@@ -7,31 +7,23 @@ pub const NodeType = enum {
     literal,
     identifier,
     binary,
-    unary,
-    call,
     grouping,
 
     // 文
-    expression_stmt,
+    assign_stmt,
     print_stmt,
-    var_decl,
-    const_decl,
     block,
     if_stmt,
     while_stmt,
-    for_stmt,
-    function_decl,
-    return_stmt,
+    break_stmt,
+    continue_stmt,
 
     // プログラム
     program,
 };
 
 pub const Value = union(enum) {
-    number: f64,
-    string: []const u8,
-    boolean: bool,
-    null_val: void,
+    number: u16, // YKWはu16のみ
 };
 
 pub const Node = struct {
@@ -54,19 +46,14 @@ pub const NodeData = union(enum) {
     literal: LiteralData,
     identifier: IdentifierData,
     binary: BinaryData,
-    unary: UnaryData,
-    call: CallData,
     grouping: GroupingData,
-    expression_stmt: ExpressionStmtData,
+    assign_stmt: AssignStmtData,
     print_stmt: PrintStmtData,
-    var_decl: VarDeclData,
-    const_decl: ConstDeclData,
     block: BlockData,
     if_stmt: IfStmtData,
     while_stmt: WhileStmtData,
-    for_stmt: ForStmtData,
-    function_decl: FunctionDeclData,
-    return_stmt: ReturnStmtData,
+    break_stmt: void,
+    continue_stmt: void,
     program: ProgramData,
 };
 
@@ -84,36 +71,17 @@ pub const BinaryData = struct {
     right: *Node,
 };
 
-pub const UnaryData = struct {
-    operator: Token,
-    operand: *Node,
-};
-
-pub const CallData = struct {
-    callee: *Node,
-    arguments: std.ArrayList(*Node),
-};
-
 pub const GroupingData = struct {
     expression: *Node,
 };
 
-pub const ExpressionStmtData = struct {
-    expression: *Node,
+pub const AssignStmtData = struct {
+    name: []const u8,
+    value: *Node,
 };
 
 pub const PrintStmtData = struct {
     expression: *Node,
-};
-
-pub const VarDeclData = struct {
-    name: []const u8,
-    initializer: ?*Node,
-};
-
-pub const ConstDeclData = struct {
-    name: []const u8,
-    initializer: *Node,
 };
 
 pub const BlockData = struct {
@@ -129,22 +97,6 @@ pub const IfStmtData = struct {
 pub const WhileStmtData = struct {
     condition: *Node,
     body: *Node,
-};
-
-pub const ForStmtData = struct {
-    variable: []const u8,
-    iterable: *Node,
-    body: *Node,
-};
-
-pub const FunctionDeclData = struct {
-    name: []const u8,
-    parameters: std.ArrayList([]const u8),
-    body: *Node,
-};
-
-pub const ReturnStmtData = struct {
-    value: ?*Node,
 };
 
 pub const ProgramData = struct {
@@ -182,12 +134,12 @@ pub const Ast = struct {
 };
 
 test "ast node creation" {
-    var ast = Ast.init(std.testing.allocator);
-    defer ast.deinit();
+    var tree = Ast.init(std.testing.allocator);
+    defer tree.deinit();
 
-    const node = try ast.createNode(
+    const node = try tree.createNode(
         .literal,
-        .{ .literal = .{ .value = .{ .number = 42.0 } } },
+        .{ .literal = .{ .value = .{ .number = 42 } } },
         null,
     );
 

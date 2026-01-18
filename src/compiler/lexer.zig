@@ -33,19 +33,15 @@ pub const TokenType = enum {
     colon, // :
     semicolon, // ;
 
-    // キーワード（やんばるくいな語）
-    kw_if, // もし
-    kw_else, // でなければ
-    kw_while, // 繰り返す
-    kw_for, // 各々
-    kw_fn, // 関数
-    kw_return, // 返す
-    kw_let, // 変数
-    kw_const, // 定数
-    kw_true, // 真
-    kw_false, // 偽
-    kw_null, // 無
-    kw_print, // 表示
+    // キーワード（YanbaruKwina語）
+    kw_if, // moshi (if)
+    kw_else_if, // mata (else if)
+    kw_else, // hoka (else)
+    kw_while, // aruku (while)
+    kw_break, // tobu (break)
+    kw_continue, // hashiru (continue)
+    kw_print, // naku (print)
+    kw_comment, // zz (comment)
 
     // 特殊
     eof,
@@ -227,18 +223,14 @@ pub const Lexer = struct {
     fn identifierType(self: *Self, text: []const u8) TokenType {
         _ = self;
         const keywords = .{
-            .{ "もし", TokenType.kw_if },
-            .{ "でなければ", TokenType.kw_else },
-            .{ "繰り返す", TokenType.kw_while },
-            .{ "各々", TokenType.kw_for },
-            .{ "関数", TokenType.kw_fn },
-            .{ "返す", TokenType.kw_return },
-            .{ "変数", TokenType.kw_let },
-            .{ "定数", TokenType.kw_const },
-            .{ "真", TokenType.kw_true },
-            .{ "偽", TokenType.kw_false },
-            .{ "無", TokenType.kw_null },
-            .{ "表示", TokenType.kw_print },
+            .{ "moshi", TokenType.kw_if },
+            .{ "mata", TokenType.kw_else_if },
+            .{ "hoka", TokenType.kw_else },
+            .{ "aruku", TokenType.kw_while },
+            .{ "tobu", TokenType.kw_break },
+            .{ "hashiru", TokenType.kw_continue },
+            .{ "naku", TokenType.kw_print },
+            .{ "zz", TokenType.kw_comment },
         };
 
         inline for (keywords) |kw| {
@@ -258,8 +250,7 @@ fn isDigit(c: u8) bool {
 fn isAlpha(c: u8) bool {
     return (c >= 'a' and c <= 'z') or
         (c >= 'A' and c <= 'Z') or
-        c == '_' or
-        c >= 0x80;
+        c == '_';
 }
 
 test "lexer basic tokens" {

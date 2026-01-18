@@ -12,9 +12,10 @@ pub const ParseError = error{
     UnexpectedToken,
     ExpectedExpression,
     ExpectedIdentifier,
-    ExpectedSemicolon,
     ExpectedClosingParen,
     ExpectedClosingBrace,
+    BreakOutsideLoop,
+    ContinueOutsideLoop,
     OutOfMemory,
 };
 
@@ -25,6 +26,7 @@ pub const Parser = struct {
     tree: Ast,
     had_error: bool,
     error_message: ?[]const u8,
+    loop_depth: usize,
 
     const Self = @This();
 
@@ -38,6 +40,7 @@ pub const Parser = struct {
             .tree = Ast.init(allocator),
             .had_error = false,
             .error_message = null,
+            .loop_depth = 0,
         };
     }
 
@@ -50,6 +53,7 @@ pub const Parser = struct {
             .tree = Ast.init(allocator),
             .had_error = false,
             .error_message = null,
+            .loop_depth = 0,
         };
     }
 
@@ -61,7 +65,11 @@ pub const Parser = struct {
         var statements = std.ArrayList(*Node).init(self.tree.allocator);
 
         while (!self.isAtEnd()) {
-            if (self.declaration()) |stmt| {
+            // zzコメントをスキップ
+            if (self.match(.kw_comment)) {
+                continue;
+            }
+            if (self.statement()) |stmt| {
                 statements.append(stmt) catch return ParseError.OutOfMemory;
             } else |_| {
                 self.synchronize();
@@ -75,126 +83,39 @@ pub const Parser = struct {
         ) catch ParseError.OutOfMemory;
     }
 
-    fn declaration(self: *Self) ParseError!*Node {
-        if (self.match(.kw_let)) {
-            return self.varDeclaration();
-        }
-        if (self.match(.kw_const)) {
-            return self.constDeclaration();
-        }
-        if (self.match(.kw_fn)) {
-            return self.functionDeclaration();
-        }
-        return self.statement();
-    }
-
-    fn varDeclaration(self: *Self) ParseError!*Node {
-        const name = self.current.lexeme;
-        if (!self.match(.identifier)) {
-            return ParseError.ExpectedIdentifier;
-        }
-
-        var initializer: ?*Node = null;
-        if (self.match(.equal)) {
-            initializer = try self.expression();
-        }
-
-        if (!self.match(.semicolon)) {
-            return ParseError.ExpectedSemicolon;
-        }
-
-        return self.tree.createNode(
-            .var_decl,
-            .{ .var_decl = .{ .name = name, .initializer = initializer } },
-            null,
-        ) catch ParseError.OutOfMemory;
-    }
-
-    fn constDeclaration(self: *Self) ParseError!*Node {
-        const name = self.current.lexeme;
-        if (!self.match(.identifier)) {
-            return ParseError.ExpectedIdentifier;
-        }
-
-        if (!self.match(.equal)) {
-            return ParseError.UnexpectedToken;
-        }
-
-        const initializer = try self.expression();
-
-        if (!self.match(.semicolon)) {
-            return ParseError.ExpectedSemicolon;
-        }
-
-        return self.tree.createNode(
-            .const_decl,
-            .{ .const_decl = .{ .name = name, .initializer = initializer } },
-            null,
-        ) catch ParseError.OutOfMemory;
-    }
-
-    fn functionDeclaration(self: *Self) ParseError!*Node {
-        const name = self.current.lexeme;
-        if (!self.match(.identifier)) {
-            return ParseError.ExpectedIdentifier;
-        }
-
-        if (!self.match(.left_paren)) {
-            return ParseError.UnexpectedToken;
-        }
-
-        var parameters = std.ArrayList([]const u8).init(self.tree.allocator);
-        if (!self.check(.right_paren)) {
-            while (true) {
-                const param_name = self.current.lexeme;
-                if (!self.match(.identifier)) {
-                    return ParseError.ExpectedIdentifier;
-                }
-                parameters.append(param_name) catch return ParseError.OutOfMemory;
-
-                if (!self.match(.comma)) break;
-            }
-        }
-
-        if (!self.match(.right_paren)) {
-            return ParseError.ExpectedClosingParen;
-        }
-
-        const body = try self.block();
-
-        return self.tree.createNode(
-            .function_decl,
-            .{ .function_decl = .{ .name = name, .parameters = parameters, .body = body } },
-            null,
-        ) catch ParseError.OutOfMemory;
-    }
-
     fn statement(self: *Self) ParseError!*Node {
+        // naku(expr) - print文
         if (self.match(.kw_print)) {
             return self.printStatement();
         }
+        // moshi(expr) block - if文
         if (self.match(.kw_if)) {
             return self.ifStatement();
         }
+        // aruku(expr) block - while文
         if (self.match(.kw_while)) {
             return self.whileStatement();
         }
-        if (self.match(.kw_for)) {
-            return self.forStatement();
+        // tobu - break文
+        if (self.match(.kw_break)) {
+            return self.breakStatement();
         }
-        if (self.match(.kw_return)) {
-            return self.returnStatement();
+        // hashiru - continue文
+        if (self.match(.kw_continue)) {
+            return self.continueStatement();
         }
-        if (self.match(.left_brace)) {
-            return self.block();
-        }
-        return self.expressionStatement();
+        // 代入文: IDENT = expr
+        return self.assignStatement();
     }
 
     fn printStatement(self: *Self) ParseError!*Node {
+        // naku(expr)
+        if (!self.match(.left_paren)) {
+            return ParseError.UnexpectedToken;
+        }
         const value = try self.expression();
-        if (!self.match(.semicolon)) {
-            return ParseError.ExpectedSemicolon;
+        if (!self.match(.right_paren)) {
+            return ParseError.ExpectedClosingParen;
         }
         return self.tree.createNode(
             .print_stmt,
@@ -204,10 +125,43 @@ pub const Parser = struct {
     }
 
     fn ifStatement(self: *Self) ParseError!*Node {
+        // moshi(condition) block (mata(condition) block)* (hoka block)?
+        if (!self.match(.left_paren)) {
+            return ParseError.UnexpectedToken;
+        }
         const condition = try self.expression();
+        if (!self.match(.right_paren)) {
+            return ParseError.ExpectedClosingParen;
+        }
         const then_branch = try self.block();
 
+        // mata (else if) のリストを処理
         var else_branch: ?*Node = null;
+
+        // mata (else if) チェーン
+        while (self.match(.kw_else_if)) {
+            if (!self.match(.left_paren)) {
+                return ParseError.UnexpectedToken;
+            }
+            const elif_condition = try self.expression();
+            if (!self.match(.right_paren)) {
+                return ParseError.ExpectedClosingParen;
+            }
+            const elif_branch = try self.block();
+
+            // else if を入れ子の if として構築
+            const elif_node = self.tree.createNode(
+                .if_stmt,
+                .{ .if_stmt = .{ .condition = elif_condition, .then_branch = elif_branch, .else_branch = null } },
+                null,
+            ) catch return ParseError.OutOfMemory;
+
+            if (else_branch == null) {
+                else_branch = elif_node;
+            }
+        }
+
+        // hoka (else) ブロック
         if (self.match(.kw_else)) {
             else_branch = try self.block();
         }
@@ -220,8 +174,18 @@ pub const Parser = struct {
     }
 
     fn whileStatement(self: *Self) ParseError!*Node {
+        // aruku(condition) block
+        if (!self.match(.left_paren)) {
+            return ParseError.UnexpectedToken;
+        }
         const condition = try self.expression();
+        if (!self.match(.right_paren)) {
+            return ParseError.ExpectedClosingParen;
+        }
+
+        self.loop_depth += 1;
         const body = try self.block();
+        self.loop_depth -= 1;
 
         return self.tree.createNode(
             .while_stmt,
@@ -230,54 +194,61 @@ pub const Parser = struct {
         ) catch ParseError.OutOfMemory;
     }
 
-    fn forStatement(self: *Self) ParseError!*Node {
-        const variable = self.current.lexeme;
+    fn breakStatement(self: *Self) ParseError!*Node {
+        if (self.loop_depth == 0) {
+            return ParseError.BreakOutsideLoop;
+        }
+        return self.tree.createNode(
+            .break_stmt,
+            .{ .break_stmt = {} },
+            self.previous,
+        ) catch ParseError.OutOfMemory;
+    }
+
+    fn continueStatement(self: *Self) ParseError!*Node {
+        if (self.loop_depth == 0) {
+            return ParseError.ContinueOutsideLoop;
+        }
+        return self.tree.createNode(
+            .continue_stmt,
+            .{ .continue_stmt = {} },
+            self.previous,
+        ) catch ParseError.OutOfMemory;
+    }
+
+    fn assignStatement(self: *Self) ParseError!*Node {
+        // IDENT = expr
+        const name = self.current.lexeme;
         if (!self.match(.identifier)) {
             return ParseError.ExpectedIdentifier;
         }
 
-        if (!self.match(.colon)) {
+        if (!self.match(.equal)) {
             return ParseError.UnexpectedToken;
         }
 
-        const iterable = try self.expression();
-        const body = try self.block();
+        const value = try self.expression();
 
         return self.tree.createNode(
-            .for_stmt,
-            .{ .for_stmt = .{ .variable = variable, .iterable = iterable, .body = body } },
-            null,
-        ) catch ParseError.OutOfMemory;
-    }
-
-    fn returnStatement(self: *Self) ParseError!*Node {
-        var value: ?*Node = null;
-        if (!self.check(.semicolon)) {
-            value = try self.expression();
-        }
-
-        if (!self.match(.semicolon)) {
-            return ParseError.ExpectedSemicolon;
-        }
-
-        return self.tree.createNode(
-            .return_stmt,
-            .{ .return_stmt = .{ .value = value } },
+            .assign_stmt,
+            .{ .assign_stmt = .{ .name = name, .value = value } },
             null,
         ) catch ParseError.OutOfMemory;
     }
 
     fn block(self: *Self) ParseError!*Node {
-        if (!self.check(.left_brace) and self.previous.type != .left_brace) {
-            if (!self.match(.left_brace)) {
-                return ParseError.UnexpectedToken;
-            }
+        if (!self.match(.left_brace)) {
+            return ParseError.ExpectedClosingBrace;
         }
 
         var statements = std.ArrayList(*Node).init(self.tree.allocator);
 
         while (!self.check(.right_brace) and !self.isAtEnd()) {
-            if (self.declaration()) |stmt| {
+            // zzコメントをスキップ
+            if (self.match(.kw_comment)) {
+                continue;
+            }
+            if (self.statement()) |stmt| {
                 statements.append(stmt) catch return ParseError.OutOfMemory;
             } else |_| {
                 self.synchronize();
@@ -295,18 +266,6 @@ pub const Parser = struct {
         ) catch ParseError.OutOfMemory;
     }
 
-    fn expressionStatement(self: *Self) ParseError!*Node {
-        const expr = try self.expression();
-        if (!self.match(.semicolon)) {
-            return ParseError.ExpectedSemicolon;
-        }
-        return self.tree.createNode(
-            .expression_stmt,
-            .{ .expression_stmt = .{ .expression = expr } },
-            null,
-        ) catch ParseError.OutOfMemory;
-    }
-
     fn expression(self: *Self) ParseError!*Node {
         return self.equality();
     }
@@ -314,7 +273,7 @@ pub const Parser = struct {
     fn equality(self: *Self) ParseError!*Node {
         var left = try self.comparison();
 
-        while (self.match(.equal_equal) or self.match(.bang_equal)) {
+        while (self.match(.equal_equal)) {
             const operator = self.previous;
             const right = try self.comparison();
             left = self.tree.createNode(
@@ -330,7 +289,8 @@ pub const Parser = struct {
     fn comparison(self: *Self) ParseError!*Node {
         var left = try self.term();
 
-        while (self.match(.less) or self.match(.less_equal) or self.match(.greater) or self.match(.greater_equal)) {
+        // 比較演算は1回のみ許可（連鎖比較は非許可）
+        if (self.match(.less) or self.match(.greater)) {
             const operator = self.previous;
             const right = try self.term();
             left = self.tree.createNode(
@@ -360,11 +320,11 @@ pub const Parser = struct {
     }
 
     fn factor(self: *Self) ParseError!*Node {
-        var left = try self.unary();
+        var left = try self.primary();
 
-        while (self.match(.star) or self.match(.slash) or self.match(.percent)) {
+        while (self.match(.star) or self.match(.slash)) {
             const operator = self.previous;
-            const right = try self.unary();
+            const right = try self.primary();
             left = self.tree.createNode(
                 .binary,
                 .{ .binary = .{ .left = left, .operator = operator, .right = right } },
@@ -375,92 +335,13 @@ pub const Parser = struct {
         return left;
     }
 
-    fn unary(self: *Self) ParseError!*Node {
-        if (self.match(.bang) or self.match(.minus)) {
-            const operator = self.previous;
-            const operand = try self.unary();
-            return self.tree.createNode(
-                .unary,
-                .{ .unary = .{ .operator = operator, .operand = operand } },
-                null,
-            ) catch ParseError.OutOfMemory;
-        }
-
-        return self.call();
-    }
-
-    fn call(self: *Self) ParseError!*Node {
-        var expr = try self.primary();
-
-        while (true) {
-            if (self.match(.left_paren)) {
-                var arguments = std.ArrayList(*Node).init(self.tree.allocator);
-
-                if (!self.check(.right_paren)) {
-                    while (true) {
-                        const arg = try self.expression();
-                        arguments.append(arg) catch return ParseError.OutOfMemory;
-                        if (!self.match(.comma)) break;
-                    }
-                }
-
-                if (!self.match(.right_paren)) {
-                    return ParseError.ExpectedClosingParen;
-                }
-
-                expr = self.tree.createNode(
-                    .call,
-                    .{ .call = .{ .callee = expr, .arguments = arguments } },
-                    null,
-                ) catch return ParseError.OutOfMemory;
-            } else {
-                break;
-            }
-        }
-
-        return expr;
-    }
-
     fn primary(self: *Self) ParseError!*Node {
         if (self.match(.number)) {
-            const value = std.fmt.parseFloat(f64, self.previous.lexeme) catch 0.0;
+            // YKWはu16整数のみ
+            const value = std.fmt.parseInt(u16, self.previous.lexeme, 10) catch 0;
             return self.tree.createNode(
                 .literal,
                 .{ .literal = .{ .value = .{ .number = value } } },
-                self.previous,
-            ) catch ParseError.OutOfMemory;
-        }
-
-        if (self.match(.string)) {
-            const lexeme = self.previous.lexeme;
-            const str = if (lexeme.len >= 2) lexeme[1 .. lexeme.len - 1] else lexeme;
-            return self.tree.createNode(
-                .literal,
-                .{ .literal = .{ .value = .{ .string = str } } },
-                self.previous,
-            ) catch ParseError.OutOfMemory;
-        }
-
-        if (self.match(.kw_true)) {
-            return self.tree.createNode(
-                .literal,
-                .{ .literal = .{ .value = .{ .boolean = true } } },
-                self.previous,
-            ) catch ParseError.OutOfMemory;
-        }
-
-        if (self.match(.kw_false)) {
-            return self.tree.createNode(
-                .literal,
-                .{ .literal = .{ .value = .{ .boolean = false } } },
-                self.previous,
-            ) catch ParseError.OutOfMemory;
-        }
-
-        if (self.match(.kw_null)) {
-            return self.tree.createNode(
-                .literal,
-                .{ .literal = .{ .value = .{ .null_val = {} } } },
                 self.previous,
             ) catch ParseError.OutOfMemory;
         }
@@ -513,10 +394,8 @@ pub const Parser = struct {
         self.advance();
 
         while (!self.isAtEnd()) {
-            if (self.previous.type == .semicolon) return;
-
             switch (self.current.type) {
-                .kw_fn, .kw_let, .kw_const, .kw_for, .kw_if, .kw_while, .kw_print, .kw_return => return,
+                .kw_if, .kw_while, .kw_print, .kw_break, .kw_continue => return,
                 else => {},
             }
 
@@ -526,7 +405,7 @@ pub const Parser = struct {
 };
 
 test "parser simple expression" {
-    var lex = Lexer.init("42;");
+    var lex = Lexer.init("x = 42");
     var parser = Parser.initWithLexer(&lex, std.testing.allocator);
     defer parser.deinit();
 
