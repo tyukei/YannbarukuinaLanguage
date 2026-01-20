@@ -119,6 +119,15 @@ pub const Ast = struct {
     }
 
     pub fn deinit(self: *Self) void {
+        // ノード内のArrayListを先に解放
+        for (self.nodes.items) |node| {
+            switch (node.data) {
+                .block => |*data| data.statements.deinit(),
+                .program => |*data| data.statements.deinit(),
+                else => {},
+            }
+        }
+        // ノード自体を解放
         for (self.nodes.items) |node| {
             self.allocator.destroy(node);
         }
