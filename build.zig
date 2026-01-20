@@ -59,6 +59,15 @@ pub fn build(b: *std.Build) void {
     codegen_mod.addImport("ast.zig", ast_mod);
     codegen_mod.addImport("lexer.zig", lexer_mod);
 
+    // Z80 Codegen module
+    const z80codegen_mod = b.createModule(.{
+        .root_source_file = b.path("src/compiler/z80codegen.zig"),
+        .target = target,
+        .optimize = optimize,
+    });
+    z80codegen_mod.addImport("ast.zig", ast_mod);
+    z80codegen_mod.addImport("lexer.zig", lexer_mod);
+
     // VM module
     const vm_mod = b.createModule(.{
         .root_source_file = b.path("src/vm/vm.zig"),
@@ -82,6 +91,7 @@ pub fn build(b: *std.Build) void {
     exe_mod.addImport("compiler/parser.zig", parser_mod);
     exe_mod.addImport("compiler/ast.zig", ast_mod);
     exe_mod.addImport("compiler/codegen.zig", codegen_mod);
+    exe_mod.addImport("compiler/z80codegen.zig", z80codegen_mod);
     exe_mod.addImport("vm/vm.zig", vm_mod);
 
     // Modules can depend on one another using the `std.Build.Module.addImport` function.

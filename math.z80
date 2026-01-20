@@ -1,0 +1,190 @@
+; YanbaruKwina Z80 Compiler Output
+; Target: CP/M (.COM)
+
+        ORG     0100h
+
+; Constants
+BDOS    EQU     0005h
+VAR_BASE EQU    8000h
+STK_BASE EQU    7F00h
+
+; Program entry
+_START:
+        LD      IX, STK_BASE    ; Initialize software stack
+
+; === Generated Code ===
+; naku(...)
+        LD      HL, 6
+        LD      (IX+0), L
+        LD      (IX+1), H
+        INC     IX
+        INC     IX
+        LD      HL, 7
+        LD      (IX+0), L
+        LD      (IX+1), H
+        INC     IX
+        INC     IX
+        DEC     IX
+        DEC     IX
+        LD      L, (IX+0)
+        LD      H, (IX+1)
+        EX      DE, HL
+        DEC     IX
+        DEC     IX
+        LD      L, (IX+0)
+        LD      H, (IX+1)
+        CALL    _MUL16
+        LD      (IX+0), L
+        LD      (IX+1), H
+        INC     IX
+        INC     IX
+        DEC     IX
+        DEC     IX
+        LD      L, (IX+0)
+        LD      H, (IX+1)
+        CALL    _PRINT_U16
+; naku(...)
+        LD      HL, 100
+        LD      (IX+0), L
+        LD      (IX+1), H
+        INC     IX
+        INC     IX
+        LD      HL, 3
+        LD      (IX+0), L
+        LD      (IX+1), H
+        INC     IX
+        INC     IX
+        DEC     IX
+        DEC     IX
+        LD      L, (IX+0)
+        LD      H, (IX+1)
+        EX      DE, HL
+        DEC     IX
+        DEC     IX
+        LD      L, (IX+0)
+        LD      H, (IX+1)
+        CALL    _DIV16
+        LD      (IX+0), L
+        LD      (IX+1), H
+        INC     IX
+        INC     IX
+        DEC     IX
+        DEC     IX
+        LD      L, (IX+0)
+        LD      H, (IX+1)
+        CALL    _PRINT_U16
+
+; Program exit
+        JP      0               ; Return to CP/M
+
+; === Runtime Library ===
+
+; 16-bit multiply: HL = HL * DE
+_MUL16:
+        PUSH    BC
+        LD      B, 16
+        LD      A, L
+        LD      C, H
+        LD      HL, 0
+_MUL16_LOOP:
+        SRL     C
+        RRA
+        JR      NC, _MUL16_SKIP
+        ADD     HL, DE
+_MUL16_SKIP:
+        SLA     E
+        RL      D
+        DJNZ    _MUL16_LOOP
+        POP     BC
+        RET
+
+; 16-bit divide: HL = HL / DE, remainder in BC
+_DIV16:
+        PUSH    AF
+        LD      A, D
+        OR      E
+        JR      Z, _DIV_ZERO
+        LD      B, 16
+        LD      A, H
+        LD      C, L
+        LD      HL, 0
+_DIV16_LOOP:
+        SLA     C
+        RL      A
+        ADC     HL, HL
+        SBC     HL, DE
+        JR      NC, _DIV16_BIT
+        ADD     HL, DE
+        JR      _DIV16_NEXT
+_DIV16_BIT:
+        INC     C
+_DIV16_NEXT:
+        DJNZ    _DIV16_LOOP
+        LD      B, H              ; Remainder in BC
+        LD      H, A
+        LD      L, C              ; Quotient in HL
+        POP     AF
+        RET
+
+_DIV_ZERO:
+        LD      DE, _DIV_MSG
+        LD      C, 9              ; BDOS print string
+        CALL    BDOS
+        JP      0
+_DIV_MSG:
+        DB      'Error: Division by zero', 13, 10, '$'
+
+; Print unsigned 16-bit number in HL
+_PRINT_U16:
+        PUSH    BC
+        PUSH    DE
+        PUSH    HL
+        LD      DE, _NUM_BUF + 5
+        XOR     A
+        LD      (DE), A           ; Null terminator
+_P16_LOOP:
+        DEC     DE
+        LD      BC, 10
+        CALL    _DIV_HL_BC
+        ADD     A, '0'
+        LD      (DE), A
+        LD      A, H
+        OR      L
+        JR      NZ, _P16_LOOP
+_P16_PRINT:
+        LD      A, (DE)
+        OR      A
+        JR      Z, _P16_NEWLINE
+        PUSH    DE
+        LD      E, A
+        LD      C, 2              ; BDOS console output
+        CALL    BDOS
+        POP     DE
+        INC     DE
+        JR      _P16_PRINT
+_P16_NEWLINE:
+        LD      E, 13
+        LD      C, 2
+        CALL    BDOS
+        LD      E, 10
+        LD      C, 2
+        CALL    BDOS
+        POP     HL
+        POP     DE
+        POP     BC
+        RET
+
+; HL = HL / BC, A = remainder
+_DIV_HL_BC:
+        PUSH    DE
+        LD      D, B
+        LD      E, C
+        CALL    _DIV16
+        LD      A, C              ; Remainder low byte
+        POP     DE
+        RET
+
+_NUM_BUF:
+        DS      6                 ; Buffer for digits
+
+        END     _START
