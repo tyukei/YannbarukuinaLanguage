@@ -168,7 +168,7 @@ async function run() {
     el("cancel").hidden = true;
     runButton.disabled = loadButton.disabled = el("example").disabled = el("language").disabled = false;
     el("output-mode").disabled=language!=="chukei";
-    runButton.innerHTML = '<span aria-hidden="true">▶</span> 実行';
+    runButton.innerHTML = '<span aria-hidden="true">▶</span> 2. 実行';
   }
 }
 runButton.addEventListener("click", run);
