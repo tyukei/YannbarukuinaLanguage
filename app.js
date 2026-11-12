@@ -265,33 +265,29 @@ el("download-code").addEventListener("click",()=>{
 });
 
 
+
 let dialogFadeTimer=null,dialogCloseTimer=null;
 function clearDialogTimers(){clearTimeout(dialogFadeTimer);clearTimeout(dialogCloseTimer);}
 function openRunDialog(){
  clearDialogTimers();el("run-dialog").classList.remove("fading");
- el("run-title").textContent="実行中…";el("walking-bird").hidden=false;
- el("dialog-output").hidden=true;el("dialog-error").hidden=true;
- el("dialog-action").hidden=false;el("dialog-action").textContent="停止";
+ el("run-title").textContent="実行中";el("walking-bird").hidden=false;
+ el("dialog-action").hidden=false;
  if(!el("run-dialog").open)el("run-dialog").showModal();
-}
-function finishRunDialog(){
- el("walking-bird").hidden=true;
- el("run-title").textContent=el("error").hidden?"実行完了":"実行を停止";
- el("dialog-output").textContent=el("output").textContent||"出力なし";
- el("dialog-output").hidden=false;
- el("dialog-error").textContent=el("error").textContent;el("dialog-error").hidden=el("error").hidden;
- el("dialog-action").hidden=true;
- if(!el("run-dialog").open){runButton.focus();return;}
- el("run-title").focus();
+ // This is a visual presentation timer, never an execution-success signal.
  dialogFadeTimer=setTimeout(()=>{
   el("run-dialog").classList.add("fading");
   const reduced=matchMedia("(prefers-reduced-motion: reduce)").matches;
   dialogCloseTimer=setTimeout(()=>el("run-dialog").close(),reduced?0:250);
  },3000);
 }
+function finishRunDialog(){
+ el("run-title").textContent=el("error").hidden?"実行完了。結果はコンソールに表示されています。":"実行停止。エラーはコンソールに表示されています。";
+ el("dialog-action").hidden=true;
+ if(el("run-dialog").open)el("run-title").focus();
+}
 el("dialog-action").addEventListener("click",()=>{if(busy)cancelRun?.();});
 el("run-dialog").addEventListener("cancel",()=>{clearDialogTimers();if(busy)cancelRun?.();});
 el("run-dialog").addEventListener("close",()=>{
  clearDialogTimers();el("run-dialog").classList.remove("fading");
- if(!busy)el("output").focus({preventScroll:false});
+ if(busy)el("cancel").focus();else el("output").focus({preventScroll:false});
 });
