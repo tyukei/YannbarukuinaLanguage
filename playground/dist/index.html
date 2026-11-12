@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="やんばるくいな言語を書いて、Z80 で動かすブラウザ内実験室。">
   <title>Queena Playground</title>
-  <link rel="stylesheet" href="./style.css?v=logo-3">
-  <script src="./app.js?v=logo-3" defer></script>
+  <link rel="stylesheet" href="./style.css?v=run-6">
+  <script src="./app.js?v=run-6" defer></script>
 </head>
 <body>
   <main>
@@ -14,10 +14,7 @@
       <a class="brand" href="./" aria-label="Playground ホーム"><span id="queena-mark" class="bird" aria-hidden="true">q.</span><img id="chukei-mark" class="language-logo" src="./images/chukei-logo.svg" width="64" height="64" alt="CHUKEI ロゴ" hidden> <span id="brand-name">QUEENA</span> <span class="wordmark">PLAYGROUND</span></a>
       <span class="local"><span aria-hidden="true">●</span> ブラウザ内で実行</span>
     </header>
-    <section class="intro">
-      
-      <h1>コードを試して、しくみを知る。</h1>
-    </section>
+    <h1 class="sr-only">Queena・CHUKEI Playground</h1>
     <section class="language-bar">
       <label for="language">言語</label><select id="language"><option value="queena">Queena</option><option value="chukei">CHUKEI</option></select>
       <label for="output-mode">出力</label><select id="output-mode" disabled aria-describedby="output-help"><option value="numeric">数値</option><option value="ascii">文字（ASCII）</option></select>
@@ -25,13 +22,13 @@
     </section>
     <div class="workspace">
       <section class="panel editor-panel" aria-labelledby="editor-heading">
-        <div class="panel-header"><h2 id="editor-heading"><span class="step-badge">1</span> コードを書く</h2><span class="file-name">main.ykw</span></div>
+        <div class="panel-header"><h2 id="editor-heading"><span class="step-badge">1</span> コードを書く</h2><span class="file-name">main.🐧</span></div>
         <div class="toolbar">
           <label for="example">サンプル</label>
           <select id="example"><option value="hello">はじめの一歩</option><option value="branch">分岐してみる</option><option value="loop">くり返してみる</option><option value="control">スキップと脱出</option></select>
           <button id="load" class="text-button" type="button">読み込む</button>
         </div>
-        <label class="sr-only" for="source">やんばるくいな言語のコード</label>
+        <div class="file-tools"><button id="import-code" class="text-button" type="button">ファイルを開く</button><button id="download-code" class="text-button" type="button">ダウンロード</button><input id="code-file" type="file" accept=".🐧,.ykw,.chukei,.txt,text/plain" hidden><span id="file-status" role="status"></span></div><label class="sr-only" for="source">やんばるくいな言語のコード</label>
         <textarea id="source" spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off" aria-describedby="editor-help"></textarea>
         <div class="editor-footer"><span id="editor-help">⌘ / Ctrl + Enter</span><button id="cancel" class="text-button" type="button" hidden>停止</button><button id="run" class="run-button" type="button"><span aria-hidden="true">▶</span> 2. 実行</button></div>
       </section>
@@ -57,6 +54,69 @@
       <div id="chukei-guide" hidden><p>C：+1 ／ CH：−1 ／ CHU：右へ ／ CHUK：出力 ／ CHUKE・CHUKEI：ループ</p><p>空白で区切る6命令。256セル、値0〜255、値・ポインタは循環。現在セルが0ならループ終了。入力・コメントなし。</p><p>JavaScript製コンパイラ → 教材用VM（Z80ではありません）。JZ：0なら移動、JNZ：0以外なら移動。</p><p>ASCII：65=A、90=Z、97=a、122=z、10=改行、32=空白。0〜127のみ。自動改行・日本語なし。</p></div>
       <p>すべてブラウザ内で処理。コードは送信しません。トークン・構文木は実際の解析結果です。Queenaの列位置はUTF-8バイト単位。</p>
     </div></details>
+    <details class="panel stage implementation"><summary>文法・実装コード</summary><div class="ast-body">
+<div id="queena-implementation"><h3>Queena · EBNF</h3><pre>program = { statement } ;
+statement = identifier, "=", expression
+  | "naku", "(", expression, ")"
+  | "moshi", "(", expression, ")", block,
+    { "mata", "(", expression, ")", block }, [ "hoka", block ]
+  | "aruku", "(", expression, ")", block
+  | "tobu" | "hashiru" ;
+block = "{", { statement }, "}" ;
+expression = comparison, { "==", comparison } ;
+comparison = sum, [ ("&lt;" | "&gt;"), sum ] ;
+sum = product, { ("+" | "-"), product } ;
+product = primary, { ("*" | "/"), primary } ;
+primary = integer | identifier | "(", expression, ")" ;
+integer = digit, { digit } ;
+identifier = letter, { letter | digit } ;
+letter = "A"…"Z" | "a"…"z" | "_" ;
+digit = "0"…"9" ;</pre>
+<p>トークン単位の文法。identifierは予約語を除く。整数は0〜65535。空白・改行を読み飛ばし、// と予約語 zz は行末までコメント。</p>
+<p>優先順位：括弧 → * / → + − → &lt; &gt; → ==。反復演算は左結合。tobu・hashiruはループ内のみ。1&lt;2&lt;3、単項 −、文字列、;、&lt;=、&gt;=、!=、% は未対応。</p>
+<h3>比較式 → 構文木</h3><pre><code>    fn comparison(self: *Self) ParseError!*Node {
+        var left = try self.term();
+
+        // 比較演算は1回のみ許可（連鎖比較は非許可）
+        if (self.match(.less) or self.match(.greater)) {
+            const operator = self.previous;
+            const right = try self.term();
+            left = self.tree.createNode(
+                .binary,
+                .{ .binary = .{ .left = left, .operator = operator, .right = right } },
+                null,
+            ) catch return ParseError.OutOfMemory;
+        }
+
+        return left;
+    }
+</code></pre><p>左右の式をBinaryノードにする実コード。比較の連鎖はifで制限。</p>
+<p><a href="https://github.com/tyukei/YannbarukuinaLanguage/blob/2342e33defa324ad9eb28b57def6397599d219db/playground/runtime-source/src/compiler/parser.zig#L287-L302" target="_blank" rel="noopener">Parser</a> · <a href="https://github.com/tyukei/YannbarukuinaLanguage/blob/2342e33defa324ad9eb28b57def6397599d219db/playground/runtime-source/src/compiler/lexer.zig" target="_blank" rel="noopener">Lexer</a> · <a href="https://github.com/tyukei/YannbarukuinaLanguage/blob/2342e33defa324ad9eb28b57def6397599d219db/playground/runtime-source/src/compiler/z80codegen.zig" target="_blank" rel="noopener">Z80生成</a></p>
+<p>Zig/WASMで解析・Z80アセンブリ生成 → アセンブル → 既存Z80エミュレータ。naku(1+2*3) → 7。</p></div>
+<div id="chukei-implementation" hidden><h3>CHUKEI · EBNF</h3><pre>program = { statement } ;
+statement = "C" | "CH" | "CHU" | "CHUK" | loop ;
+loop = "CHUKE", { statement }, "CHUKEI" ;</pre>
+<p>空白で分割したトークン単位。大文字・空白区切り、コメントなし。空プログラム可。ループは現在セルが0以外の間、最大128段。値とポインタは循環。</p>
+<h3>ループ → VM命令</h3><pre><code>  for(let i=0;i&lt;result.tokens.length;i++) {
+   const t=result.tokens[i];
+   const at=`line ${t.line}, column ${t.column}`;
+   if(t.kind==='invalid') throw Error(`Unknown command at ${at}: ${t.lexeme}`);
+   const pc=code.length;
+   code.push({pc,op:t.kind,sourceIndex:i});
+   if(t.kind==='JZ') {
+    if(stack.length&gt;=128) throw Error(`Loop nesting exceeds 128 levels at ${at}`);
+    const node={label:'CHUKE … CHUKEI · Loop while current cell ≠ 0',children:[]};
+    children.push(node);stack.push({pc,parent:children,token:t});children=node.children;
+   } else if(t.kind==='JNZ') {
+    if(!stack.length) throw Error(`Unmatched CHUKEI at ${at}`);
+    const open=stack.pop();code[open.pc].arg=pc+1;code[pc].arg=open.pc+1;children=open.parent;
+   } else children.push({label:`${t.lexeme} · ${t.kind}`,children:[]});
+  }
+  if(stack.length){const t=stack.at(-1).token;throw Error(`Unmatched CHUKE at line ${t.line}, column ${t.column}`);}
+</code></pre><p>スタックで開始と終了を対応付け、JZはループ後、JNZは本体先頭へ。ASTと命令列を同時に作る。</p>
+<p><a href="https://github.com/tyukei/YannbarukuinaLanguage/blob/2342e33defa324ad9eb28b57def6397599d219db/playground/runtime-source/chukei-runtime.js#L24-L39" target="_blank" rel="noopener">実装全体</a> · <a href="https://github.com/tyukei/YannbarukuinaLanguage/blob/2342e33defa324ad9eb28b57def6397599d219db/playground/runtime-source/chukei-test.mjs" target="_blank" rel="noopener">テスト</a></p>
+<p>JavaScript製の教材用VM。Z80ではありません。C C C CHUKE CHUK CH CHUKEI → 3・2・1。ASCIIは0〜127、自動改行なし。</p></div>
+<p class="notation">EBNF：{ } 繰り返し ／ [ ] 省略可能 ／ | 選択 ／ , 連結</p></div></details>
     <details class="illustration-disclosure panel stage"><summary>図で見る</summary>
     <section class="illustrated-guide" aria-labelledby="flow-heading">
       <h2 id="flow-heading">イラストで見る、コードから実行まで</h2>
@@ -68,5 +128,6 @@
     </details>
     <footer><span id="limits">数値は 0〜65535 の整数。変数は最大 32 個。</span><span>入力 16 KiB · 出力 16 KiB · 全体の実行上限 15 秒</span> <a href="./THIRD-PARTY-LICENSES.txt">ライセンス</a></footer>
   </main>
+<dialog id="run-dialog" aria-labelledby="run-title"><div class="run-dialog-inner"><h2 id="run-title" aria-live="polite">実行中…</h2><div id="walking-bird" aria-hidden="true"><svg viewBox="0 0 240 130" class="rail-bird"><path class="bird-leg leg-back" d="M112 84L112 109L126 116" /><path class="bird-leg leg-front" d="M137 84L137 110L151 116" /><g class="bird-body"><path d="M60 65L32 48L48 79Z" fill="#51463c"/><ellipse cx="106" cy="64" rx="56" ry="34" fill="#4b453c"/><path d="M88 73Q112 99 147 69" fill="none" stroke="#e9e1cd" stroke-width="6"/><path d="M93 82Q116 105 141 80" fill="none" stroke="#e9e1cd" stroke-width="5"/><path d="M134 64Q142 12 174 25Q194 36 177 59L160 81Z" fill="#303732"/><path d="M151 37L175 35" stroke="#f4f1db" stroke-width="5"/><circle cx="172" cy="42" r="3" fill="#fff"/><circle cx="173" cy="42" r="1.7" fill="#171d19"/><path d="M181 44L212 51L182 57Z" fill="#d94e36"/></g><path d="M26 120H214" stroke="#c0d0c4" stroke-width="2"/></svg></div><pre id="dialog-output" hidden></pre><p id="dialog-error" class="error" role="alert" hidden></p><button id="dialog-action" class="run-button" type="button">停止</button></div></dialog>
 </body>
 </html>
