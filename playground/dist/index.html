@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="やんばるくいな言語を書いて、Z80 で動かすブラウザ内実験室。">
   <title>Queena Playground</title>
-  <link rel="stylesheet" href="./style.css?v=neumorphic-1">
-  <script src="./app.js" defer></script>
+  <link rel="stylesheet" href="./style.css?v=clear-2">
+  <script src="./app.js?v=clear-2" defer></script>
 </head>
 <body>
   <main>
@@ -16,7 +16,7 @@
     </header>
     <section class="intro">
       
-      <h1>書いて、動かす。</h1>
+      <h1>コードを試して、しくみを知る。</h1>
     </section>
     <section class="language-bar">
       <label for="language">言語</label><select id="language"><option value="queena">Queena</option><option value="chukei">CHUKEI</option></select>
@@ -25,7 +25,7 @@
     </section>
     <div class="workspace">
       <section class="panel editor-panel" aria-labelledby="editor-heading">
-        <div class="panel-header"><h2 id="editor-heading">コード</h2><span class="file-name">main.ykw</span></div>
+        <div class="panel-header"><h2 id="editor-heading"><span class="step-badge">1</span> コードを書く</h2><span class="file-name">main.ykw</span></div>
         <div class="toolbar">
           <label for="example">サンプル</label>
           <select id="example"><option value="hello">はじめの一歩</option><option value="branch">分岐してみる</option><option value="loop">くり返してみる</option><option value="control">スキップと脱出</option></select>
@@ -33,14 +33,15 @@
         </div>
         <label class="sr-only" for="source">やんばるくいな言語のコード</label>
         <textarea id="source" spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off" aria-describedby="editor-help"></textarea>
-        <div class="editor-footer"><span id="editor-help">⌘ / Ctrl + Enter</span><button id="cancel" class="text-button" type="button" hidden>停止</button><button id="run" class="run-button" type="button"><span aria-hidden="true">▶</span> 実行</button></div>
+        <div class="editor-footer"><span id="editor-help">⌘ / Ctrl + Enter</span><button id="cancel" class="text-button" type="button" hidden>停止</button><button id="run" class="run-button" type="button"><span aria-hidden="true">▶</span> 2. 実行</button></div>
       </section>
       <section class="panel result-panel" aria-labelledby="result-heading">
-        <div class="panel-header"><h2 id="result-heading">結果</h2><span id="status" class="status" role="status">待機中</span></div>
+        <div class="panel-header"><h2 id="result-heading"><span class="step-badge">3</span> 結果を見る</h2><span id="status" class="status" role="status">待機中</span></div>
         <div class="result-content"><p id="result-note" class="result-note">実行で表示。</p><pre id="output" tabindex="0" aria-label="プログラムの出力"></pre><p id="error" class="error" role="alert" hidden></p></div>
         <div class="result-footer"><span class="engine-light" aria-hidden="true"></span><span id="metrics">Z80 実行エンジン</span></div>
       </section>
     </div>
+    <h2 class="explore-heading">しくみを見る <span>開いて確認</span></h2>
     <details class="tokens-panel panel stage">
       <summary><span class="panel-number">01</span> トークン</summary>
       <div class="ast-body"><p id="tokens-note" role="status">実行で表示。</p><ol id="tokens-list" aria-label="ソース順のトークン"></ol></div>
