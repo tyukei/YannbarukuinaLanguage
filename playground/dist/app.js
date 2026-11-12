@@ -331,6 +331,11 @@ let stageTimers=[];
 function clearStageReplay(){stageTimers.forEach(clearTimeout);stageTimers=[];}
 function replayStages(result){
  clearStageReplay();
+ // Give all four returned stages time to be seen, even after a slow compile.
+ if(el("run-dialog").open){
+  clearDialogTimers();el("run-dialog").classList.remove("fading");
+  dialogFadeTimer=setTimeout(()=>{el("run-dialog").classList.add("fading");dialogCloseTimer=setTimeout(()=>el("run-dialog").close(),matchMedia("(prefers-reduced-motion: reduce)").matches?0:250);},3000);
+ }
  const tokens=result.tokens||[],ast=result.ast;
  const code=language==="chukei"?(result.bytecode?.length?JSON.stringify(result.bytecode.slice(0,4),null,2):""):(result.assembly||"");
  const phases=[
