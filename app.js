@@ -16,11 +16,12 @@ function asciiExample(text){
  return commands.reduce((lines,command,i)=>lines+(i?(i%10===0?"\n":" "):"")+command,"");
 }
 const asciiSamples={
- hello:asciiExample("ABC"),
+ hello:asciiExample("HELLO, I AM CHUKEI!"),
  branch:asciiExample("Hello"),
  loop:"C ".repeat(65)+"CHUK\nCHU\n"+"C ".repeat(66)+"CHUK",
  control:asciiExample("A\nB"),
- letters:asciiExample("AZaz")
+ letters:asciiExample("AZaz"),
+ abc:asciiExample("ABC")
 };
 const drafts={};
 let chukeiMode="ascii";
@@ -248,7 +249,7 @@ el("language").addEventListener("change",()=>{
 
 function refreshSampleNames(){
  const keys=Object.keys(currentSamples());
- const names=language==="chukei"?(el("output-mode").value==="ascii"?["ABCを出力","Helloを出力","別のセルでAB","改行してA・B","AZazを出力"]:["3・2・1を出力","0と255の循環","セルを右へ移動","入れ子のループ"]):["はじめの一歩","分岐してみる","くり返してみる","スキップと脱出"];
+ const names=language==="chukei"?(el("output-mode").value==="ascii"?["HELLO, I AM CHUKEI!","Helloを出力","別のセルでAB","改行してA・B","AZazを出力","ABCを出力"]:["3・2・1を出力","0と255の循環","セルを右へ移動","入れ子のループ"]):["はじめの一歩","分岐してみる","くり返してみる","スキップと脱出"];
  const selected=el("example").value;
  el("example").replaceChildren(...keys.map((key,i)=>{const option=document.createElement("option");option.value=key;option.textContent=names[i];return option;}));
  el("example").value=keys.includes(selected)?selected:"hello";
@@ -347,3 +348,7 @@ function replayStages(result){
  if(matchMedia("(prefers-reduced-motion: reduce)").matches){finish();return;}
  phases.slice(1).forEach((_,i)=>stageTimers.push(setTimeout(()=>show(i+1),(i+1)*550)));
 }
+
+// Start with the explicitly selected CHUKEI greeting.
+el("language").value="chukei";
+el("language").dispatchEvent(new Event("change"));
