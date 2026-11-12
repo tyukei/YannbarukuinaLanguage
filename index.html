@@ -4,19 +4,19 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="やんばるくいな言語を書いて、Z80 で動かすブラウザ内実験室。">
-  <title>Queena Playground</title>
-  <link rel="stylesheet" href="./style.css?v=bird-8">
-  <script src="./app.js?v=bird-8" defer></script>
+  <title>YanbaruKuina Playground</title>
+  <link rel="stylesheet" href="./style.css?v=stages-11">
+  <script src="./app.js?v=stages-11" defer></script>
 </head>
 <body>
   <main>
     <header class="masthead">
-      <a class="brand" href="./" aria-label="Playground ホーム"><span id="queena-mark" class="bird" aria-hidden="true">q.</span><img id="chukei-mark" class="language-logo" src="./images/chukei-logo.svg" width="64" height="64" alt="CHUKEI ロゴ" hidden> <span id="brand-name" class="sr-only">QUEENA</span> </a>
+      <a class="brand" href="./" aria-label="Playground ホーム"><img id="queena-mark" class="language-logo" src="./images/yanbaru-logo.svg" width="64" height="64" alt="YanbaruKuina ロゴ"><img id="chukei-mark" class="language-logo" src="./images/chukei-logo.svg" width="64" height="64" alt="CHUKEI ロゴ" hidden> <span id="brand-name" class="sr-only">YanbaruKuina</span> </a>
       
     </header>
-    <h1 class="sr-only">Queena・CHUKEI Playground</h1>
+    <h1 class="sr-only">YanbaruKuina・CHUKEI Playground</h1>
     <section class="language-bar">
-      <label for="language">言語</label><select id="language"><option value="queena">Queena</option><option value="chukei">CHUKEI</option></select>
+      <label for="language">言語</label><select id="language"><option value="queena">YanbaruKuina</option><option value="chukei">CHUKEI</option></select>
       <label for="output-mode">出力</label><select id="output-mode" disabled aria-describedby="output-help"><option value="numeric">数値</option><option value="ascii">文字（ASCII）</option></select>
       <span id="language-note" class="engine-badge">Z80</span><span id="output-help" class="sr-only">文字出力はCHUKEIのみ対応。</span>
     </section>
@@ -26,7 +26,7 @@
         <div class="toolbar">
           <label for="example">サンプル</label>
           <select id="example"><option value="hello">はじめの一歩</option><option value="branch">分岐してみる</option><option value="loop">くり返してみる</option><option value="control">スキップと脱出</option></select>
-          <button id="load" class="text-button" type="button">読み込む</button>
+          
         </div>
         <div class="file-tools"><button id="import-code" class="text-button" type="button">ファイルを開く</button><button id="download-code" class="text-button" type="button">ダウンロード</button><input id="code-file" type="file" accept=".🐧,.ykw,.chukei,.txt,text/plain" hidden><span id="file-status" role="status"></span></div><label class="sr-only" for="source">やんばるくいな言語のコード</label>
         <textarea id="source" spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off" aria-describedby="editor-help"></textarea>
@@ -35,7 +35,7 @@
       <section class="panel result-panel" aria-labelledby="result-heading">
         <div class="panel-header"><h2 id="result-heading"><span class="step-badge">3</span> <span id="terminal-name">Z80 CONSOLE</span></h2><span id="status" class="status" role="status">待機中</span></div>
         <div class="result-content"><p id="result-note" class="result-note">実行で表示。</p><pre id="output" tabindex="0" aria-label="プログラムの出力"></pre><p id="error" class="error" role="alert" hidden></p></div>
-        <div class="result-footer"><span class="engine-light" aria-hidden="true"></span><span id="metrics">Z80 実行エンジン</span></div>
+        <div class="result-footer"><span class="engine-light" aria-hidden="true"></span><span id="metrics"></span><svg id="z80-chip" width="64" height="32" viewBox="0 0 64 32" role="img" aria-label="Z80チップのイラスト"><path d="M8 2v28M16 2v28M24 2v28M32 2v28M40 2v28M48 2v28M56 2v28" stroke="#b7c3b5" stroke-width="3"/><rect x="3" y="6" width="58" height="20" rx="3" fill="#28332b" stroke="#9bac99"/><text x="32" y="20" text-anchor="middle" font-family="monospace" font-size="11" fill="#d4e4c8">Z80</text></svg></div>
       </section>
     </div>
     <h2 class="explore-heading">しくみを見る <span>開いて確認</span></h2>
@@ -47,15 +47,15 @@
       <summary><span class="panel-number">02</span> 構文木</summary>
       <div class="ast-body"><p id="ast-note" role="status">実行で表示。</p><div id="ast-tree"></div></div>
     </details>
-    <details id="chukei-code" class="panel ast-panel stage"><summary><span class="panel-number">03</span> 生成コード <small id="code-kind">Z80アセンブリ</small></summary><div class="ast-body"><pre id="assembly">実行で表示。</pre><pre id="bytecode" hidden>実行で表示。</pre></div></details>
+    <details id="chukei-code" class="panel ast-panel stage"><summary><span class="panel-number">03</span> 生成コード <small id="code-kind">Z80アセンブリ</small></summary><div class="ast-body"><button id="download-generated" class="text-button" type="button" disabled>生成コードを保存</button><pre id="assembly">実行で表示。</pre><pre id="bytecode" hidden>実行で表示。</pre></div></details>
     <details id="chukei-trace" class="panel ast-panel stage"><summary><span class="panel-number">04</span> 実行ステップ</summary><div class="ast-body"><p id="trace-note">CHUKEIのみ対応。</p><div class="trace-controls" hidden><button id="trace-prev" type="button">前へ</button><input id="trace-index" type="range" min="0" max="0" value="0" aria-label="実行ステップ"><button id="trace-next" type="button">次へ</button></div><pre id="trace-state"></pre></div></details>
     <details class="help panel stage"><summary>使い方・仕様</summary><div class="ast-body">
       <div id="queena-help"><p>naku：出力 ／ moshi：分岐 ／ aruku：ループ ／ zz：コメント</p><p>Zig/WASM → Z80アセンブリ → 機械語 → 既存Z80エミュレータ。CP/Mはコンソール出力のみ。</p></div>
       <div id="chukei-guide" hidden><p>C：+1 ／ CH：−1 ／ CHU：右へ ／ CHUK：出力 ／ CHUKE・CHUKEI：ループ</p><p>空白で区切る6命令。256セル、値0〜255、値・ポインタは循環。現在セルが0ならループ終了。入力・コメントなし。</p><p>JavaScript製コンパイラ → 教材用VM（Z80ではありません）。JZ：0なら移動、JNZ：0以外なら移動。</p><p>ASCII：65=A、90=Z、97=a、122=z、10=改行、32=空白。0〜127のみ。自動改行・日本語なし。</p></div>
-      <p>すべてブラウザ内で処理。コードは送信しません。トークン・構文木は実際の解析結果です。Queenaの列位置はUTF-8バイト単位。</p>
+      <p>すべてブラウザ内で処理。コードは送信しません。トークン・構文木は実際の解析結果です。YanbaruKuinaの列位置はUTF-8バイト単位。</p>
     </div></details>
     <details class="panel stage implementation"><summary>文法・実装コード</summary><div class="ast-body">
-<div id="queena-implementation"><h3>Queena · EBNF</h3><pre>program = { statement } ;
+<div id="queena-implementation"><h3>YanbaruKuina · EBNF</h3><pre>program = { statement } ;
 statement = identifier, "=", expression
   | "naku", "(", expression, ")"
   | "moshi", "(", expression, ")", block,
@@ -128,6 +128,6 @@ loop = "CHUKE", { statement }, "CHUKEI" ;</pre>
     </details>
     <footer><span id="limits">数値は 0〜65535 の整数。変数は最大 32 個。</span><span>入力 16 KiB · 出力 16 KiB · 全体の実行上限 15 秒</span> <a href="./THIRD-PARTY-LICENSES.txt">ライセンス</a></footer>
   </main>
-<dialog id="run-dialog" aria-labelledby="run-title"><div class="run-dialog-inner"><h2 id="run-title" class="sr-only" tabindex="-1" aria-live="polite">実行中…</h2><div id="walking-bird" aria-hidden="true"><svg viewBox="0 0 40 26" class="rail-bird pixel-rail" shape-rendering="crispEdges"><g fill="#111"><path d="M27 3h6v2h2v3h4v2h-6v4h-3v4h-4v2H12v-2H8v-3H5v-2H2v-3h5v2h5V9h6V7h8V5h1z"/><path class="pixel-foot foot-one" d="M15 19h2v4h4v2h-6z"/><path class="pixel-foot foot-two" d="M24 19h2v4h4v2h-6z"/></g><path fill="#fff" d="M27 5h5v1h-5zM30 7h1v1h-1zM12 13h12v1H12zM14 16h11v1H14zM18 10h7v1h-7z"/><path d="M3 25h34" stroke="#bbb" stroke-width=".2"/></svg></div><button id="dialog-action" class="bird-stop" type="button" aria-label="実行を停止">■</button></div></dialog>
+<dialog id="run-dialog" aria-labelledby="run-title"><div class="run-dialog-inner"><h2 id="run-title" class="sr-only" tabindex="-1" aria-live="polite">実行中…</h2><div id="walking-bird" aria-hidden="true"><svg viewBox="0 0 40 26" class="rail-bird pixel-rail" shape-rendering="crispEdges"><g fill="#111"><path d="M27 3h6v2h2v3h4v2h-6v4h-3v4h-4v2H12v-2H8v-3H5v-2H2v-3h5v2h5V9h6V7h8V5h1z"/><path class="pixel-foot foot-one" d="M15 19h2v4h4v2h-6z"/><path class="pixel-foot foot-two" d="M24 19h2v4h4v2h-6z"/></g><path fill="#fff" d="M27 5h5v1h-5zM30 7h1v1h-1zM12 13h12v1H12zM14 16h11v1H14zM18 10h7v1h-7z"/><path d="M3 25h34" stroke="#bbb" stroke-width=".2"/></svg></div><section id="stage-replay" hidden aria-label="実際の解析結果の再生"><small>解析結果の再生</small><ol id="stage-list"></ol><pre id="stage-preview"></pre><button id="skip-replay" type="button">スキップ</button></section><button id="dialog-action" class="bird-stop" type="button" aria-label="実行を停止">■</button></div></dialog>
 </body>
 </html>
