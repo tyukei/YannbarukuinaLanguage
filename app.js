@@ -219,6 +219,7 @@ el("language").addEventListener("change",()=>{
   el("trace-note").textContent=isChukei?"実行で表示。":"CHUKEIのみ対応。";
   document.querySelector(".file-name").textContent="main.🐧";
   el("language-note").textContent=isChukei?"教材用VM":"Z80";
+  el("terminal-name").textContent=isChukei?"CHUKEI VM":"Z80 CONSOLE";
   el("limits").textContent=isChukei?"CHUKEI：256セル・値0〜255・ポインタ循環・入力なし。":"数値は 0〜65535 の整数。変数は最大 32 個。";
   el("metrics").textContent=isChukei?"教材用VM（Z80ではありません）":"Z80 実行エンジン";
   refreshSampleNames();el("example").value="hello";
@@ -263,10 +264,14 @@ el("download-code").addEventListener("click",()=>{
  el("file-status").textContent="ダウンロードを開始しました。";
 });
 
+
+let dialogFadeTimer=null,dialogCloseTimer=null;
+function clearDialogTimers(){clearTimeout(dialogFadeTimer);clearTimeout(dialogCloseTimer);}
 function openRunDialog(){
+ clearDialogTimers();el("run-dialog").classList.remove("fading");
  el("run-title").textContent="実行中…";el("walking-bird").hidden=false;
  el("dialog-output").hidden=true;el("dialog-error").hidden=true;
- el("dialog-action").textContent="停止";
+ el("dialog-action").hidden=false;el("dialog-action").textContent="停止";
  if(!el("run-dialog").open)el("run-dialog").showModal();
 }
 function finishRunDialog(){
@@ -275,8 +280,18 @@ function finishRunDialog(){
  el("dialog-output").textContent=el("output").textContent||"出力なし";
  el("dialog-output").hidden=false;
  el("dialog-error").textContent=el("error").textContent;el("dialog-error").hidden=el("error").hidden;
- el("dialog-action").textContent="コードに戻る";
- if(!el("run-dialog").open)runButton.focus();
+ el("dialog-action").hidden=true;
+ if(!el("run-dialog").open){runButton.focus();return;}
+ el("run-title").focus();
+ dialogFadeTimer=setTimeout(()=>{
+  el("run-dialog").classList.add("fading");
+  const reduced=matchMedia("(prefers-reduced-motion: reduce)").matches;
+  dialogCloseTimer=setTimeout(()=>el("run-dialog").close(),reduced?0:250);
+ },3000);
 }
-el("dialog-action").addEventListener("click",()=>{if(busy){cancelRun?.();return;}el("run-dialog").close();runButton.focus();});
-el("run-dialog").addEventListener("cancel",()=>{if(busy)cancelRun?.();});
+el("dialog-action").addEventListener("click",()=>{if(busy)cancelRun?.();});
+el("run-dialog").addEventListener("cancel",()=>{clearDialogTimers();if(busy)cancelRun?.();});
+el("run-dialog").addEventListener("close",()=>{
+ clearDialogTimers();el("run-dialog").classList.remove("fading");
+ if(!busy)el("output").focus({preventScroll:false});
+});
