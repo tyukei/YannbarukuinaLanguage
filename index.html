@@ -5,14 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="やんばるくいな言語を書いて、Z80 で動かすブラウザ内実験室。">
   <title>Queena Playground</title>
-  <link rel="stylesheet" href="./style.css?v=run-6">
-  <script src="./app.js?v=run-6" defer></script>
+  <link rel="stylesheet" href="./style.css?v=terminal-7">
+  <script src="./app.js?v=terminal-7" defer></script>
 </head>
 <body>
   <main>
     <header class="masthead">
-      <a class="brand" href="./" aria-label="Playground ホーム"><span id="queena-mark" class="bird" aria-hidden="true">q.</span><img id="chukei-mark" class="language-logo" src="./images/chukei-logo.svg" width="64" height="64" alt="CHUKEI ロゴ" hidden> <span id="brand-name">QUEENA</span> <span class="wordmark">PLAYGROUND</span></a>
-      <span class="local"><span aria-hidden="true">●</span> ブラウザ内で実行</span>
+      <a class="brand" href="./" aria-label="Playground ホーム"><span id="queena-mark" class="bird" aria-hidden="true">q.</span><img id="chukei-mark" class="language-logo" src="./images/chukei-logo.svg" width="64" height="64" alt="CHUKEI ロゴ" hidden> <span id="brand-name" class="sr-only">QUEENA</span> </a>
+      
     </header>
     <h1 class="sr-only">Queena・CHUKEI Playground</h1>
     <section class="language-bar">
@@ -33,7 +33,7 @@
         <div class="editor-footer"><span id="editor-help">⌘ / Ctrl + Enter</span><button id="cancel" class="text-button" type="button" hidden>停止</button><button id="run" class="run-button" type="button"><span aria-hidden="true">▶</span> 2. 実行</button></div>
       </section>
       <section class="panel result-panel" aria-labelledby="result-heading">
-        <div class="panel-header"><h2 id="result-heading"><span class="step-badge">3</span> 結果を見る</h2><span id="status" class="status" role="status">待機中</span></div>
+        <div class="panel-header"><h2 id="result-heading"><span class="step-badge">3</span> <span id="terminal-name">Z80 CONSOLE</span></h2><span id="status" class="status" role="status">待機中</span></div>
         <div class="result-content"><p id="result-note" class="result-note">実行で表示。</p><pre id="output" tabindex="0" aria-label="プログラムの出力"></pre><p id="error" class="error" role="alert" hidden></p></div>
         <div class="result-footer"><span class="engine-light" aria-hidden="true"></span><span id="metrics">Z80 実行エンジン</span></div>
       </section>
@@ -128,6 +128,6 @@ loop = "CHUKE", { statement }, "CHUKEI" ;</pre>
     </details>
     <footer><span id="limits">数値は 0〜65535 の整数。変数は最大 32 個。</span><span>入力 16 KiB · 出力 16 KiB · 全体の実行上限 15 秒</span> <a href="./THIRD-PARTY-LICENSES.txt">ライセンス</a></footer>
   </main>
-<dialog id="run-dialog" aria-labelledby="run-title"><div class="run-dialog-inner"><h2 id="run-title" aria-live="polite">実行中…</h2><div id="walking-bird" aria-hidden="true"><svg viewBox="0 0 240 130" class="rail-bird"><path class="bird-leg leg-back" d="M112 84L112 109L126 116" /><path class="bird-leg leg-front" d="M137 84L137 110L151 116" /><g class="bird-body"><path d="M60 65L32 48L48 79Z" fill="#51463c"/><ellipse cx="106" cy="64" rx="56" ry="34" fill="#4b453c"/><path d="M88 73Q112 99 147 69" fill="none" stroke="#e9e1cd" stroke-width="6"/><path d="M93 82Q116 105 141 80" fill="none" stroke="#e9e1cd" stroke-width="5"/><path d="M134 64Q142 12 174 25Q194 36 177 59L160 81Z" fill="#303732"/><path d="M151 37L175 35" stroke="#f4f1db" stroke-width="5"/><circle cx="172" cy="42" r="3" fill="#fff"/><circle cx="173" cy="42" r="1.7" fill="#171d19"/><path d="M181 44L212 51L182 57Z" fill="#d94e36"/></g><path d="M26 120H214" stroke="#c0d0c4" stroke-width="2"/></svg></div><pre id="dialog-output" hidden></pre><p id="dialog-error" class="error" role="alert" hidden></p><button id="dialog-action" class="run-button" type="button">停止</button></div></dialog>
+<dialog id="run-dialog" aria-labelledby="run-title"><div class="run-dialog-inner"><h2 id="run-title" tabindex="-1" aria-live="polite">実行中…</h2><div id="walking-bird" aria-hidden="true"><svg viewBox="0 0 40 26" class="rail-bird pixel-rail" shape-rendering="crispEdges"><g fill="#111"><path d="M27 3h6v2h2v3h4v2h-6v4h-3v4h-4v2H12v-2H8v-3H5v-2H2v-3h5v2h5V9h6V7h8V5h1z"/><path class="pixel-foot foot-one" d="M15 19h2v4h4v2h-6z"/><path class="pixel-foot foot-two" d="M24 19h2v4h4v2h-6z"/></g><path fill="#fff" d="M27 5h5v1h-5zM30 7h1v1h-1zM12 13h12v1H12zM14 16h11v1H14zM18 10h7v1h-7z"/><path d="M3 25h34" stroke="#bbb" stroke-width=".2"/></svg></div><pre id="dialog-output" hidden></pre><p id="dialog-error" class="error" role="alert" hidden></p><button id="dialog-action" class="run-button" type="button">停止</button></div></dialog>
 </body>
 </html>
