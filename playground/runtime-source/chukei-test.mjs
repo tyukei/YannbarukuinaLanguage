@@ -1,0 +1,20 @@
+import assert from 'node:assert/strict';
+import {runChukei} from './chukei-runtime.js';
+let passed=0;
+function test(name,fn){fn();passed++;console.log('PASS',name);}
+test('countdown',()=>{const r=runChukei('C C C CHUKE CHUK CH CHUKEI');assert.equal(r.ok,true);assert.equal(r.output,'3\n2\n1\n');assert.deepEqual(r.bytecode[3],{pc:3,op:'JZ',sourceIndex:3,arg:7});assert.equal(r.bytecode[6].arg,4);assert.equal(r.cells[0],0);});
+test('empty',()=>{for(const s of ['',' \n\t']){const r=runChukei(s);assert.equal(r.ok,true);assert.equal(r.steps,0);assert.deepEqual(r.ast.children,[]);}});
+test('value wrap',()=>{assert.equal(runChukei('CH CHUK C CHUK').output,'255\n0\n');assert.equal(runChukei('C '.repeat(256)+'CHUK').output,'0\n');});
+test('pointer wrap and independent cells',()=>{const r=runChukei('C CHU C C CHUK '+'CHU '.repeat(255)+'CHUK');assert.equal(r.output,'2\n1\n');assert.equal(r.pointer,0);});
+test('nested loop',()=>{const r=runChukei('C C CHUKE CHUKE CH CHUKEI CHUKEI CHUK');assert.equal(r.ok,true);assert.equal(r.output,'0\n');assert.equal(r.ast.children[2].children[0].children[0].label,'CH · DEC');assert.equal(r.bytecode[2].arg,7);assert.equal(r.bytecode[3].arg,6);});
+test('zero skips nested loop',()=>{const r=runChukei('CHUKE C CHUKE CHUK CHUKEI CHUKEI CHUK');assert.equal(r.output,'0\n');assert.equal(r.steps,2);});
+test('empty loop zero/nonzero',()=>{assert.equal(runChukei('CHUKE CHUKEI').ok,true);const r=runChukei('C CHUKE CHUKEI');assert.equal(r.ok,false);assert.ok(r.ast);assert.match(r.error,/上限/);assert.ok(r.steps<=1000000);});
+test('unknown and injection',()=>{for(const s of ['c','CCH','C;','<script>alert(1)</script>','constructor','__proto__','CHUKK','// comment']){const r=runChukei(s);assert.equal(r.ok,false);assert.match(r.error,/Unknown command/);assert.equal(r.ast,null);assert.deepEqual(r.bytecode,[]);}});
+test('unmatched locations',()=>{let r=runChukei('C\n  CHUKEI');assert.match(r.error,/line 2, column 3/);r=runChukei('C\n CHUKE CHUKE');assert.match(r.error,/line 2, column 8/);assert.equal(r.ast,null);});
+test('token locations and trailing tokens on error',()=>{const r=runChukei('C\r\n\tBAD CHUK');assert.deepEqual(r.tokens[1],{kind:'invalid',lexeme:'BAD',line:2,column:2});assert.equal(r.tokens[2].lexeme,'CHUK');});
+test('output bound',()=>{const r=runChukei('C CHUKE CHUK CHUKEI');assert.equal(r.ok,false);assert.match(r.error,/出力上限/);assert.equal(r.output.length,16384);assert.ok(r.ast);assert.equal(r.cells[0],1);});
+test('input bound/type',()=>{assert.equal(runChukei('C '.repeat(9000)).ok,false);assert.equal(runChukei(null).ok,false);});
+test('deterministic reset',()=>{assert.equal(runChukei('C CHUK').output,'1\n');assert.equal(runChukei('CHUK').output,'0\n');assert.deepEqual(runChukei('C CHUK'),runChukei('C CHUK'));});
+test('deep loops bounded for safe browser cloning',()=>{const r=runChukei('CHUKE '.repeat(100)+'CHUKEI '.repeat(100));assert.equal(r.ok,true);assert.equal(r.steps,1);assert.match(runChukei('CHUKE '.repeat(129)).error,/nesting exceeds/);});
+test('bounded post-instruction trace',()=>{const r=runChukei('C CHU C CHUK');assert.deepEqual(r.trace[0],{step:1,pc:0,op:'INC',next_pc:1,pointer:0,value:1});assert.equal(r.trace[1].pointer,1);assert.equal(r.trace[1].value,0);assert.equal(r.trace[3].output,'1\n');assert.equal(r.trace_truncated,false);const long=runChukei('C '.repeat(300));assert.equal(long.trace.length,200);assert.equal(long.trace_truncated,true);assert.equal(long.cells[0],44);});
+console.log(`PASS ${passed} CHUKEI tests`);

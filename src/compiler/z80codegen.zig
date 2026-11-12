@@ -83,6 +83,11 @@ pub const Z80CodeGen = struct {
         try self.emit("; Program entry\n");
         try self.emit("_START:\n");
         try self.emit("        LD      IX, STK_BASE    ; Initialize software stack\n");
+        try self.emit("        LD      HL, VAR_BASE    ; Zero all global variable slots\n");
+        try self.emit("        LD      (HL), 0\n");
+        try self.emit("        LD      DE, VAR_BASE + 1\n");
+        try self.emitFmt("        LD      BC, {d}\n", .{MAX_VARIABLES * 2 - 1});
+        try self.emit("        LDIR\n");
         try self.emit("\n");
         try self.emit("; === Generated Code ===\n");
     }
@@ -145,9 +150,10 @@ pub const Z80CodeGen = struct {
         try self.emit("        INC     C\n");
         try self.emit("_DIV16_NEXT:\n");
         try self.emit("        DJNZ    _DIV16_LOOP\n");
-        try self.emit("        LD      B, H              ; Remainder in BC\n");
+        try self.emit("        PUSH    HL                ; Save the complete remainder\n");
         try self.emit("        LD      H, A\n");
         try self.emit("        LD      L, C              ; Quotient in HL\n");
+        try self.emit("        POP     BC                ; Remainder in BC\n");
         try self.emit("        POP     AF\n");
         try self.emit("        RET\n");
         try self.emit("\n");
@@ -470,12 +476,10 @@ pub const Z80CodeGen = struct {
     fn compileIdentifier(self: *Self, node: *Node) anyerror!void {
         const name = node.data.identifier.name;
 
-        if (self.variables.get(name)) |slot| {
-            try self.emitFmt("        LD      HL, (VAR_BASE + {d})\n", .{@as(u16, slot) * 2});
-        } else {
-            // 未定義変数は0
-            try self.emit("        LD      HL, 0\n");
-        }
+        // Allocate on first reference, including reads before the first assignment.
+        // The prologue initializes every slot, so later loop iterations read updates.
+        const slot = try self.getOrCreateSlot(name);
+        try self.emitFmt("        LD      HL, (VAR_BASE + {d})\n", .{@as(u16, slot) * 2});
         try self.emitStackPush();
     }
 

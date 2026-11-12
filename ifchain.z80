@@ -11,6 +11,11 @@ STK_BASE EQU    7F00h
 ; Program entry
 _START:
         LD      IX, STK_BASE    ; Initialize software stack
+        LD      HL, VAR_BASE    ; Zero all global variable slots
+        LD      (HL), 0
+        LD      DE, VAR_BASE + 1
+        LD      BC, 63
+        LDIR
 
 ; === Generated Code ===
 ; x = ...
@@ -76,6 +81,58 @@ _L3:
         CALL    _PRINT_U16
         JP      _L1
 _L0:
+; moshi (...)
+        LD      HL, (VAR_BASE + 0)
+        LD      (IX+0), L
+        LD      (IX+1), H
+        INC     IX
+        INC     IX
+        LD      HL, 10
+        LD      (IX+0), L
+        LD      (IX+1), H
+        INC     IX
+        INC     IX
+        DEC     IX
+        DEC     IX
+        LD      L, (IX+0)
+        LD      H, (IX+1)
+        EX      DE, HL
+        DEC     IX
+        DEC     IX
+        LD      L, (IX+0)
+        LD      H, (IX+1)
+        OR      A
+        SBC     HL, DE
+        JP      C, _L6
+        LD      HL, 0
+        JP      _L7
+_L6:
+        LD      HL, 1
+_L7:
+        LD      (IX+0), L
+        LD      (IX+1), H
+        INC     IX
+        INC     IX
+        DEC     IX
+        DEC     IX
+        LD      L, (IX+0)
+        LD      H, (IX+1)
+        LD      A, H
+        OR      L
+        JP      Z, _L4
+; naku(...)
+        LD      HL, 1
+        LD      (IX+0), L
+        LD      (IX+1), H
+        INC     IX
+        INC     IX
+        DEC     IX
+        DEC     IX
+        LD      L, (IX+0)
+        LD      H, (IX+1)
+        CALL    _PRINT_U16
+        JP      _L5
+_L4:
 ; naku(...)
         LD      HL, 2
         LD      (IX+0), L
@@ -87,6 +144,7 @@ _L0:
         LD      L, (IX+0)
         LD      H, (IX+1)
         CALL    _PRINT_U16
+_L5:
 _L1:
 
 ; Program exit
@@ -135,9 +193,10 @@ _DIV16_BIT:
         INC     C
 _DIV16_NEXT:
         DJNZ    _DIV16_LOOP
-        LD      B, H              ; Remainder in BC
+        PUSH    HL                ; Save the complete remainder
         LD      H, A
         LD      L, C              ; Quotient in HL
+        POP     BC                ; Remainder in BC
         POP     AF
         RET
 

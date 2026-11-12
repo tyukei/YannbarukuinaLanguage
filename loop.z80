@@ -11,6 +11,11 @@ STK_BASE EQU    7F00h
 ; Program entry
 _START:
         LD      IX, STK_BASE    ; Initialize software stack
+        LD      HL, VAR_BASE    ; Zero all global variable slots
+        LD      (HL), 0
+        LD      DE, VAR_BASE + 1
+        LD      BC, 63
+        LDIR
 
 ; === Generated Code ===
 ; i = ...
@@ -154,9 +159,10 @@ _DIV16_BIT:
         INC     C
 _DIV16_NEXT:
         DJNZ    _DIV16_LOOP
-        LD      B, H              ; Remainder in BC
+        PUSH    HL                ; Save the complete remainder
         LD      H, A
         LD      L, C              ; Quotient in HL
+        POP     BC                ; Remainder in BC
         POP     AF
         RET
 

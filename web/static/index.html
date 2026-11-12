@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="やんばるくいな言語を書いて、Z80 で動かすローカル実験室。">
+  <title>Queena Playground</title>
+  <link rel="stylesheet" href="/style.css">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <main>
+    <header class="masthead">
+      <a class="brand" href="/" aria-label="Queena Playground ホーム"><span class="bird" aria-hidden="true">q.</span> QUEENA <span class="wordmark">PLAYGROUND</span></a>
+      <span class="local"><span aria-hidden="true">●</span> LOCAL EXPERIMENT</span>
+    </header>
+    <section class="intro">
+      <p class="eyebrow">WRITE. RUN. DISCOVER.</p>
+      <h1>書いて、鳴かせてみよう。</h1>
+      <p>やんばるくいな言語を、ちいさな実験室で。<br class="mobile">コードを書いて「実行」を押すだけ。</p>
+    </section>
+    <div class="workspace">
+      <section class="panel editor-panel" aria-labelledby="editor-heading">
+        <div class="panel-header"><h2 id="editor-heading"><span class="panel-number">01</span> コード</h2><span class="file-name">main.ykw</span></div>
+        <div class="toolbar">
+          <label for="example">サンプル</label>
+          <select id="example"><option value="hello">はじめの一歩</option><option value="branch">分岐してみる</option><option value="loop">くり返してみる</option><option value="control">スキップと脱出</option></select>
+          <button id="load" class="text-button" type="button">読み込む</button>
+        </div>
+        <label class="sr-only" for="source">やんばるくいな言語のコード</label>
+        <textarea id="source" spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off" aria-describedby="editor-help"></textarea>
+        <div class="editor-footer"><span id="editor-help">⌘ / Ctrl + Enter で実行</span><button id="run" class="run-button" type="button"><span aria-hidden="true">▶</span> 実行</button></div>
+      </section>
+      <section class="panel result-panel" aria-labelledby="result-heading">
+        <div class="panel-header"><h2 id="result-heading"><span class="panel-number">02</span> 実行結果</h2><span id="status" class="status" role="status">待機中</span></div>
+        <div class="result-content"><p id="result-note" class="result-note">コードの声が、ここに届きます。</p><pre id="output" tabindex="0" aria-label="プログラムの出力"></pre><p id="error" class="error" role="alert" hidden></p></div>
+        <div class="result-footer"><span class="engine-light" aria-hidden="true"></span><span id="metrics">Z80 実行エンジン</span></div>
+      </section>
+    </div>
+    <details class="behind"><summary>中で何が起きている？ <span>YKW → Z80 → OUTPUT</span></summary>
+      <div class="behind-content"><p>入力コードを既存の Zig 製コンパイラで Z80 アセンブリに変換し、pyz80 で機械語にした後、kosarev/z80 の CPU エミュレータで実行します。コンパイルと実行はローカルサーバー側です。</p><p>エミュレータ自体はまだ Queena 製ではありません。CP/M の画面出力だけを補助しており、CP/M 全体や実機を再現するものではありません。</p><details id="asm-details"><summary>生成された Z80 アセンブリ</summary><pre id="assembly">実行後に表示します。</pre></details></div>
+    </details>
+    <section class="guide" aria-label="文法のヒント"><p><strong>naku</strong><span>数字を出力</span></p><p><strong>moshi / mata / hoka</strong><span>もし / そうでなくもし / その他</span></p><p><strong>aruku</strong><span>条件のあいだ、くり返す</span></p><p><strong>zz</strong><span>行末までコメント</span></p></section>
+    <footer>数値は 0〜65535 の整数。変数は最大 32 個。<span>入力 16 KiB · 出力 16 KiB · CPU 実行 2 秒</span></footer>
+  </main>
+</body>
+</html>

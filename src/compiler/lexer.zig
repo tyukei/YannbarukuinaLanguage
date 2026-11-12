@@ -84,41 +84,52 @@ pub const Lexer = struct {
     }
 
     pub fn nextToken(self: *Self) Token {
-        self.skipWhitespace();
-        self.start = self.current;
+        while (true) {
+            self.skipWhitespace();
+            self.start = self.current;
 
-        if (self.isAtEnd()) {
-            return self.makeToken(.eof);
+            if (self.isAtEnd()) {
+                return self.makeToken(.eof);
+            }
+
+            const c = self.advance();
+
+            if (isDigit(c)) return self.number();
+            if (isAlpha(c)) {
+                const token = self.identifier();
+                if (token.type == .kw_comment) {
+                    while (!self.isAtEnd() and self.peek() != '\n') {
+                        _ = self.advance();
+                    }
+                    continue;
+                }
+                return token;
+            }
+
+            return switch (c) {
+                '(' => self.makeToken(.left_paren),
+                ')' => self.makeToken(.right_paren),
+                '{' => self.makeToken(.left_brace),
+                '}' => self.makeToken(.right_brace),
+                '[' => self.makeToken(.left_bracket),
+                ']' => self.makeToken(.right_bracket),
+                ',' => self.makeToken(.comma),
+                '.' => self.makeToken(.dot),
+                ':' => self.makeToken(.colon),
+                ';' => self.makeToken(.semicolon),
+                '+' => self.makeToken(.plus),
+                '-' => self.makeToken(.minus),
+                '*' => self.makeToken(.star),
+                '/' => self.makeToken(.slash),
+                '%' => self.makeToken(.percent),
+                '=' => if (self.match('=')) self.makeToken(.equal_equal) else self.makeToken(.equal),
+                '!' => if (self.match('=')) self.makeToken(.bang_equal) else self.makeToken(.bang),
+                '<' => if (self.match('=')) self.makeToken(.less_equal) else self.makeToken(.less),
+                '>' => if (self.match('=')) self.makeToken(.greater_equal) else self.makeToken(.greater),
+                '"' => self.string(),
+                else => self.makeToken(.invalid),
+            };
         }
-
-        const c = self.advance();
-
-        if (isDigit(c)) return self.number();
-        if (isAlpha(c)) return self.identifier();
-
-        return switch (c) {
-            '(' => self.makeToken(.left_paren),
-            ')' => self.makeToken(.right_paren),
-            '{' => self.makeToken(.left_brace),
-            '}' => self.makeToken(.right_brace),
-            '[' => self.makeToken(.left_bracket),
-            ']' => self.makeToken(.right_bracket),
-            ',' => self.makeToken(.comma),
-            '.' => self.makeToken(.dot),
-            ':' => self.makeToken(.colon),
-            ';' => self.makeToken(.semicolon),
-            '+' => self.makeToken(.plus),
-            '-' => self.makeToken(.minus),
-            '*' => self.makeToken(.star),
-            '/' => self.makeToken(.slash),
-            '%' => self.makeToken(.percent),
-            '=' => if (self.match('=')) self.makeToken(.equal_equal) else self.makeToken(.equal),
-            '!' => if (self.match('=')) self.makeToken(.bang_equal) else self.makeToken(.bang),
-            '<' => if (self.match('=')) self.makeToken(.less_equal) else self.makeToken(.less),
-            '>' => if (self.match('=')) self.makeToken(.greater_equal) else self.makeToken(.greater),
-            '"' => self.string(),
-            else => self.makeToken(.invalid),
-        };
     }
 
     fn advance(self: *Self) u8 {
@@ -261,4 +272,12 @@ test "lexer basic tokens" {
     try std.testing.expectEqual(TokenType.plus, t2.type);
     const t3 = lexer.nextToken();
     try std.testing.expectEqual(TokenType.number, t3.type);
+}
+
+test "lexer skips full zz lines including Japanese text" {
+    var lex = Lexer.init("zz 日本語 naku(99)\nzzfoo=7 zz 行末\nnaku(zz 式の途中\nzzfoo)");
+    const expected = [_]TokenType{ .identifier, .equal, .number, .kw_print, .left_paren, .identifier, .right_paren, .eof };
+    for (expected) |kind| {
+        try std.testing.expectEqual(kind, lex.nextToken().type);
+    }
 }

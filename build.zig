@@ -168,4 +168,11 @@ pub fn build(b: *std.Build) void {
     const test_step = b.step("test", "Run unit tests");
     test_step.dependOn(&run_lib_unit_tests.step);
     test_step.dependOn(&run_exe_unit_tests.step);
+    // Named imported modules are separate test roots; the executable test alone
+    // does not discover their test declarations.
+    for ([_]*std.Build.Module{ lexer_mod, ast_mod, parser_mod, codegen_mod, z80codegen_mod, vm_mod }) |module| {
+        const module_tests = b.addTest(.{ .root_module = module });
+        const run_module_tests = b.addRunArtifact(module_tests);
+        test_step.dependOn(&run_module_tests.step);
+    }
 }

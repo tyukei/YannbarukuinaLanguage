@@ -11,7 +11,14 @@ const Parser = parser.Parser;
 const CodeGen = codegen.CodeGen;
 const VM = vm.VM;
 
-pub fn main() !void {
+pub fn main() void {
+    runMain() catch |err| {
+        std.io.getStdErr().writer().print("Error: {s}\n", .{@errorName(err)}) catch {};
+        std.process.exit(1);
+    };
+}
+
+fn runMain() !void {
     const stdout = std.io.getStdOut().writer();
     const stderr = std.io.getStdErr().writer();
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
@@ -149,9 +156,7 @@ fn compileFile(input_path: []const u8, output_path: []const u8, allocator: std.m
     defer allocator.free(source);
 
     // コンパイル
-    const okr_data = compile(source, allocator, stderr) catch {
-        return;
-    };
+    const okr_data = try compile(source, allocator, stderr);
     defer allocator.free(okr_data);
 
     // 出力ファイルに書き込む
@@ -195,9 +200,7 @@ fn execFile(input_path: []const u8, allocator: std.mem.Allocator, stdout: anytyp
     defer allocator.free(source);
 
     // コンパイル
-    const okr_data = compile(source, allocator, stderr) catch {
-        return;
-    };
+    const okr_data = try compile(source, allocator, stderr);
     defer allocator.free(okr_data);
 
     // 実行
@@ -243,8 +246,8 @@ fn showBytecode(input_path: []const u8, allocator: std.mem.Allocator, stdout: an
     defer p.deinit();
 
     const root = p.parse() catch |err| {
-        try stderr.print("Parse error: {}\n", .{err});
-        return;
+        try stderr.print("Parse error at {d}:{d}: {}\n", .{ p.current.line, p.current.column, err });
+        return error.CompileFailed;
     };
 
     var cg = CodeGen.init(allocator);
@@ -265,7 +268,7 @@ fn compile(source: []const u8, allocator: std.mem.Allocator, stderr: anytype) ![
     defer p.deinit();
 
     const root = p.parse() catch |err| {
-        try stderr.print("Parse error: {}\n", .{err});
+        try stderr.print("Parse error at {d}:{d}: {}\n", .{ p.current.line, p.current.column, err });
         return error.CompileFailed;
     };
 
@@ -292,9 +295,7 @@ fn compileZ80File(input_path: []const u8, output_path: []const u8, allocator: st
     defer allocator.free(source);
 
     // Z80アセンブリに変換
-    const asm_output = compileToZ80(source, allocator, stderr) catch {
-        return;
-    };
+    const asm_output = try compileToZ80(source, allocator, stderr);
     defer allocator.free(asm_output);
 
     // 出力ファイルに書き込む
@@ -318,7 +319,7 @@ fn compileToZ80(source: []const u8, allocator: std.mem.Allocator, stderr: anytyp
     defer p.deinit();
 
     const root = p.parse() catch |err| {
-        try stderr.print("Parse error: {}\n", .{err});
+        try stderr.print("Parse error at {d}:{d}: {}\n", .{ p.current.line, p.current.column, err });
         return error.CompileFailed;
     };
 

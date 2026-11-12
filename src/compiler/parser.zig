@@ -16,6 +16,7 @@ pub const ParseError = error{
     ExpectedClosingBrace,
     BreakOutsideLoop,
     ContinueOutsideLoop,
+    InvalidNumber,
     OutOfMemory,
 };
 
@@ -63,17 +64,11 @@ pub const Parser = struct {
 
     pub fn parse(self: *Self) ParseError!*Node {
         var statements = std.ArrayList(*Node).init(self.tree.allocator);
+        errdefer statements.deinit();
 
         while (!self.isAtEnd()) {
-            // zzコメントをスキップ
-            if (self.match(.kw_comment)) {
-                continue;
-            }
-            if (self.statement()) |stmt| {
-                statements.append(stmt) catch return ParseError.OutOfMemory;
-            } else |_| {
-                self.synchronize();
-            }
+            const stmt = try self.statement();
+            statements.append(stmt) catch return ParseError.OutOfMemory;
         }
 
         return self.tree.createNode(
@@ -137,6 +132,7 @@ pub const Parser = struct {
 
         // mata (else if) のリストを処理
         var else_branch: ?*Node = null;
+        var else_tail: ?*Node = null;
 
         // mata (else if) チェーン
         while (self.match(.kw_else_if)) {
@@ -156,14 +152,22 @@ pub const Parser = struct {
                 null,
             ) catch return ParseError.OutOfMemory;
 
-            if (else_branch == null) {
+            if (else_tail) |tail| {
+                tail.data.if_stmt.else_branch = elif_node;
+            } else {
                 else_branch = elif_node;
             }
+            else_tail = elif_node;
         }
 
         // hoka (else) ブロック
         if (self.match(.kw_else)) {
-            else_branch = try self.block();
+            const else_block = try self.block();
+            if (else_tail) |tail| {
+                tail.data.if_stmt.else_branch = else_block;
+            } else {
+                else_branch = else_block;
+            }
         }
 
         return self.tree.createNode(
@@ -184,8 +188,8 @@ pub const Parser = struct {
         }
 
         self.loop_depth += 1;
+        defer self.loop_depth -= 1;
         const body = try self.block();
-        self.loop_depth -= 1;
 
         return self.tree.createNode(
             .while_stmt,
@@ -242,17 +246,11 @@ pub const Parser = struct {
         }
 
         var statements = std.ArrayList(*Node).init(self.tree.allocator);
+        errdefer statements.deinit();
 
         while (!self.check(.right_brace) and !self.isAtEnd()) {
-            // zzコメントをスキップ
-            if (self.match(.kw_comment)) {
-                continue;
-            }
-            if (self.statement()) |stmt| {
-                statements.append(stmt) catch return ParseError.OutOfMemory;
-            } else |_| {
-                self.synchronize();
-            }
+            const stmt = try self.statement();
+            statements.append(stmt) catch return ParseError.OutOfMemory;
         }
 
         if (!self.match(.right_brace)) {
@@ -338,7 +336,7 @@ pub const Parser = struct {
     fn primary(self: *Self) ParseError!*Node {
         if (self.match(.number)) {
             // YKWはu16整数のみ
-            const value = std.fmt.parseInt(u16, self.previous.lexeme, 10) catch 0;
+            const value = std.fmt.parseInt(u16, self.previous.lexeme, 10) catch return ParseError.InvalidNumber;
             return self.tree.createNode(
                 .literal,
                 .{ .literal = .{ .value = .{ .number = value } } },
@@ -411,4 +409,48 @@ test "parser simple expression" {
 
     const result = parser.parse();
     try std.testing.expect(result != error.ExpectedExpression);
+}
+
+test "parser preserves all mata branches and final hoka" {
+    var lex = Lexer.init("moshi(0){naku(10)} mata(1){naku(20)} mata(2){naku(30)} hoka{naku(40)}");
+    var p = Parser.initWithLexer(&lex, std.testing.allocator);
+    defer p.deinit();
+    const root = try p.parse();
+    const initial = root.data.program.statements.items[0];
+    const first = initial.data.if_stmt.else_branch.?;
+    const second = first.data.if_stmt.else_branch.?;
+    const fallback = second.data.if_stmt.else_branch.?;
+    try std.testing.expectEqual(@as(u16, 1), first.data.if_stmt.condition.data.literal.value.number);
+    try std.testing.expectEqual(@as(u16, 2), second.data.if_stmt.condition.data.literal.value.number);
+    try std.testing.expectEqual(NodeType.block, fallback.node_type);
+    try std.testing.expectEqual(@as(usize, 1), fallback.data.block.statements.items.len);
+}
+
+test "parser preserves mata chain without hoka" {
+    var lex = Lexer.init("moshi(0){} mata(0){} mata(1){}");
+    var p = Parser.initWithLexer(&lex, std.testing.allocator);
+    defer p.deinit();
+    const root = try p.parse();
+    const initial = root.data.program.statements.items[0];
+    const last = initial.data.if_stmt.else_branch.?.data.if_stmt.else_branch.?;
+    try std.testing.expectEqual(@as(u16, 1), last.data.if_stmt.condition.data.literal.value.number);
+    try std.testing.expect(last.data.if_stmt.else_branch == null);
+}
+
+test "parser rejects invalid input without swallowing errors" {
+    const cases = .{
+        .{ "naku(", ParseError.ExpectedExpression },
+        .{ "naku(1", ParseError.ExpectedClosingParen },
+        .{ "moshi(1){naku(2)", ParseError.ExpectedClosingBrace },
+        .{ "tobu", ParseError.BreakOutsideLoop },
+        .{ "hashiru", ParseError.ContinueOutsideLoop },
+        .{ "naku(65536)", ParseError.InvalidNumber },
+        .{ "naku(1.5)", ParseError.InvalidNumber },
+    };
+    inline for (cases) |case| {
+        var lex = Lexer.init(case[0]);
+        var p = Parser.initWithLexer(&lex, std.testing.allocator);
+        defer p.deinit();
+        try std.testing.expectError(case[1], p.parse());
+    }
 }

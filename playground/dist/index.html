@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="やんばるくいな言語を書いて、Z80 で動かすブラウザ内実験室。">
+  <title>Queena Playground</title>
+  <link rel="stylesheet" href="/style.css">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <main>
+    <header class="masthead">
+      <a class="brand" href="/" aria-label="Queena Playground ホーム"><span class="bird" aria-hidden="true">q.</span> QUEENA <span class="wordmark">PLAYGROUND</span></a>
+      <span class="local"><span aria-hidden="true">●</span> BROWSER EXPERIMENT</span>
+    </header>
+    <section class="intro">
+      <p class="eyebrow">WRITE. RUN. DISCOVER.</p>
+      <h1>書いて、鳴かせてみよう。</h1>
+      <p>やんばるくいな言語を、ちいさな実験室で。<br class="mobile">コードを書いて「実行」を押すだけ。</p>
+    </section>
+    <section class="language-bar"><label for="language">言語</label><select id="language"><option value="queena">Yambaru Queena · Z80</option><option value="chukei">CHUKEI · はじめてのコンパイラ</option></select><p id="language-note">変数・分岐・ループのある言語を Z80 機械語に変換します。</p></section>
+    <section id="chukei-guide" class="behind ast-body" hidden><h2>6つの命令だけで、コンパイラを学ぶ</h2><p>C：値 +1 ／ CH：値 −1 ／ CHU：右のセルへ ／ CHUK：数値を出力 ／ CHUKE：ループ開始 ／ CHUKEI：ループ終了</p><p>命令は空白で区切ります。256個のセルとポインタは循環し、値は0〜255。ループは現在のセルが0なら終了。入力・コメント命令はありません。</p><p>字句解析 → ループ構造 → 教材用VM命令 → 実行記録。CHUKEIはJavaScript製コンパイラと小さなVMで動きます。Z80ではありません。</p></section>
+    <div class="workspace">
+      <section class="panel editor-panel" aria-labelledby="editor-heading">
+        <div class="panel-header"><h2 id="editor-heading"><span class="panel-number">01</span> コード</h2><span class="file-name">main.ykw</span></div>
+        <div class="toolbar">
+          <label for="example">サンプル</label>
+          <select id="example"><option value="hello">はじめの一歩</option><option value="branch">分岐してみる</option><option value="loop">くり返してみる</option><option value="control">スキップと脱出</option></select>
+          <button id="load" class="text-button" type="button">読み込む</button>
+        </div>
+        <label class="sr-only" for="source">やんばるくいな言語のコード</label>
+        <textarea id="source" spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off" aria-describedby="editor-help"></textarea>
+        <div class="editor-footer"><span id="editor-help">⌘ / Ctrl + Enter で実行</span><button id="cancel" class="text-button" type="button" hidden>停止</button><button id="run" class="run-button" type="button"><span aria-hidden="true">▶</span> 実行</button></div>
+      </section>
+      <section class="panel result-panel" aria-labelledby="result-heading">
+        <div class="panel-header"><h2 id="result-heading"><span class="panel-number">02</span> 実行結果</h2><span id="status" class="status" role="status">待機中</span></div>
+        <div class="result-content"><p id="result-note" class="result-note">コードの声が、ここに届きます。</p><pre id="output" tabindex="0" aria-label="プログラムの出力"></pre><p id="error" class="error" role="alert" hidden></p></div>
+        <div class="result-footer"><span class="engine-light" aria-hidden="true"></span><span id="metrics">Z80 実行エンジン</span></div>
+      </section>
+    </div>
+    <details class="behind"><summary>中で何が起きている？ <span>YKW → Z80 → OUTPUT</span></summary>
+      <div class="behind-content"><p>入力コードを修正済み Zig 製コンパイラの WebAssembly 版で Z80 アセンブリに変換し、@fugloy/asm で機械語にした後、既存の z80-emulator CPU エンジンで実行します。コンパイルと実行はお使いのブラウザ内で行います。入力コードを実行サーバーに送信しません。</p><p>エミュレータ自体はまだ Queena 製ではありません。CP/M の画面出力だけを補助しており、CP/M 全体や実機を再現するものではありません。</p><details id="asm-details"><summary>生成された Z80 アセンブリ</summary><pre id="assembly">実行後に表示します。</pre></details></div>
+    </details>
+    <section class="tokens-panel panel" aria-labelledby="tokens-heading">
+      <div class="panel-header"><h2 id="tokens-heading"><span class="panel-number">03</span> 字句解析（トークン）</h2><span class="file-name">SOURCE → TOKENS</span></div>
+      <div class="ast-body"><p id="tokens-note" role="status">「実行」を押すと、実際の字句解析器が読んだ順番で表示します。</p><ol id="tokens-list" aria-label="ソース順のトークン"></ol></div>
+    </section>
+    <section class="ast-panel panel" aria-labelledby="ast-heading">
+      <div class="panel-header"><h2 id="ast-heading"><span class="panel-number">04</span> 構文木（AST）</h2><span class="file-name">SOURCE → TREE</span></div>
+      <div class="ast-body"><p id="ast-note" role="status">「実行」を押すと、実際のコンパイラが解析した構文木を表示します。</p><div id="ast-tree"></div></div>
+    </section>
+    <section id="chukei-code" class="panel ast-panel" hidden><div class="panel-header"><h2>05 コード生成 → 教材用VM命令</h2></div><div class="ast-body"><p>JZ は値が0なら移動、JNZ は0以外なら移動。矢印の数値は移動先の命令番号です。</p><pre id="bytecode">実行後に表示します。</pre></div></section>
+    <section id="chukei-trace" class="panel ast-panel" hidden><div class="panel-header"><h2>06 実行を1ステップずつ振り返る</h2></div><div class="ast-body"><p id="trace-note">実行後に確認できます。</p><div class="trace-controls"><button id="trace-prev" type="button">前へ</button><input id="trace-index" type="range" min="0" max="0" value="0" aria-label="実行ステップ"><button id="trace-next" type="button">次へ</button></div><pre id="trace-state"></pre></div></section>
+    <section class="illustrated-guide" aria-labelledby="flow-heading">
+      <h2 id="flow-heading">イラストで見る、コードから実行まで</h2>
+      <p>画像をタップすると原寸で開けます。</p>
+      <p class="syntax-note"><strong>入力するときは括弧を付けてください。</strong> 図の表記は説明用です。実際のコードは <code>naku(3)</code>、<code>naku(3 + 2)</code> です。</p>
+      <figure><a href="/images/queena-execution-flow.png" target="_blank" rel="noopener"><img src="/images/queena-execution-flow.png" width="2126" height="740" loading="lazy" alt="コードを書く → コンパイラで Z80 アセンブリに変換 → アセンブラで機械語に変換 → Z80 エミュレータで実行。naku 3 の出力は 3。すべてブラウザ内で動作。"></a><figcaption>① 実行までの全体像。既存の Z80 CPU エミュレータを使っています。</figcaption></figure>
+      <figure><a href="/images/queena-compiler-flow.png" target="_blank" rel="noopener"><img src="/images/queena-compiler-flow.png" width="1752" height="897" loading="lazy" alt="コンパイラの仕組み。naku 3 + 2 を字句解析でトークンに分割し、構文解析で構文木に組み立て、Z80 アセンブリを生成。アセンブラとエミュレータを経て結果 5 を出力。"></a><figcaption>② コンパイラの内部。字句解析 → 構文解析 → コード生成。</figcaption></figure>
+    </section>
+    <section class="guide" aria-label="文法のヒント"><p><strong>naku</strong><span>数字を出力</span></p><p><strong>moshi / mata / hoka</strong><span>もし / そうでなくもし / その他</span></p><p><strong>aruku</strong><span>条件のあいだ、くり返す</span></p><p><strong>zz</strong><span>行末までコメント</span></p></section>
+    <footer><span id="limits">数値は 0〜65535 の整数。変数は最大 32 個。</span><span>入力 16 KiB · 出力 16 KiB · 全体の実行上限 15 秒</span> <a href="/THIRD-PARTY-LICENSES.txt">ライセンス</a></footer>
+  </main>
+</body>
+</html>

@@ -16,3 +16,10 @@ zig-out/
 /build/
 /build-*/
 /docgen_tmp/
+.venv/
+__pycache__/
+*.pyc
+
+node_modules/
+*.tar.gz
+*.zip

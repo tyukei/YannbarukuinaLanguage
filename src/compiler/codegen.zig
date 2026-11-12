@@ -305,14 +305,10 @@ pub const CodeGen = struct {
     fn compileIdentifier(self: *Self, node: *Node) CodeGenError!void {
         const name = node.data.identifier.name;
 
-        if (self.variables.get(name)) |slot| {
-            try self.emit(.LOAD);
-            try self.emitByte(slot);
-        } else {
-            // 未定義変数は0として扱う（YKW仕様）
-            try self.emit(.PUSH8);
-            try self.emitByte(0);
-        }
+        // Every global has a zero-initialized slot, even when first used in a read.
+        const slot = try self.getOrCreateSlot(name);
+        try self.emit(.LOAD);
+        try self.emitByte(slot);
     }
 
     fn compileGrouping(self: *Self, node: *Node) CodeGenError!void {

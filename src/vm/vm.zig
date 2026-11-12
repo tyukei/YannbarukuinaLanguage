@@ -222,22 +222,22 @@ pub const VM = struct {
 test "vm simple arithmetic" {
     var vm = VM.init();
 
-    // 1 + 2 = 3 を計算して表示
+    // Assert the result without printing into Zig's test-runner protocol.
     const code = [_]u8{
         @intFromEnum(OpCode.PUSH8), 1,
         @intFromEnum(OpCode.PUSH8), 2,
-        @intFromEnum(OpCode.ADD),
-        @intFromEnum(OpCode.PRINTU),
-        @intFromEnum(OpCode.HALT),
+        @intFromEnum(OpCode.ADD),   @intFromEnum(OpCode.STORE),
+        0,                          @intFromEnum(OpCode.HALT),
     };
 
     try vm.execute(&code);
+    try std.testing.expectEqual(@as(u16, 3), vm.vars[0]);
 }
 
 test "vm variable" {
     var vm = VM.init();
 
-    // x = 42; naku(x)
+    // x = 42; y = x
     const code = [_]u8{
         @intFromEnum(OpCode.PUSH8),
         42,
@@ -245,12 +245,14 @@ test "vm variable" {
         0, // slot 0
         @intFromEnum(OpCode.LOAD),
         0,
-        @intFromEnum(OpCode.PRINTU),
+        @intFromEnum(OpCode.STORE),
+        1,
         @intFromEnum(OpCode.HALT),
     };
 
     try vm.execute(&code);
     try std.testing.expectEqual(@as(u16, 42), vm.vars[0]);
+    try std.testing.expectEqual(@as(u16, 42), vm.vars[1]);
 }
 
 test "vm loop" {
@@ -260,22 +262,23 @@ test "vm loop" {
     // 最終的に i = 3
     const code = [_]u8{
         // i = 0
-        @intFromEnum(OpCode.PUSH8),  0,
-        @intFromEnum(OpCode.STORE),  0,
+        @intFromEnum(OpCode.PUSH8), 0,
+        @intFromEnum(OpCode.STORE),
+        0,
         // loop start (addr 4)
-        @intFromEnum(OpCode.LOAD),   0, // i
-        @intFromEnum(OpCode.PUSH8),  3,
+        @intFromEnum(OpCode.LOAD),  0, // i
+        @intFromEnum(OpCode.PUSH8), 3,
         @intFromEnum(OpCode.LT), // i < 3
-        @intFromEnum(OpCode.JZ),     22, 0, // jump to end if false
+        @intFromEnum(OpCode.JZ),   22,                        0, // jump to end if false
         // i = i + 1
-        @intFromEnum(OpCode.LOAD),   0,
-        @intFromEnum(OpCode.PUSH8),  1,
-        @intFromEnum(OpCode.ADD),
-        @intFromEnum(OpCode.STORE),  0,
+        @intFromEnum(OpCode.LOAD), 0,                         @intFromEnum(OpCode.PUSH8),
+        1,                         @intFromEnum(OpCode.ADD),  @intFromEnum(OpCode.STORE),
+        0,
         // jump back to loop start
-        @intFromEnum(OpCode.JMP),    4, 0,
+                                @intFromEnum(OpCode.JMP),  4,
+        0,
         // end (addr 22)
-        @intFromEnum(OpCode.HALT),
+                                @intFromEnum(OpCode.HALT),
     };
 
     try vm.execute(&code);
