@@ -122,6 +122,7 @@ async function run() {
     return;
   }
   busy = true;
+  openRunDialog();
   el("cancel").hidden = false;
   lastSource = code;
   runButton.disabled = loadButton.disabled = el("example").disabled = el("language").disabled = el("output-mode").disabled = true;
@@ -169,6 +170,7 @@ async function run() {
     runButton.disabled = loadButton.disabled = el("example").disabled = el("language").disabled = false;
     el("output-mode").disabled=language!=="chukei";
     runButton.innerHTML = '<span aria-hidden="true">▶</span> 2. 実行';
+    finishRunDialog();
   }
 }
 runButton.addEventListener("click", run);
@@ -260,3 +262,21 @@ el("download-code").addEventListener("click",()=>{
  setTimeout(()=>URL.revokeObjectURL(url),60000);
  el("file-status").textContent="ダウンロードを開始しました。";
 });
+
+function openRunDialog(){
+ el("run-title").textContent="実行中…";el("walking-bird").hidden=false;
+ el("dialog-output").hidden=true;el("dialog-error").hidden=true;
+ el("dialog-action").textContent="停止";
+ if(!el("run-dialog").open)el("run-dialog").showModal();
+}
+function finishRunDialog(){
+ el("walking-bird").hidden=true;
+ el("run-title").textContent=el("error").hidden?"実行完了":"実行を停止";
+ el("dialog-output").textContent=el("output").textContent||"出力なし";
+ el("dialog-output").hidden=false;
+ el("dialog-error").textContent=el("error").textContent;el("dialog-error").hidden=el("error").hidden;
+ el("dialog-action").textContent="コードに戻る";
+ if(!el("run-dialog").open)runButton.focus();
+}
+el("dialog-action").addEventListener("click",()=>{if(busy){cancelRun?.();return;}el("run-dialog").close();runButton.focus();});
+el("run-dialog").addEventListener("cancel",()=>{if(busy)cancelRun?.();});
