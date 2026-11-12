@@ -204,6 +204,8 @@ el("language").addEventListener("change",()=>{
   el("tokens-note").textContent="実行で表示。";el("ast-note").textContent="実行で表示。";
   el("result-note").textContent="実行で表示。";
   const isChukei=language==="chukei";
+  el("chukei-implementation").hidden=!isChukei;
+  el("queena-implementation").hidden=isChukei;
   el("chukei-mark").hidden=!isChukei;
   el("queena-mark").hidden=isChukei;
   el("brand-name").textContent=isChukei?"CHUKEI":"QUEENA";
@@ -213,7 +215,7 @@ el("language").addEventListener("change",()=>{
   el("code-kind").textContent=isChukei?"教材用VM":"Z80アセンブリ";
   document.querySelector(".trace-controls").hidden=!isChukei;
   el("trace-note").textContent=isChukei?"実行で表示。":"CHUKEIのみ対応。";
-  document.querySelector(".file-name").textContent=isChukei?"main.chukei":"main.ykw";
+  document.querySelector(".file-name").textContent="main.🐧";
   el("language-note").textContent=isChukei?"教材用VM":"Z80";
   el("limits").textContent=isChukei?"CHUKEI：256セル・値0〜255・ポインタ循環・入力なし。":"数値は 0〜65535 の整数。変数は最大 32 個。";
   el("metrics").textContent=isChukei?"教材用VM（Z80ではありません）":"Z80 実行エンジン";
@@ -230,4 +232,31 @@ el("output-mode").addEventListener("change",()=>{
   refreshSampleNames();
   el("result-note").textContent="出力形式を変更。再実行してください。";
   el("trace-note").textContent="変更前の記録。";
+});
+
+el("import-code").addEventListener("click",()=>{
+ if(busy){el("file-status").textContent="実行終了後に開けます。";return;}
+ el("code-file").click();
+});
+el("code-file").addEventListener("change",async()=>{
+ const file=el("code-file").files[0];
+ try{
+  if(!file)return;
+  if(file.size>16384)throw Error("16 KiB以内のファイルを選んでください。");
+  const text=new TextDecoder("utf-8",{fatal:true}).decode(await file.arrayBuffer());
+  if(text.includes("\u0000"))throw Error("テキストファイルを選んでください。");
+  if(busy)throw Error("実行終了後に開いてください。");
+  if(source.value && !confirm("編集中のコードを置き換えます。必要なら先にダウンロードしてください。"))return;
+  source.value=text;drafts[language]=text;changed();
+  el("file-status").textContent="読み込み完了。言語を確認して実行してください。";
+ }catch(error){el("file-status").textContent=error instanceof TypeError?"UTF-8のテキストを選んでください。":error.message;}
+ finally{el("code-file").value="";}
+});
+el("download-code").addEventListener("click",()=>{
+ if(new TextEncoder().encode(source.value).length>16384){el("file-status").textContent="コードを16 KiB以内にしてください。";return;}
+ const blob=new Blob([source.value],{type:"text/plain;charset=utf-8"});
+ const url=URL.createObjectURL(blob),a=document.createElement("a");
+ a.href=url;a.download="main.🐧";document.body.append(a);a.click();a.remove();
+ setTimeout(()=>URL.revokeObjectURL(url),60000);
+ el("file-status").textContent="ダウンロードを開始しました。";
 });
