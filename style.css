@@ -24,3 +24,12 @@ select{background:#fff;border-color:#8da79a;box-shadow:none;font-size:13px;borde
 #run-dialog{width:min(320px,calc(100vw - 32px))}.run-dialog-inner{position:relative;padding:24px;min-height:180px}.bird-stop{position:absolute;right:8px;top:8px;width:44px;height:44px;border:0;border-radius:50%;background:transparent;color:#33453a;font-size:16px}.bird-stop:hover{background:#e9eeeb}#run-dialog .run-dialog-inner .sr-only{position:absolute;width:1px;height:1px;margin:0;padding:0;overflow:hidden}
 
 #stage-replay{width:min(440px,72vw);text-align:left}#stage-list{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:0;list-style:none;font-size:.8rem}#stage-list li{padding:8px;border:1px solid #b3bfc1;border-radius:6px;color:#49565a}#stage-list li[data-active=true]{background:#173f38;color:#fff;border-color:#173f38}#stage-list li[data-seen=true]{font-weight:700}#stage-preview{font-size:.75rem;white-space:pre-wrap;overflow-wrap:anywhere;max-height:110px;overflow:auto;background:#eef2ef;color:#172d26;padding:10px;border-radius:6px}#skip-replay{font-size:.8rem;padding:6px 12px}#run-dialog{max-height:90vh;overflow:auto}
+/* The replay must fit the dialog's inner box, not the viewport. */
+#run-dialog{width:min(520px,calc(100vw - 24px));max-height:calc(100dvh - 24px);overflow:auto}
+.run-dialog-inner{width:100%;min-width:0;padding:20px;gap:14px}
+#stage-replay{width:100%;min-width:0;max-width:100%}
+#stage-list{min-width:0}#stage-list li{min-width:0;overflow-wrap:anywhere}
+#stage-preview{width:100%;min-width:0;max-width:100%;box-sizing:border-box}
+#walking-bird{max-width:calc(100% - 24px);flex-shrink:0}
+.pixel-rail{display:block;width:min(240px,100%);height:auto;aspect-ratio:40/26}
+@media(max-height:600px){.run-dialog-inner{padding:14px;gap:8px}.pixel-rail{width:120px}#stage-preview{max-height:70px}#stage-list{margin:6px 0}}
