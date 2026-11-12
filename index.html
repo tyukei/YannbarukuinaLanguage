@@ -12,12 +12,11 @@
   <main>
     <header class="masthead">
       <a class="brand" href="./" aria-label="Queena Playground ホーム"><span class="bird" aria-hidden="true">q.</span> QUEENA <span class="wordmark">PLAYGROUND</span></a>
-      <span class="local"><span aria-hidden="true">●</span> BROWSER EXPERIMENT</span>
+      <span class="local"><span aria-hidden="true">●</span> ブラウザ内で実行</span>
     </header>
     <section class="intro">
-      <p class="eyebrow">WRITE. RUN. DISCOVER.</p>
-      <h1>書いて、鳴かせてみよう。</h1>
-      <p>コードを書いて、しくみを見る。</p>
+      
+      <h1>書いて、動かす。</h1>
     </section>
     <section class="language-bar">
       <label for="language">言語</label><select id="language"><option value="queena">Queena</option><option value="chukei">CHUKEI</option></select>
@@ -34,7 +33,7 @@
         </div>
         <label class="sr-only" for="source">やんばるくいな言語のコード</label>
         <textarea id="source" spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off" aria-describedby="editor-help"></textarea>
-        <div class="editor-footer"><span id="editor-help">⌘ / Ctrl + Enter で実行</span><button id="cancel" class="text-button" type="button" hidden>停止</button><button id="run" class="run-button" type="button"><span aria-hidden="true">▶</span> 実行</button></div>
+        <div class="editor-footer"><span id="editor-help">⌘ / Ctrl + Enter</span><button id="cancel" class="text-button" type="button" hidden>停止</button><button id="run" class="run-button" type="button"><span aria-hidden="true">▶</span> 実行</button></div>
       </section>
       <section class="panel result-panel" aria-labelledby="result-heading">
         <div class="panel-header"><h2 id="result-heading">結果</h2><span id="status" class="status" role="status">待機中</span></div>
@@ -42,11 +41,11 @@
         <div class="result-footer"><span class="engine-light" aria-hidden="true"></span><span id="metrics">Z80 実行エンジン</span></div>
       </section>
     </div>
-    <details class="tokens-panel panel stage" open>
+    <details class="tokens-panel panel stage">
       <summary><span class="panel-number">01</span> トークン</summary>
       <div class="ast-body"><p id="tokens-note" role="status">実行で表示。</p><ol id="tokens-list" aria-label="ソース順のトークン"></ol></div>
     </details>
-    <details class="ast-panel panel stage" open>
+    <details class="ast-panel panel stage">
       <summary><span class="panel-number">02</span> 構文木</summary>
       <div class="ast-body"><p id="ast-note" role="status">実行で表示。</p><div id="ast-tree"></div></div>
     </details>
