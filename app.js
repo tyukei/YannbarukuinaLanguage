@@ -204,6 +204,9 @@ el("language").addEventListener("change",()=>{
   el("tokens-note").textContent="実行で表示。";el("ast-note").textContent="実行で表示。";
   el("result-note").textContent="実行で表示。";
   const isChukei=language==="chukei";
+  el("chukei-mark").hidden=!isChukei;
+  el("queena-mark").hidden=isChukei;
+  el("brand-name").textContent=isChukei?"CHUKEI":"QUEENA";
   document.querySelector('label[for="source"]').textContent=isChukei?"CHUKEIのコード":"やんばるくいな言語のコード";
   el("chukei-guide").hidden=!isChukei;el("queena-help").hidden=isChukei;
   el("assembly").hidden=isChukei;el("bytecode").hidden=!isChukei;
