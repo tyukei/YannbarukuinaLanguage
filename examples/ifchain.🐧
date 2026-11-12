@@ -1,4 +1,0 @@
-x = 7
-moshi (x < 0) { naku(0) }
-mata (x < 10) { naku(1) }
-hoka { naku(2) }

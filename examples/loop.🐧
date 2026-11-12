@@ -1,5 +1,0 @@
-i = 0
-aruku (i < 5) {
-  naku(i)
-  i = i + 1
-}
