@@ -1,10 +1,14 @@
 // CHUKEI educational VM. Independent from Queena and the Z80 pipeline.
 const COMMANDS = Object.freeze({C:'INC',CH:'DEC',CHU:'RIGHT',CHUK:'OUT',CHUKE:'JZ',CHUKEI:'JNZ'});
 const SOURCE_LIMIT=16384, OUTPUT_LIMIT=16384, STEP_LIMIT=1000000, TIME_LIMIT_MS=1500;
-export function runChukei(source) {
- const result={ok:false,tokens:[],ast:null,bytecode:[],output:'',steps:0,trace:[],trace_truncated:false,cells:Array(256).fill(0),pointer:0};
+export function runChukei(source, options={}) {
+ const result={ok:false,tokens:[],ast:null,bytecode:[],output:'',steps:0,trace:[],trace_truncated:false,cells:Array(256).fill(0),pointer:0,outputMode:'numeric'};
  const started=performance.now();
  try {
+  if(options===null || typeof options!=='object' || Array.isArray(options)) throw Error('出力設定が不正です。');
+  const outputMode=options.outputMode===undefined?'numeric':options.outputMode;
+  if(outputMode!=='numeric' && outputMode!=='ascii') throw Error('出力モードはnumericまたはasciiを指定してください。');
+  result.outputMode=outputMode;
   if(typeof source!=='string') throw Error('ソースコードは文字列で指定してください。');
   if(new TextEncoder().encode(source).length>SOURCE_LIMIT) throw Error('コードは16 KiB以内にしてください。');
   // Whitespace-delimited, case-sensitive commands; no comments or punctuation.
@@ -40,21 +44,22 @@ export function runChukei(source) {
    while(pc<code.length) {
     if(result.steps>=STEP_LIMIT) throw Error('命令実行上限（1,000,000ステップ）に達しました。');
     if((result.steps&4095)===0 && performance.now()-started>TIME_LIMIT_MS) throw Error('実行時間上限（1.5秒）に達しました。');
-    const ins=code[pc];const executedPc=pc;result.steps++;
+    const ins=code[pc];const executedPc=pc;let emitted;result.steps++;
     switch(ins.op) {
      case 'INC':cells[pointer]=(cells[pointer]+1)&255;pc++;break;
      case 'DEC':cells[pointer]=(cells[pointer]+255)&255;pc++;break;
      case 'RIGHT':pointer=(pointer+1)&255;pc++;break;
      case 'OUT':{
-      const text=`${cells[pointer]}\n`;
+      if(outputMode==='ascii' && cells[pointer]>127) throw Error(`ASCII出力範囲外 at line ${result.tokens[ins.sourceIndex].line}, column ${result.tokens[ins.sourceIndex].column}: ${cells[pointer]}（0〜127のみ対応）`);
+      const text=outputMode==='ascii'?String.fromCharCode(cells[pointer]):`${cells[pointer]}\n`;
       if(result.output.length+text.length>OUTPUT_LIMIT) throw Error('出力上限（16 KiB）に達しました。');
-      result.output+=text;pc++;break;
+      result.output+=text;emitted=text;pc++;break;
      }
      case 'JZ':pc=cells[pointer]===0?ins.arg:pc+1;break;
      case 'JNZ':pc=cells[pointer]!==0?ins.arg:pc+1;break;
      default:throw Error('Invalid VM instruction');
     }
-    if(result.trace.length<200) result.trace.push({step:result.steps,pc:executedPc,op:ins.op,next_pc:pc,pointer,value:cells[pointer],...(ins.op==='OUT'?{output:`${cells[pointer]}\n`}:{})});
+    if(result.trace.length<200) result.trace.push({step:result.steps,pc:executedPc,op:ins.op,next_pc:pc,pointer,value:cells[pointer],...(emitted!==undefined?{output:emitted}:{})});
     else result.trace_truncated=true;
    }
    result.ok=true;

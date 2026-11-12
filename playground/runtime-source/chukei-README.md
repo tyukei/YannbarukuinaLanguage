@@ -36,3 +36,21 @@ with its independent watchdog. Each run allocates fresh state; empty input is a
 valid empty program. UI must render source/error/labels with textContent.
 
 Tests: `node chukei-test.mjs` (15 cases).
+
+## ASCII output option
+
+`runChukei(source, {outputMode:'ascii'})` or worker `{source,outputMode:'ascii'}`
+selects ASCII output. Omitting outputMode or using `'numeric'` preserves the
+original number-plus-newline behavior. No command was added or changed.
+In ASCII mode CHUK emits exactly one character for values 0–127 with NO automatic
+newline. All ASCII controls (including NUL, tab, LF, CR and ESC) and DEL are
+preserved literally; they may be invisible. Render as text, never terminal/HTML
+escape interpretation. Values 128–255 cause an explicit runtime error when OUT
+is executed; previous output and final VM state are retained. Those byte values
+are still valid cell values for all other operations. This is ASCII, not UTF-8,
+Latin-1 or arbitrary Unicode support.
+`result.outputMode` reports the validated mode (numeric default). `trace[].output`
+contains the actual emitted text for that instruction, including ASCII controls.
+Invalid mode/settings fail before compilation. Output limit remains 16 KiB,
+which equals 16,384 characters in ASCII mode. `node chukei-ascii-test.mjs` adds
+9 tests; the original 15 tests still pass. The worker artifact is rebuilt.

@@ -6,7 +6,7 @@ The compiler is based on tyukei/YannbarukuinaLanguage, with the corrected parser
 
 Source code entered by visitors is not persisted or sent to an execution server. Hosting access logs are outside this application's control.
 
-The production deployment is managed separately in Sites. This directory preserves its source and static assets in the original GitHub repository; deployment metadata is intentionally omitted.
+GitHub Pages publishes the generated static files from the `gh-pages` branch root. Source and tests live on `feat/queena-chukei-playground` under `playground/`. Sites is retained during migration. The deployment contains no server or secrets. Relative asset URLs support both the repository URL and a custom domain.
 
 ## Illustrated guide and syntax tree
 Two requested illustrations are served locally under `dist/images/`; tapping opens the original resolution. The responsive guide follows the editor, without changing the runtime privacy model. The AST panel renders structured compiler output as safe text and collapsible branches, not HTML, and marks earlier results stale when source changes.
@@ -15,3 +15,7 @@ The lexical analysis panel uses the compiler's real lexer tokens in source order
 
 ## CHUKEI educational language
 Separate selectable language with six whitespace-delimited commands: C increment, CH decrement, CHU move right, CHUK numeric output, CHUKE begin loop, CHUKEI end loop. It compiles to an explicitly educational VM instruction stream, not Z80. Its 256 uint8 cells and pointer wrap. The UI shows tokens, nested structure, generated instructions and bounded execution history. Source remains browser-local; both runtimes are terminated by the existing cancel/watchdog.
+
+CHUKEI now offers numeric (default, unchanged) and ASCII output modes for CHUK. ASCII mode emits one character without an automatic newline; 0–127 only, with 10 newline and 32 space. Values above127 report an error, not arbitrary Unicode conversion. UI includes ABC/AZaz/cell/newline examples and marks results stale when the mode changes.
+
+UI uses the same language/output controls, editor/result pair, and token/tree/generated-code/execution-step disclosures for both languages. Language details and illustrations are collapsed; Queena's unsupported ASCII selector is disabled and its step panel explicitly says CHUKEI only. Runtime assets are unchanged.

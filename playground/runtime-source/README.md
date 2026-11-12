@@ -2,25 +2,15 @@
 
 Existing corrected Zig lexer/parser/Z80 code generator compiled to WebAssembly, followed by an MIT-licensed browser assembler and Z80 CPU emulator. This is actual generated Z80 machine-code execution, not a JavaScript language interpreter. A minimal CP/M BDOS console shim handles calls 2 and 9; no full CP/M OS or ROM is loaded.
 
-## Rebuild the checked-in hosted assets
-From this directory, with Zig 0.14.1 and Node.js installed:
+## Build
+- Install Zig 0.14.1 (build-only).
+- `npm ci`
+- `zig build`
+- `cp zig-out/bin/queena.wasm dist/`
+- `node_modules/.bin/esbuild worker.js --bundle --format=esm --platform=browser --target=es2020 --outfile=dist/worker.js`
+- `node test.mjs` and `node extended-test.mjs`
 
-```sh
-npm ci
-zig build
-mkdir -p dist
-cp zig-out/bin/queena.wasm dist/queena.wasm
-cp dist/queena.wasm ../dist/queena.wasm
-node_modules/.bin/esbuild worker.js --bundle --format=esm --platform=browser --target=es2020 --outfile=../dist/runtime-worker.js
-node_modules/.bin/esbuild chukei-worker.js --bundle --format=esm --platform=browser --target=es2020 --outfile=../dist/chukei-worker.js
-node test.mjs
-node extended-test.mjs
-node ast-test.mjs
-node token-test.mjs
-node chukei-test.mjs
-```
-
-Serve `../dist/` with a static HTTP server, e.g. `python3 -m http.server 8000 --bind 127.0.0.1 --directory ../dist`. The checked-in dist is immediately usable without rebuilding. Keep THIRD-PARTY-LICENSES.txt with deployments. The UI runs module Workers and provides Cancel and a watchdog.
+Deploy `dist/worker.js`, `dist/queena.wasm`, and `dist/THIRD-PARTY-LICENSES.txt` in one directory. UI creates a module Worker at worker.js and posts `{source}`. Worker returns `{ok,output,error?,assembly,binary_bytes,elapsed_ms,instructions?}`. Terminate Worker after each result and provide a UI watchdog (15 seconds) and Cancel button.
 
 Limits: UTF-8 source 16 KiB, output 16 KiB, compiled code below 0x7000 (entry 0x0100), 5 million instructions, 2.5 second internal execution deadline, 32 MiB WASM maximum memory. No network other than static same-origin WASM fetch; source never leaves the device. Each run has fresh WASM instance and CPU memory.
 

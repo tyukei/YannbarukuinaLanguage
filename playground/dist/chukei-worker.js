@@ -4,10 +4,14 @@ var SOURCE_LIMIT = 16384;
 var OUTPUT_LIMIT = 16384;
 var STEP_LIMIT = 1e6;
 var TIME_LIMIT_MS = 1500;
-function runChukei(source) {
-  const result = { ok: false, tokens: [], ast: null, bytecode: [], output: "", steps: 0, trace: [], trace_truncated: false, cells: Array(256).fill(0), pointer: 0 };
+function runChukei(source, options = {}) {
+  const result = { ok: false, tokens: [], ast: null, bytecode: [], output: "", steps: 0, trace: [], trace_truncated: false, cells: Array(256).fill(0), pointer: 0, outputMode: "numeric" };
   const started = performance.now();
   try {
+    if (options === null || typeof options !== "object" || Array.isArray(options)) throw Error("\u51FA\u529B\u8A2D\u5B9A\u304C\u4E0D\u6B63\u3067\u3059\u3002");
+    const outputMode = options.outputMode === void 0 ? "numeric" : options.outputMode;
+    if (outputMode !== "numeric" && outputMode !== "ascii") throw Error("\u51FA\u529B\u30E2\u30FC\u30C9\u306Fnumeric\u307E\u305F\u306Fascii\u3092\u6307\u5B9A\u3057\u3066\u304F\u3060\u3055\u3044\u3002");
+    result.outputMode = outputMode;
     if (typeof source !== "string") throw Error("\u30BD\u30FC\u30B9\u30B3\u30FC\u30C9\u306F\u6587\u5B57\u5217\u3067\u6307\u5B9A\u3057\u3066\u304F\u3060\u3055\u3044\u3002");
     if (new TextEncoder().encode(source).length > SOURCE_LIMIT) throw Error("\u30B3\u30FC\u30C9\u306F16 KiB\u4EE5\u5185\u306B\u3057\u3066\u304F\u3060\u3055\u3044\u3002");
     let line = 1, column = 1, scanned = 0;
@@ -61,6 +65,7 @@ function runChukei(source) {
         if ((result.steps & 4095) === 0 && performance.now() - started > TIME_LIMIT_MS) throw Error("\u5B9F\u884C\u6642\u9593\u4E0A\u9650\uFF081.5\u79D2\uFF09\u306B\u9054\u3057\u307E\u3057\u305F\u3002");
         const ins = code[pc];
         const executedPc = pc;
+        let emitted;
         result.steps++;
         switch (ins.op) {
           case "INC":
@@ -76,10 +81,12 @@ function runChukei(source) {
             pc++;
             break;
           case "OUT": {
-            const text = `${cells[pointer]}
+            if (outputMode === "ascii" && cells[pointer] > 127) throw Error(`ASCII\u51FA\u529B\u7BC4\u56F2\u5916 at line ${result.tokens[ins.sourceIndex].line}, column ${result.tokens[ins.sourceIndex].column}: ${cells[pointer]}\uFF080\u301C127\u306E\u307F\u5BFE\u5FDC\uFF09`);
+            const text = outputMode === "ascii" ? String.fromCharCode(cells[pointer]) : `${cells[pointer]}
 `;
             if (result.output.length + text.length > OUTPUT_LIMIT) throw Error("\u51FA\u529B\u4E0A\u9650\uFF0816 KiB\uFF09\u306B\u9054\u3057\u307E\u3057\u305F\u3002");
             result.output += text;
+            emitted = text;
             pc++;
             break;
           }
@@ -92,8 +99,7 @@ function runChukei(source) {
           default:
             throw Error("Invalid VM instruction");
         }
-        if (result.trace.length < 200) result.trace.push({ step: result.steps, pc: executedPc, op: ins.op, next_pc: pc, pointer, value: cells[pointer], ...ins.op === "OUT" ? { output: `${cells[pointer]}
-` } : {} });
+        if (result.trace.length < 200) result.trace.push({ step: result.steps, pc: executedPc, op: ins.op, next_pc: pc, pointer, value: cells[pointer], ...emitted !== void 0 ? { output: emitted } : {} });
         else result.trace_truncated = true;
       }
       result.ok = true;
@@ -109,5 +115,5 @@ function runChukei(source) {
 
 // chukei-worker.js
 self.onmessage = ({ data }) => {
-  self.postMessage(runChukei(data?.source));
+  self.postMessage(runChukei(data?.source, { outputMode: data?.outputMode }));
 };
