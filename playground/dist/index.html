@@ -7,6 +7,12 @@
   <title>YanbaruKuina Playground</title>
   <link rel="stylesheet" href="./style.css?v=replay-fit-13">
   <script src="./app.js?v=replay-fit-13" defer></script>
+  <style>
+    #bytecode[hidden] + .vm-command-guide { display: none; }
+    .vm-command-guide { margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--line); font-size: 12px; }
+    .vm-command-guide ul { margin: 8px 0; padding-left: 1.4em; }
+    .vm-command-guide li { margin: 4px 0; }
+  </style>
 </head>
 <body>
   <main>
@@ -47,7 +53,14 @@
       <summary><span class="panel-number">02</span> 構文木</summary>
       <div class="ast-body"><p id="ast-note" role="status">実行で表示。</p><div id="ast-tree"></div></div>
     </details>
-    <details id="chukei-code" class="panel ast-panel stage"><summary><span class="panel-number">03</span> 生成コード <small id="code-kind">Z80アセンブリ</small></summary><div class="ast-body"><button id="download-generated" class="text-button" type="button" disabled>生成コードを保存</button><pre id="assembly">実行で表示。</pre><pre id="bytecode" hidden>実行で表示。</pre></div></details>
+    <details id="chukei-code" class="panel ast-panel stage"><summary><span class="panel-number">03</span> 生成コード <small id="code-kind">Z80アセンブリ</small></summary><div class="ast-body"><button id="download-generated" class="text-button" type="button" disabled>生成コードを保存</button><pre id="assembly">実行で表示。</pre><pre id="bytecode" hidden>実行で表示。</pre><aside class="vm-command-guide" aria-label="CHUKEIのVM命令"><p><strong>CHUKEI → VM命令</strong></p><ul>
+<li><code>C → INC</code>：現在のセルを1増やす</li>
+<li><code>CH → DEC</code>：現在のセルを1減らす</li>
+<li><code>CHU → RIGHT</code>：右のセルへ移動</li>
+<li><code>CHUK → OUT</code>：現在のセルを数値または文字で出力</li>
+<li><code>CHUKE → JZ</code>：現在のセルが0なら、ループの後へ</li>
+<li><code>CHUKEI → JNZ</code>：現在のセルが0以外なら、ループ本体の先頭へ</li>
+</ul><p>JZ・JNZの後ろの数字は、移動先の命令番号（0始まり）です。セルの位置ではありません。</p></aside></div></details>
     <details id="chukei-trace" class="panel ast-panel stage"><summary><span class="panel-number">04</span> 実行ステップ</summary><div class="ast-body"><p id="trace-note">CHUKEIのみ対応。</p><div class="trace-controls" hidden><button id="trace-prev" type="button">前へ</button><input id="trace-index" type="range" min="0" max="0" value="0" aria-label="実行ステップ"><button id="trace-next" type="button">次へ</button></div><pre id="trace-state"></pre></div></details>
     <details class="help panel stage"><summary>使い方・仕様</summary><div class="ast-body">
       <div id="queena-help"><p>naku：出力 ／ moshi：分岐 ／ aruku：ループ ／ zz：コメント</p><p>Zig/WASM → Z80アセンブリ → 機械語 → 既存Z80エミュレータ。CP/Mはコンソール出力のみ。</p></div>
