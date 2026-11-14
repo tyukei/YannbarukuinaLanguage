@@ -58,31 +58,15 @@ function renderTokens(tokens) {
   }
   if(tokens.length>5000) el("tokens-note").textContent+=" 表示は先頭5000件までです。";
 }
-function renderAst(ast) {
-  const container = el("ast-tree");
-  container.replaceChildren();
-  if (!ast) { el("ast-note").textContent = "構文木なし。エラーを確認。"; return; }
-  el("ast-note").textContent = "枝を押して開閉。";
-  let count = 0;
-  function node(item, depth) {
-    if (++count > 2000 || depth > 80) { const p = document.createElement("p"); p.textContent = "表示上限に達しました。コードを短くして確認してください。"; return p; }
-    const children = Array.isArray(item.children) ? item.children : [];
-    const label = item.label;
-    if (!children.length) { const p = document.createElement("div"); p.className="ast-leaf"; p.textContent=label; return p; }
-    const d=document.createElement("details"); d.className="ast-node"; d.open=depth<4;
-    const summary=document.createElement("summary"); summary.textContent=label; d.append(summary);
-    const branch=document.createElement("div"); branch.className="ast-children";
-    for (const child of children) { if(count>=2000) break; branch.append(node(child,depth+1)); }
-    d.append(branch); return d;
-  }
-  container.append(node(ast,0));
-}
+const astView=QueenaAstView.create({document,container:el("ast-tree"),note:el("ast-note"),tools:el("ast-tools"),summary:el("ast-summary"),limit:el("ast-limit"),groupInput:el("ast-group"),groupLabel:el("ast-group-label"),expandButton:el("ast-expand"),collapseButton:el("ast-collapse")});
+function renderAst(ast) { astView.render(ast,language); }
+
 function changed() {
   invalidateGenerated();
   if (lastSource !== null && source.value !== lastSource) {
     if(language==="chukei") el("trace-note").textContent="編集前の記録。";
     el("result-note").textContent = "編集前の結果。再実行してください。";
-    el("ast-note").textContent = "編集前の構文木。";
+    astView.markStale();
     el("tokens-note").textContent = "編集前のトークン。";
   }
 }
@@ -113,8 +97,7 @@ async function run() {
   const code = source.value;
   el("tokens-list").replaceChildren();
   el("tokens-note").textContent = "解析中…";
-  el("ast-tree").replaceChildren();
-  el("ast-note").textContent = "解析中…";
+  astView.clear("解析中…");
   if (!code.trim() && language!=="chukei") {
     el("tokens-note").textContent = "コードを入力して実行してください。";
     el("ast-note").textContent = "コードを入力して実行してください。";
@@ -220,7 +203,7 @@ el("language").addEventListener("change",()=>{
   el("output-mode").value=language==="chukei"?chukeiMode:"numeric";
   el("output-mode").disabled=language!=="chukei";
   source.value=drafts[language]??currentSamples().hello;lastSource=null;
-  for(const id of ["tokens-list","ast-tree"]) el(id).replaceChildren();
+  el("tokens-list").replaceChildren();astView.clear();
   el("output").textContent="";el("error").hidden=true;el("assembly").textContent="実行で表示。";setStatus("待機中","");
   el("tokens-note").textContent="実行で表示。";el("ast-note").textContent="実行で表示。";
   el("result-note").textContent="実行で表示。";

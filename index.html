@@ -6,7 +6,9 @@
   <meta name="description" content="やんばるくいな言語を書いて、Z80 で動かすブラウザ内実験室。">
   <title>YanbaruKuina Playground</title>
   <link rel="stylesheet" href="./style.css?v=replay-fit-13">
-  <script src="./app.js?v=compact-20261114" defer></script>
+  <link rel="stylesheet" href="./ast-view.css?v=visual-20261114">
+  <script src="./ast-view.js?v=visual-20261114" defer></script>
+  <script src="./app.js?v=ast-visual-20261114" defer></script>
   <style>
     #bytecode[hidden] + .vm-command-guide { display: none; }
     .vm-command-guide { margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--line); font-size: 12px; }
@@ -49,9 +51,13 @@
       <summary><span class="panel-number">01</span> トークン</summary>
       <div class="ast-body"><p id="tokens-note" role="status">実行で表示。</p><ol id="tokens-list" aria-label="ソース順のトークン"></ol></div>
     </details>
-    <details class="ast-panel panel stage">
+    <details id="ast-panel" class="ast-panel panel stage">
       <summary><span class="panel-number">02</span> 構文木</summary>
-      <div class="ast-body"><p id="ast-note" role="status">実行で表示。</p><div id="ast-tree"></div></div>
+      <div class="ast-body"><p id="ast-note" role="status">実行で表示。</p>
+        <div id="ast-tools" class="ast-tools" hidden><div class="ast-actions"><button id="ast-expand" type="button" aria-controls="ast-tree" disabled>枝を開く</button><button id="ast-collapse" type="button" aria-controls="ast-tree" disabled>枝をたたむ</button></div><label id="ast-group-label" class="ast-group-toggle"><input id="ast-group" type="checkbox" checked disabled>連続する同じ命令をまとめる</label></div>
+        <div class="ast-legend" aria-label="ノードの種類"><span><i class="ast-dot" aria-hidden="true"></i>処理・まとまり</span><span><i class="ast-dot loop" aria-hidden="true"></i>ループ</span><span><i class="ast-dot branch" aria-hidden="true"></i>分岐</span><span><i class="ast-dot expression" aria-hidden="true"></i>式・値</span></div>
+        <p id="ast-summary"></p><div id="ast-tree" role="region" aria-label="構文木の親子関係。大きい木は縦横にスクロールできます" tabindex="0"></div><p id="ast-limit" role="status" hidden></p>
+      </div>
     </details>
     <details id="chukei-code" class="panel ast-panel stage"><summary><span class="panel-number">03</span> 生成コード <small id="code-kind">Z80アセンブリ</small></summary><div class="ast-body"><button id="download-generated" class="text-button" type="button" disabled>生成コードを保存</button><pre id="assembly">実行で表示。</pre><pre id="bytecode" hidden>実行で表示。</pre><aside class="vm-command-guide" aria-label="CHUKEIのVM命令"><p><strong>CHUKEI → VM命令</strong></p><ul>
 <li><code>C → INC</code>：現在のセルを1増やす</li>
