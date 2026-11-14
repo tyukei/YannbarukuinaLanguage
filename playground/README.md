@@ -22,3 +22,10 @@ UI uses the same language/output controls, editor/result pair, and token/tree/ge
 
 ## Compact CHUKEI source
 The default HELLO greeting and all CHUKEI examples now contain no whitespace. `CCCCHUKECHUKCHCHUKEI` emits 3, 2, 1 in numeric mode. Output-mode selection and VM instruction semantics are unchanged. See `runtime-source/chukei-README.md` for the scanner, build and regression checks.
+
+## Visual syntax tree
+The AST panel presents the actual returned AST as connected, keyboard-expandable cards. Roles (condition/body/left/right) and source locations are used only when provided by the compiler. CHUKEI loops remain one real loop node with their real body children; no synthetic condition nodes or execution counts are invented. Consecutive identical CHUKEI leaf commands can be grouped for display, with an explicit count and a switch to show individual nodes. This does not alter the AST, VM or execution.
+
+Cards are limited to 400 and depth 24 with an explicit truncation notice; counts inspect at most 20,000 nodes. Native details and nested lists provide keyboard and screen-reader semantics. The scroll region contains wide/deep trees on mobile. Parse failures clear the previous tree; runtime failures retain a successfully parsed tree. Edited source is marked stale.
+
+Run `node runtime-source/ast-view-test.mjs` for presentation and DOM-adapter unit tests, and the existing runtime AST/CHUKEI tests for compiler semantics. The DOM adapter is not browser/layout verification.

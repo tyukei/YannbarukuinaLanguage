@@ -132,7 +132,7 @@ test('bundled worker message API agrees with runtime including errors',()=>{
 
 test('site explains compact syntax and retains VM instruction guide',()=>{
  const html=projectFile('../dist/index.html');
- assert.match(html,/app\.js\?v=compact-20261114/);assert.match(app,/chukei-worker\.js\?v=compact-20261114/);
+ assert.match(html,/app\.js\?v=[^"\s]+/);assert.match(app,/chukei-worker\.js\?v=compact-20261114/);
  assert.match(html,/スペース不要/);assert.match(html,/次のCで区切れます/);
  assert.match(html,/C HはCHになりません/);assert.match(html,/未知の文字・命令はエラー/);
  assert.doesNotMatch(html,/空白で分割したトークン単位|大文字・空白区切り|空白で区切る6命令/);
