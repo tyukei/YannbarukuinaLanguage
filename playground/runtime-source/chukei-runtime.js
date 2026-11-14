@@ -11,9 +11,11 @@ export function runChukei(source, options={}) {
   result.outputMode=outputMode;
   if(typeof source!=='string') throw Error('ソースコードは文字列で指定してください。');
   if(new TextEncoder().encode(source).length>SOURCE_LIMIT) throw Error('コードは16 KiB以内にしてください。');
-  // Whitespace-delimited, case-sensitive commands; no comments or punctuation.
+  // Every command starts with C and contains no other C. Split at the next C
+  // or whitespace, preserving invalid chunks and original source positions.
+  // Whitespace remains an optional boundary, never joined inside a command.
   let line=1,column=1,scanned=0;
-  for(const match of source.matchAll(/\S+/gu)) {
+  for(const match of source.matchAll(/C[^\sC]*|[^\sC]+/gu)) {
    for(let i=scanned;i<match.index;i++){if(source[i]==='\n'){line++;column=1;}else column++;}
    const lexeme=match[0];
    result.tokens.push({kind:Object.hasOwn(COMMANDS,lexeme)?COMMANDS[lexeme]:'invalid',lexeme,line,column});

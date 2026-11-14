@@ -1,9 +1,15 @@
 # CHUKEI educational VM
 
 This is a separate language/runtime, not Queena, native CPU machine code or Z80.
-Exact case-sensitive whitespace-delimited commands:
+Exact case-sensitive commands; spaces are not required:
 C increment; CH decrement; CHU move right; CHUK output current number and newline;
 CHUKE begin loop while current cell != 0; CHUKEI end loop.
+Every command starts with C and has no other C inside it. The next C or whitespace
+ends the current token. For example `CCCCHUKECHUKCHCHUKEI` is the countdown
+3, 2, 1 in numeric mode. Existing space/newline-separated code is still valid.
+Whitespace is an optional token boundary, not removed globally: `C H` is invalid,
+not `CH`. Unknown chunks, punctuation and incomplete loop pairs remain errors.
+Each of C, CH, CHU and CHUK is itself a complete command, not an incomplete prefix.
 There are 256 uint8 cells. Values wrap modulo 256 and the pointer wraps modulo 256.
 Loop conditions check the current pointer's cell, including after moving inside a loop.
 No comments, strings, input, external calls, filesystem access or network requests.
@@ -35,7 +41,11 @@ every 4096 steps, loop nesting 128 levels. Host should also terminate the worker
 with its independent watchdog. Each run allocates fresh state; empty input is a
 valid empty program. UI must render source/error/labels with textContent.
 
-Tests: `node chukei-test.mjs` (15 cases).
+Tests: `node chukei-test.mjs`, `node chukei-ascii-test.mjs`, and
+`node chukei-compact-test.mjs` (compact syntax, backwards compatibility, source
+locations, limits, all UI examples and the bundled worker).
+Rebuild after runtime changes from this directory:
+`node_modules/.bin/esbuild chukei-worker.js --bundle --format=esm --platform=browser --target=es2020 --outfile=../dist/chukei-worker.js`
 
 ## ASCII output option
 
