@@ -5,7 +5,7 @@ const samples = {
   loop: "zz 0 から 4 まで、ひとつずつ\ni = 0\naruku (i < 5) {\n  naku(i)\n  i = i + 1\n}\n",
   control: "zz 3 を飛ばして、6 の手前で止まる\ni = 0\naruku (i < 10) {\n  i = i + 1\n  moshi (i == 3) { hashiru }\n  moshi (i == 6) { tobu }\n  naku(i)\n}\n"
 };
-const chukeiSamples = {hello:"C C C CHUKE CHUK CH CHUKEI", branch:"CH CHUK C CHUK", loop:"C C CHU C C C CHUKE CHUK CH CHUKEI", control:"C CHUKE CHUKE CH CHUKEI CHUKEI CHUK"};
+const chukeiSamples = {hello:"CCCCHUKECHUKCHCHUKEI", branch:"CHCHUKCCHUK", loop:"CCCHUCCCCHUKECHUKCHCHUKEI", control:"CCHUKECHUKECHCHUKEICHUKEICHUK"};
 let language="queena", trace=[], traceIndex=0;
 function asciiExample(text){
  let value=0;const commands=[];
@@ -13,12 +13,12 @@ function asciiExample(text){
   const target=char.charCodeAt(0),delta=target-value;
   commands.push(...Array(Math.abs(delta)).fill(delta>=0?"C":"CH"),"CHUK");value=target;
  }
- return commands.reduce((lines,command,i)=>lines+(i?(i%10===0?"\n":" "):"")+command,"");
+ return commands.join("");
 }
 const asciiSamples={
  hello:asciiExample("HELLO, I AM CHUKEI!"),
  branch:asciiExample("Hello"),
- loop:"C ".repeat(65)+"CHUK\nCHU\n"+"C ".repeat(66)+"CHUK",
+ loop:"C".repeat(65)+"CHUKCHU"+"C".repeat(66)+"CHUK",
  control:asciiExample("A\nB"),
  letters:asciiExample("AZaz"),
  abc:asciiExample("ABC")
@@ -31,7 +31,7 @@ const source = el("source"), runButton = el("run"), exampleSelect = el("example"
 let busy = false, lastSource = null, controller = null, cancelRun = null;
 function execute(code) {
   return new Promise((resolve, reject) => {
-    const worker = new Worker(language==="chukei"?"./chukei-worker.js":"./runtime-worker.js", {type:"module"});
+    const worker = new Worker(language==="chukei"?"./chukei-worker.js?v=compact-20261114":"./runtime-worker.js", {type:"module"});
     controller = worker;
     cancelRun = () => { clearTimeout(timer); worker.terminate(); reject(new Error("実行を停止しました。")); };
     const timer = setTimeout(() => { worker.terminate(); reject(new Error("時間制限に達しました。ループや入力サイズを確認してください。")); }, 15000);

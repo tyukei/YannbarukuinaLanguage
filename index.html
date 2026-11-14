@@ -6,7 +6,7 @@
   <meta name="description" content="やんばるくいな言語を書いて、Z80 で動かすブラウザ内実験室。">
   <title>YanbaruKuina Playground</title>
   <link rel="stylesheet" href="./style.css?v=replay-fit-13">
-  <script src="./app.js?v=replay-fit-13" defer></script>
+  <script src="./app.js?v=compact-20261114" defer></script>
   <style>
     #bytecode[hidden] + .vm-command-guide { display: none; }
     .vm-command-guide { margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--line); font-size: 12px; }
@@ -64,7 +64,7 @@
     <details id="chukei-trace" class="panel ast-panel stage"><summary><span class="panel-number">04</span> 実行ステップ</summary><div class="ast-body"><p id="trace-note">CHUKEIのみ対応。</p><div class="trace-controls" hidden><button id="trace-prev" type="button">前へ</button><input id="trace-index" type="range" min="0" max="0" value="0" aria-label="実行ステップ"><button id="trace-next" type="button">次へ</button></div><pre id="trace-state"></pre></div></details>
     <details class="help panel stage"><summary>使い方・仕様</summary><div class="ast-body">
       <div id="queena-help"><p>naku：出力 ／ moshi：分岐 ／ aruku：ループ ／ zz：コメント</p><p>Zig/WASM → Z80アセンブリ → 機械語 → 既存Z80エミュレータ。CP/Mはコンソール出力のみ。</p></div>
-      <div id="chukei-guide" hidden><p>C：+1 ／ CH：−1 ／ CHU：右へ ／ CHUK：出力 ／ CHUKE・CHUKEI：ループ</p><p>空白で区切る6命令。256セル、値0〜255、値・ポインタは循環。現在セルが0ならループ終了。入力・コメントなし。</p><p>JavaScript製コンパイラ → 教材用VM（Z80ではありません）。JZ：0なら移動、JNZ：0以外なら移動。</p><p>ASCII：65=A、90=Z、97=a、122=z、10=改行、32=空白。0〜127のみ。自動改行・日本語なし。</p></div>
+      <div id="chukei-guide" hidden><p>C：+1 ／ CH：−1 ／ CHU：右へ ／ CHUK：出力 ／ CHUKE・CHUKEI：ループ</p><p>スペース不要の6命令。次のCが命令の区切りです。既存の空白・改行区切りも使えます。256セル、値0〜255、値・ポインタは循環。現在セルが0ならループ終了。入力・コメントなし。</p><p>JavaScript製コンパイラ → 教材用VM（Z80ではありません）。JZ：0なら移動、JNZ：0以外なら移動。</p><p>ASCII：65=A、90=Z、97=a、122=z、10=改行、32=空白。0〜127のみ。自動改行・日本語なし。</p></div>
       <p>すべてブラウザ内で処理。コードは送信しません。トークン・構文木は実際の解析結果です。YanbaruKuinaの列位置はUTF-8バイト単位。</p>
     </div></details>
     <details class="panel stage implementation"><summary>文法・実装コード</summary><div class="ast-body">
@@ -109,7 +109,7 @@ digit = "0"…"9" ;</pre>
 <div id="chukei-implementation" hidden><h3>CHUKEI · EBNF</h3><pre>program = { statement } ;
 statement = "C" | "CH" | "CHU" | "CHUK" | loop ;
 loop = "CHUKE", { statement }, "CHUKEI" ;</pre>
-<p>空白で分割したトークン単位。大文字・空白区切り、コメントなし。空プログラム可。ループは現在セルが0以外の間、最大128段。値とポインタは循環。</p>
+<p>各命令は必ずCで始まり、内部にCを含まないため、次のCで区切れます。大文字のみ、スペース不要。空白・改行は任意の区切りとして使えますが、命令の途中には入れません（C HはCHになりません）。未知の文字・命令はエラー。コメントなし。空プログラム可。ループは現在セルが0以外の間、最大128段。値とポインタは循環。</p>
 <h3>ループ → VM命令</h3><pre><code>  for(let i=0;i&lt;result.tokens.length;i++) {
    const t=result.tokens[i];
    const at=`line ${t.line}, column ${t.column}`;
@@ -127,8 +127,8 @@ loop = "CHUKE", { statement }, "CHUKEI" ;</pre>
   }
   if(stack.length){const t=stack.at(-1).token;throw Error(`Unmatched CHUKE at line ${t.line}, column ${t.column}`);}
 </code></pre><p>スタックで開始と終了を対応付け、JZはループ後、JNZは本体先頭へ。ASTと命令列を同時に作る。</p>
-<p><a href="https://github.com/tyukei/YannbarukuinaLanguage/blob/2342e33defa324ad9eb28b57def6397599d219db/playground/runtime-source/chukei-runtime.js#L24-L39" target="_blank" rel="noopener">実装全体</a> · <a href="https://github.com/tyukei/YannbarukuinaLanguage/blob/2342e33defa324ad9eb28b57def6397599d219db/playground/runtime-source/chukei-test.mjs" target="_blank" rel="noopener">テスト</a></p>
-<p>JavaScript製の教材用VM。Z80ではありません。C C C CHUKE CHUK CH CHUKEI → 3・2・1。ASCIIは0〜127、自動改行なし。</p></div>
+<p><a href="https://github.com/tyukei/YannbarukuinaLanguage/blob/feat/queena-chukei-playground/playground/runtime-source/chukei-runtime.js" target="_blank" rel="noopener">実装全体</a> · <a href="https://github.com/tyukei/YannbarukuinaLanguage/blob/feat/queena-chukei-playground/playground/runtime-source/chukei-compact-test.mjs" target="_blank" rel="noopener">テスト</a></p>
+<p>JavaScript製の教材用VM。Z80ではありません。CCCCHUKECHUKCHCHUKEI → 数値出力で3・2・1。ASCIIは0〜127、自動改行なし。</p></div>
 <p class="notation">EBNF：{ } 繰り返し ／ [ ] 省略可能 ／ | 選択 ／ , 連結</p></div></details>
     <details class="illustration-disclosure panel stage"><summary>図で見る</summary>
     <section class="illustrated-guide" aria-labelledby="flow-heading">

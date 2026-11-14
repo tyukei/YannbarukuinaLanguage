@@ -1,4 +1,4 @@
-// chukei-runtime.js
+// runtime-source/chukei-runtime.js
 var COMMANDS = Object.freeze({ C: "INC", CH: "DEC", CHU: "RIGHT", CHUK: "OUT", CHUKE: "JZ", CHUKEI: "JNZ" });
 var SOURCE_LIMIT = 16384;
 var OUTPUT_LIMIT = 16384;
@@ -15,7 +15,7 @@ function runChukei(source, options = {}) {
     if (typeof source !== "string") throw Error("\u30BD\u30FC\u30B9\u30B3\u30FC\u30C9\u306F\u6587\u5B57\u5217\u3067\u6307\u5B9A\u3057\u3066\u304F\u3060\u3055\u3044\u3002");
     if (new TextEncoder().encode(source).length > SOURCE_LIMIT) throw Error("\u30B3\u30FC\u30C9\u306F16 KiB\u4EE5\u5185\u306B\u3057\u3066\u304F\u3060\u3055\u3044\u3002");
     let line = 1, column = 1, scanned = 0;
-    for (const match of source.matchAll(/\S+/gu)) {
+    for (const match of source.matchAll(/C[^\sC]*|[^\sC]+/gu)) {
       for (let i = scanned; i < match.index; i++) {
         if (source[i] === "\n") {
           line++;
@@ -113,7 +113,7 @@ function runChukei(source, options = {}) {
   return result;
 }
 
-// chukei-worker.js
+// runtime-source/chukei-worker.js
 self.onmessage = ({ data }) => {
   self.postMessage(runChukei(data?.source, { outputMode: data?.outputMode }));
 };
