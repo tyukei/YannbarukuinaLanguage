@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="C と Python のソースコードがどう動くか。Z80 の機械語を使って CPU とメモリの働きまでたどります。">
+<title>コードはどうやって動く？ | YanbaruKuina</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#fff;color:#181818;font:1rem/1.75 system-ui,sans-serif}
+main{max-width:46rem;margin:auto;padding:1.25rem clamp(1rem,5vw,2rem) 3rem}
+a{color:#0645ad;text-decoration:underline;text-underline-offset:.15em}
+a:visited{color:#551a8b}a:focus-visible{outline:2px solid #0645ad;outline-offset:3px}
+h1,h2,h3{line-height:1.35}h1{font-size:clamp(1.75rem,5vw,2.4rem);margin:.8em 0 .4em}h2{font-size:1.25rem;margin:1.1em 0 .5em}
+h3{font-size:1rem;margin:1.4em 0 .5em}
+p,figure{margin:.75em 0}ol,ul{padding-inline-start:1.6em}li+li{margin-top:.28em}
+hr{border:0;border-top:1px solid #aaa;margin:1.5rem 0}
+code,pre{font-family:ui-monospace,Menlo,Consolas,monospace}
+pre{margin:.4rem 0;padding:.65rem .8rem;border-left:2px solid #aaa;font-size:.9rem;line-height:1.6;white-space:pre-wrap;overflow-wrap:anywhere}
+figcaption{font-size:.9rem;color:#424242}
+</style>
+</head>
+<body>
+<main>
+<header>
+<p><a href="../">← Playground に戻る</a></p>
+<h1>コードはどうやって動く？</h1>
+<p>人が読むソースコードと、CPU が実行する機械語は別物です。その間に何があるか、C と Python を例にたどり、最後に Z80 の機械語を手で動かします。</p>
+</header>
+<nav aria-label="目次">
+<ul>
+<li><a href="#source">ソースコードを書く</a></li>
+<li><a href="#c">C：実行ファイルを作る</a></li>
+<li><a href="#python">Python：処理系で実行する</a></li>
+<li><a href="#cpu">CPU とメモリ：命令を取り出す</a></li>
+<li><a href="#z80">実例：Z80 の機械語で 2 + 3</a></li>
+</ul>
+</nav>
+<hr>
+<section id="source">
+<h2>1. ソースコードを書く</h2>
+<figure>
+<pre><code>人 ───────────────→ ソースコード
+人 → LLM に指示 ───→ ソースコード</code></pre>
+<figcaption>入口は二つ。どちらも C や Python などの高水準言語のソースコードにつながります。</figcaption>
+</figure>
+<p>誰が書いても、同じソースコードなら実行までの仕組みは同じです。LLM が生成したコードも、意図どおりかは読んで試して確かめます。</p>
+</section>
+<hr>
+<section id="c">
+<h2>2. C：実行ファイルを作る</h2>
+<figure>
+<pre><code>hello.c（C のソースコード）
+  ↓ 前処理
+展開済みの C コード
+  ↓ コンパイル
+アセンブリ
+  ↓ アセンブル
+hello.o（オブジェクトファイル）
+  ↓ リンク（ほかの .o やライブラリと結合）
+実行ファイル</code></pre>
+<figcaption>たとえば <code>cc hello.c -o hello</code> はこの一連の工程を進めます。通常は <code>./hello</code> で実行します。</figcaption>
+</figure>
+<ol>
+<li><strong>前処理：</strong><code>#include</code> でファイルを取り込み、マクロを展開する。</li>
+<li><strong>コンパイル：</strong>C の意味を調べ、対象 CPU 向けのアセンブリに変換する。</li>
+<li><strong>アセンブル：</strong>機械語と、後で結び付けるための情報をオブジェクトファイルに格納する。</li>
+<li><strong>リンク：</strong>別のファイルやライブラリにある関数などの参照をつなぎ、実行ファイルを作る。</li>
+</ol>
+<p>実行時は OS が必要な部分をメモリに配置し、CPU が機械語を実行します。</p>
+</section>
+<hr>
+<section id="python">
+<h2>3. Python：処理系で実行する</h2>
+<p><code>python hello.py</code> と実行すると、一般的な処理系の CPython は、Python をバイトコードに変換してから、内部の仮想マシンで実行します。</p>
+<figure>
+<pre><code>hello.py → Python バイトコード
+         → CPython が実行</code></pre>
+<figcaption>CPU が直接実行するのは CPython 自体の機械語です。Python のバイトコードは CPU の命令ではありません。</figcaption>
+</figure>
+<p>「インタープリタを使う」ことは「途中で変換しない」という意味ではありません。CPython もバイトコードへのコンパイルを行います。</p>
+</section>
+<hr>
+<section id="cpu">
+<h2>4. CPU とメモリ：命令を取り出す</h2>
+<p><strong>PC（プログラムカウンタ）</strong>は、次に読み出す命令のアドレスを示す CPU 内のレジスタです。ここでの PC はパソコンの略ではありません。</p>
+<figure>
+<pre><code>フェッチ：PC が指す位置から命令を取る
+    ↓
+デコード：何をする命令か読み解く
+    ↓
+実行：計算、読み書き、分岐などを行う
+    ↓
+PC は次に実行する位置を指す
+    └→ 繰り返す</code></pre>
+<figcaption>概念図。通常は次の命令へ進み、分岐すると別のアドレスを指します。</figcaption>
+</figure>
+<p><strong>メモリ</strong>には実行中の命令やデータが置かれます。現代の CPU には、アクセスした命令やデータの一部を近くに保持する、小さくて高速な<strong>キャッシュ</strong>がよくあります。必要な内容がキャッシュにあれば、メインメモリまで取りに行かずに済みます。</p>
+</section>
+<hr>
+<section id="z80">
+<h2>5. 実例：Z80 の機械語で 2 + 3</h2>
+<p>次の 5 バイトを使います。アセンブリは人が読む表記で、メモリに置くのは中央のバイト列です。</p>
+<figure>
+<pre><code>アドレス  バイト  アセンブリ
+0100h     3E 02   LD A,02h
+0102h     C6 03   ADD A,03h
+0104h     76      HALT</code></pre>
+<figcaption><code>h</code> は16進数。<code>3E</code> は2進数では <code>00111110</code>。この命令では、その直後の <code>02</code> が A に入れる値です。</figcaption>
+</figure>
+<ol>
+<li>Z80 エミュレータで、メモリの <code>0100h</code> から <code>3E 02 C6 03 76</code> を書き込みます。raw バイナリの読み込み機能があれば、同じ 5 バイトを開始アドレス <code>0100h</code> にロードします。上の文字列そのものをファイルに入れるのではなく、数値としての 5 バイトです。</li>
+<li>レジスタの <code>PC</code> を <code>0100h</code> に設定して、1 命令だけ実行します。<code>A = 02h</code>、<code>PC = 0102h</code> になります。</li>
+<li>もう 1 命令進めると、<code>A = 05h</code>、<code>PC = 0104h</code> になります。最後の <code>HALT</code> で通常の命令実行が停止します。</li>
+</ol>
+<p>結果の 5 は画面には出力されません。エミュレータのレジスタ表示で <code>A</code> を確認します。この例は、メモリと PC を操作できる Z80 エミュレータ向けです。</p>
+<h3>別の場所に置いた処理を呼び出す：CALL と RET</h3>
+<p>「呼び出して元に戻る」動きも試せます。エミュレータのメモリに次のバイトを書き込み、初期値を <code>PC = 0100h</code>、<code>SP = F000h</code> に設定します。SP はスタックの位置を示すレジスタです。</p>
+<figure>
+<pre><code>0100h  CD 10 01  CALL 0110h
+0103h  76        HALT
+0110h  3E 02     LD A,02h
+0112h  C6 03     ADD A,03h
+0114h  C9        RET</code></pre>
+<figcaption>1 命令ずつ進めると PC は <code>0100h → 0110h → 0112h → 0114h → 0103h</code>。CALL は戻り先 <code>0103h</code> をスタックに積み、RET はそこへ戻ります。最後の <code>A</code> は <code>05h</code> です。</figcaption>
+</figure>
+<p>命令の詳細は <a href="https://www.zilog.com/docs/z80/um0080.pdf">Zilog の Z80 マニュアル</a>を参照できます。</p>
+</section>
+<hr>
+<section aria-labelledby="playground">
+<h2 id="playground">Playground で見比べる</h2>
+<p>YanbaruKuina は Z80 向けのコードを生成し、ブラウザ内の Z80 エミュレータで実行します。 エディタに入力するのは高水準のソースコードで、上のような生の機械語バイトを直接入力する欄ではありません。CHUKEI は Z80 とは別の教材用 VM です。たとえば CHUKEI の「数値」出力で <code>CC CHUK</code> を実行すると、2 回足して <code>2</code> を表示します。</p>
+<p><a href="../">Playground を開く →</a></p>
+</section>
+</main>
+</body>
+</html>
