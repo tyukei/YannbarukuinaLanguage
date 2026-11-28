@@ -34,3 +34,14 @@ test('bounds on source, program, output, and steps', () => {
   assert.throws(() => execute('8 888888 88888 8888888'), /出力が4,096/u);
   assert.throws(() => execute('8 888888 8888888'), /100,000/u);
 });
+
+test('Bengali digit four is interchangeable with 8, but ASCII 4 is rejected', () => {
+  const ascii = '8 8 8 8 8 88888';
+  for (const source of ['৪ ৪ ৪ ৪ ৪ ৪৪৪৪৪', '8 ৪ ৪ 8 ৪ 8৪8৪8']) {
+    assert.deepEqual(compile(source), compile(ascii));
+    assert.deepEqual(execute(source).output, [5]);
+  }
+  assert.deepEqual(execute('৪ 8৪ ৪৪৪৪৪').output, [0]);
+  assert.throws(() => compile('৪ 4'), /1行 3列/u);
+  assert.throws(() => compile('৪'.repeat(9)), /1行 1列/u);
+});
