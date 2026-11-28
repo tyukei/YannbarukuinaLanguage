@@ -2,15 +2,65 @@ import {commandGroups, commandTable, compactCodes, compile, debugSnapshot, hex, 
 
 const $ = id => document.getElementById(id);
 const source = $('source'), output = $('output'), error = $('error');
-const languagePicker = $('language-select');
-languagePicker.addEventListener('change', () => {
-  const lang = languagePicker.value;
-  if (lang !== 'chukei' && lang !== 'queena') return;
-  languagePicker.value = '8888';
-  location.assign('../?lang=' + lang);
-});
+const draftKey = 'yanbarukuina.playground.8888-draft';
+// Keep the 8888 draft in this tab while switching to another language.
+try {
+  const draft = sessionStorage.getItem(draftKey);
+  if (draft !== null) source.value = draft;
+} catch { /* No storage in some private browsing modes. */ }
+if (typeof document.querySelectorAll === 'function') {
+  for (const link of document.querySelectorAll('.language-tabs [data-language]')) {
+    link.addEventListener('click', event => {
+      if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+      if (link.dataset.language === '8888') {
+        event.preventDefault();
+        return;
+      }
+      try { sessionStorage.setItem(draftKey, source.value); } catch { /* Keep navigation available. */ }
+    });
+  }
+}
 const resultStatus = $('result-status');
 const bytes = $('bytes'), trace = $('trace'), runButton = $('run');
+let generated = null;
+function saveFile(contents, filename, kind) {
+  const url = URL.createObjectURL(new Blob([contents], {type:kind}));
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  document.body.append(link);
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+$('import-code').addEventListener('click', () => $('code-file').click());
+$('code-file').addEventListener('change', async () => {
+  const input = $('code-file'), file = input.files[0];
+  try {
+    if (!file) return;
+    if (file.size > 16384) throw new Error('16 KiB以内のファイルを選んでください。');
+    const value = new TextDecoder('utf-8', {fatal:true}).decode(await file.arrayBuffer());
+    if (value.includes('\u0000')) throw new Error('テキストファイルを選んでください。');
+    if (source.value && !confirm('編集中のコードを置き換えます。必要なら先にダウンロードしてください。')) return;
+    source.value = value;
+    clear();
+    $('file-status').textContent = '読み込み完了。実行できます。';
+  } catch (error) {
+    $('file-status').textContent = error instanceof TypeError ? 'UTF-8のテキストを選んでください。' : error.message;
+  } finally { input.value = ''; }
+});
+$('download-code').addEventListener('click', () => {
+  if (new TextEncoder().encode(source.value).length > 16384) {
+    $('file-status').textContent = 'コードを16 KiB以内にしてください。';
+    return;
+  }
+  saveFile(source.value, 'main.8888', 'text/plain;charset=utf-8');
+});
+$('download-generated').addEventListener('click', () => {
+  if (!generated) return;
+  const {code, literals} = generated;
+  saveFile(JSON.stringify({format:'8888 educational VM', version:1, code:[...code], literals}, null, 2), 'main.8888-vm.json', 'application/json');
+});
 function example(name, body, calls = 1) {
   return 'マジ' + name + '{' + body + '}' + ('めっちゃ{' + name + '}').repeat(calls);
 }
@@ -230,6 +280,8 @@ pageSelect.addEventListener('change', () => showStep(Number(slider.value)));
 
 function clear() {
   recording = null;
+  generated = null;
+  $('download-generated').disabled = true;
   debugPanel.hidden = true;
   output.textContent = 'まだ実行していません。';
   resultStatus.textContent = '待機中';
@@ -257,6 +309,8 @@ function execute(debug = false) {
     }
     if (code.length > 96 * 3) listing.push('…（先頭96命令のみ表示）');
     bytes.textContent = listing.join('\n') || '（命令なし）';
+    generated = program;
+    $('download-generated').disabled = false;
 
     const result = run(program, {debug});
     if (result.debug) openDebug(result.debug, program);

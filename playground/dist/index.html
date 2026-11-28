@@ -5,10 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="やんばるくいな言語を書いて、Z80 で動かすブラウザ内実験室。">
   <title>YanbaruKuina Playground</title>
-  <link rel="stylesheet" href="./style.css?v=replay-fit-13">
+  <link rel="stylesheet" href="./style.css?v=language-tabs-1">
   <link rel="stylesheet" href="./ast-view.css?v=visual-20261114">
   <script src="./ast-view.js?v=visual-20261114" defer></script>
-  <script src="./app.js?v=8888-menu-2" defer></script>
+  <script src="./app.js?v=language-tabs-1" defer></script>
   <style>
     #bytecode[hidden] + .vm-command-guide { display: none; }
     .vm-command-guide { margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--line); font-size: 12px; }
@@ -22,15 +22,16 @@
       <a class="brand" href="./" aria-label="Playground ホーム"><img id="queena-mark" class="language-logo" src="./images/yanbaru-logo.svg" width="64" height="64" alt="YanbaruKuina ロゴ"><img id="chukei-mark" class="language-logo" src="./images/chukei-logo.svg" width="64" height="64" alt="CHUKEI ロゴ" hidden> <span id="brand-name" class="sr-only">YanbaruKuina</span> </a>
       
       <nav aria-label="関連ページ" style="display:flex;flex-wrap:wrap;gap:.5rem 1rem;justify-content:flex-end">
-        <a href="./8888/">8888言語（試作）</a>
+        <a href="./8888/">8888</a>
         <a href="./guide/">コードはどうやって動く？</a>
       </nav>
     </header>
-    <h1 class="sr-only">YanbaruKuina・CHUKEI Playground</h1>
+    <nav class="language-tabs" aria-label="言語を切り替える"><span class="language-tabs-label">言語を切り替える</span><a href="./?lang=queena" data-language="queena">YanbaruKuina</a><a href="./?lang=chukei" data-language="chukei" aria-current="page">CHUKEI</a><a href="./8888/" data-language="8888">8888</a></nav>
+<h1 id="language-title" class="language-title">ちょっと刻んどきますね型言語 CHUKEI</h1>
     <section class="language-bar">
-      <label for="language">言語</label><select id="language"><option value="queena">YanbaruKuina</option><option value="chukei">CHUKEI</option><option value="8888">8888言語（試作）</option></select>
+      <select id="language" aria-label="言語" hidden><option value="queena">YanbaruKuina</option><option value="chukei">CHUKEI</option><option value="8888">8888</option></select>
       <label for="output-mode">出力</label><select id="output-mode" disabled aria-describedby="output-help"><option value="numeric">数値</option><option value="ascii">文字（ASCII）</option></select>
-      <span id="language-note" class="engine-badge">Z80</span><span id="output-help" class="sr-only">文字出力はCHUKEIのみ対応。</span>
+      <a class="cheat-link" href="#cheatsheet">チートシート ↓</a><span id="debug-note" class="feature-note" hidden>Z80のステップ実行は未対応</span><span id="language-note" class="engine-badge">Z80</span><span id="output-help" class="sr-only">文字出力はCHUKEIのみ対応。</span>
     </section>
     <div class="workspace">
       <section class="panel editor-panel" aria-labelledby="editor-heading">
@@ -42,7 +43,7 @@
         </div>
         <div class="file-tools"><button id="import-code" class="text-button" type="button">ファイルを開く</button><button id="download-code" class="text-button" type="button">ダウンロード</button><input id="code-file" type="file" accept=".🐧,.ykw,.chukei,.txt,text/plain" hidden><span id="file-status" role="status"></span></div><label class="sr-only" for="source">やんばるくいな言語のコード</label>
         <textarea id="source" spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off" aria-describedby="editor-help"></textarea>
-        <div class="editor-footer"><span id="editor-help">⌘ / Ctrl + Enter</span><button id="cancel" class="text-button" type="button" hidden>停止</button><button id="run" class="run-button" type="button"><span aria-hidden="true">▶</span> 2. 実行</button></div>
+        <div class="editor-footer"><span id="editor-help">⌘ / Ctrl + Enter</span><button id="cancel" class="text-button" type="button" hidden>停止</button><button id="debug-run" class="text-button" type="button" aria-describedby="debug-note">デバッグ実行</button><button id="run" class="run-button" type="button"><span aria-hidden="true">▶</span> 2. 実行</button></div>
       </section>
       <section class="panel result-panel" aria-labelledby="result-heading">
         <div class="panel-header"><h2 id="result-heading"><span class="step-badge">3</span> <span id="terminal-name">Z80 CONSOLE</span></h2><span id="status" class="status" role="status">待機中</span></div>
@@ -50,6 +51,24 @@
         <div class="result-footer"><span class="engine-light" aria-hidden="true"></span><span id="metrics"></span><svg id="z80-chip" width="64" height="32" viewBox="0 0 64 32" role="img" aria-label="Z80チップのイラスト"><path d="M8 2v28M16 2v28M24 2v28M32 2v28M40 2v28M48 2v28M56 2v28" stroke="#b7c3b5" stroke-width="3"/><rect x="3" y="6" width="58" height="20" rx="3" fill="#28332b" stroke="#9bac99"/><text x="32" y="20" text-anchor="middle" font-family="monospace" font-size="11" fill="#d4e4c8">Z80</text></svg></div>
       </section>
     </div>
+    <section class="panel cheat-panel" id="cheatsheet" aria-labelledby="cheat-title"><h2 id="cheat-title">チートシート</h2><div id="queena-cheat" hidden>
+<div class="cheat-grid">
+<div class="cheat-example"><h3>まずはこれを実行</h3><pre><code>t = 2 + 3
+naku(t)</code></pre><div class="cheat-result"><span class="sample-arrow" aria-hidden="true">↳</span><span>出力 </span><code>5</code></div></div>
+<ol class="cheat-steps"><li><strong>値を入れる：</strong><code>t = 2 + 3</code> で計算結果を置く。</li><li><strong>表示する：</strong><code>naku(t)</code> で値を出す。</li><li><strong>条件・繰り返し：</strong><code>moshi</code> と <code>aruku</code> の中身は <code>{ }</code> で囲む。</li></ol>
+</div>
+<h3>よく使う命令</h3>
+<div class="cheat-table-wrap"><table><thead><tr><th scope="col">命令</th><th scope="col">意味</th><th scope="col">書き方の例</th></tr></thead><tbody><tr><td><code>=</code></td><td>変数に値を入れる</td><td><code>t = 5</code></td></tr><tr><td><code>naku</code></td><td>数を表示</td><td><code>naku(t)</code></td></tr><tr><td><code>moshi</code></td><td>条件が真なら実行</td><td><code>moshi (t &gt; 0) { naku(t) }</code></td></tr><tr><td><code>aruku</code></td><td>条件が真の間繰り返す</td><td><code>aruku (t &gt; 0) { t = t - 1 }</code></td></tr></tbody></table></div>
+<p class="cheat-tip">行末までのコメントは <code>zz</code> または <code>//</code>。出力は数値です。</p>
+</div><div id="chukei-cheat">
+<div class="cheat-grid">
+<div class="cheat-example"><h3>まずはこれを実行</h3><pre><code>CCCHUK</code></pre><div class="cheat-result"><span class="sample-arrow" aria-hidden="true">↳</span><span>出力  <small>出力を「数値」にした場合</small></span><code>2</code></div></div>
+<ol class="cheat-steps"><li><strong>増やす：</strong><code>C</code> を2回書くと、セル0の値が2になる。</li><li><strong>表示する：</strong><code>CHUK</code> で現在のセルを出力する。</li><li><strong>見分ける：</strong>命令はすべて <code>C</code> から始まる。空白なしでも書ける。</li></ol>
+</div>
+<h3>よく使う命令</h3>
+<div class="cheat-table-wrap"><table><thead><tr><th scope="col">命令</th><th scope="col">意味</th><th scope="col">書き方の例</th></tr></thead><tbody><tr><td><code>C / CH</code></td><td>1増やす / 減らす</td><td><code>CCH</code></td></tr><tr><td><code>CHU</code></td><td>右のセルへ</td><td><code>CHU</code></td></tr><tr><td><code>CHUK</code></td><td>現在のセルを出力</td><td><code>CCCHUK</code></td></tr><tr><td><code>CHUKE … CHUKEI</code></td><td>現在セルが0になるまで繰り返す</td><td><code>CCCHUKECHUKCHCHUKEI</code></td></tr></tbody></table></div>
+<p class="cheat-tip">文字（ASCII）を選ぶと、セルの値65を <code>A</code> として表示します。コメントは使えません。</p>
+</div></section>
     <h2 class="explore-heading">しくみを見る <span>開いて確認</span></h2>
     <details class="tokens-panel panel stage">
       <summary><span class="panel-number">01</span> トークン</summary>

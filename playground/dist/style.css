@@ -33,3 +33,43 @@ select{background:#fff;border-color:#8da79a;box-shadow:none;font-size:13px;borde
 #walking-bird{max-width:calc(100% - 24px);flex-shrink:0}
 .pixel-rail{display:block;width:min(240px,100%);height:auto;aspect-ratio:40/26}
 @media(max-height:600px){.run-dialog-inner{padding:14px;gap:8px}.pixel-rail{width:120px}#stage-preview{max-height:70px}#stage-list{margin:6px 0}}
+
+/* Shared navigation and language quick reference. */
+.cheat-link { font-weight: 650; }
+.cheat-panel { padding: 1.15rem clamp(1rem, 3vw, 1.4rem); margin-bottom: 1.4rem; }
+.cheat-grid { display: grid; grid-template-columns: minmax(0, .87fr) minmax(0, 1fr); align-items: start; gap: .5rem 1.5rem; }
+.cheat-steps { padding-left: 1.4rem; margin-block: 1rem; }
+.cheat-steps li + li { margin-top: .55rem; }
+.cheat-panel h3, .docs-section h3 { font-size: 1rem; margin-bottom: .4rem; }
+.cheat-example pre, .doc-body pre, #debug-source { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; background: #eef5f0; border: 1px solid var(--line); border-radius: 8px; padding: .7rem .8rem; }
+.cheat-result, .cheat-tip { margin: .5rem 0 0; color: var(--muted); }
+.cheat-table-wrap { overflow-x: auto; }
+.cheat-panel table, .docs-section table { border-spacing: 0; }
+th, td { text-align: left; padding: .3rem .75rem .3rem .25rem; border-bottom: 1px solid var(--line); }
+
+.language-tabs { display:flex; align-items:center; flex-wrap:wrap; gap:.55rem; padding:.7rem; border:1px solid #9db8aa; background:#dce9e0; border-radius:12px; margin:0 0 1rem; }
+.language-tabs-label { font-weight:650; font-size:.88rem; padding-inline:.3rem; }
+.language-tabs a { display:inline-flex; align-items:center; justify-content:center; min-height:44px; min-width:6rem; border:1px solid #8da79a; border-radius:8px; padding:.45rem .85rem; font-weight:650; text-decoration:none; background:#fff; color:#205e4c; }
+.language-tabs a[aria-current="page"] { background:#205e4c; color:#fff; border-color:#205e4c; }
+.language-tabs a:hover:not([aria-current="page"]) { background:#f0f6f2; }
+.language-title { font-size:clamp(1.25rem, 3vw, 1.75rem); margin:0 0 .5rem; }
+.language-bar { margin-top:.65rem; }
+.common-output { font-size:13px; font-weight:600; }
+.editor-footer { flex-wrap:wrap; }
+.cheat-panel .cheat-example pre { font-family:var(--mono); }
+#cheatsheet { scroll-margin-top:1rem; }
+@media (max-width:760px) {
+  .language-tabs-label { flex-basis:100%; }
+  .language-tabs a { min-width:0; flex:1; padding-inline:.4rem; font-size:.875rem; }
+  .cheat-grid { grid-template-columns:minmax(0,1fr); }
+}
+
+.feature-note { font-size:.8rem; color:var(--muted); }
+.intro-symbols { display:flex; flex-wrap:wrap; gap:.4rem; align-items:center; }
+.intro-symbols code { background:#e3ece7; border:1px solid var(--line); border-radius:6px; min-width:1.8rem; padding:.08rem .35rem; text-align:center; font-weight:bold; }
+.cheat-example .cheat-result { display:flex; align-items:center; gap:.65rem; padding:.4rem .65rem; background:#edf5ef; border:1px solid var(--line); border-radius:8px; }
+.sample-arrow { color:var(--green); font-size:1.1rem; }
+.cheat-result code { margin-left:auto; font-weight:700; color:var(--green); }
+.cheat-result small { display:block; color:var(--muted); font-size:.75rem; }
+.cheat-panel th, .cheat-panel td { text-align:left; padding:.35rem .65rem .35rem .2rem; border-bottom:1px solid var(--line); }
+.cheat-panel td code { overflow-wrap:anywhere; }

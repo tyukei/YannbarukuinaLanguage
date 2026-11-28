@@ -5,7 +5,6 @@ main { padding-bottom: 3rem; }
 .intro { padding-block: .25rem .6rem; }
 .intro p { margin: .4rem 0; }
 .credit { color: var(--muted); font-size: .88em; }
-.cheat-link { font-weight: 650; }
 #source { min-height: 10rem; height: 15rem; }
 .editor-footer { flex-wrap: wrap; }
 .editor-footer .run-button { margin-left: auto; }
@@ -14,22 +13,11 @@ main { padding-bottom: 3rem; }
 .js-note { margin-inline: 18px; }
 .tools { display: flex; align-items: center; gap: .55rem .75rem; flex-wrap: wrap; margin-bottom: .6rem; }
 code, pre { font-family: var(--mono); }
-.cheat-panel { padding: 1.15rem clamp(1rem, 3vw, 1.4rem); margin-bottom: 1.4rem; }
-.cheat-grid { display: grid; grid-template-columns: minmax(0, .87fr) minmax(0, 1fr); align-items: start; gap: .5rem 1.5rem; }
-.cheat-steps { padding-left: 1.4rem; margin-block: 1rem; }
-.cheat-steps li + li { margin-top: .55rem; }
-.cheat-panel h3, .docs-section h3 { font-size: 1rem; margin-bottom: .4rem; }
-.cheat-example pre, .doc-body pre, #debug-source { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; background: #eef5f0; border: 1px solid var(--line); border-radius: 8px; padding: .7rem .8rem; }
-.cheat-result, .cheat-tip { margin: .5rem 0 0; color: var(--muted); }
-.cheat-table-wrap { overflow-x: auto; }
-.cheat-panel table, .docs-section table { border-spacing: 0; }
-th, td { text-align: left; padding: .3rem .75rem .3rem .25rem; border-bottom: 1px solid var(--line); }
 .doc-body { padding: 0 18px 14px; }
 .doc-body pre { max-height: 18rem; overflow: auto; }
 .docs-section caption { text-align: left; margin-top: .6rem; font-weight: 650; }
 #cheatsheet, #commands { scroll-margin-top: 1rem; }
 @media (max-width: 760px) {
-  .cheat-grid { grid-template-columns: minmax(0, 1fr); }
   .masthead .brand-word { display: none; }
   .result-content { min-height: 7rem; }
   th, td { padding-right: .45rem; }

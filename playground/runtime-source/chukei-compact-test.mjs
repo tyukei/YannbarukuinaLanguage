@@ -114,7 +114,13 @@ test('all ten UI samples are whitespace-free and produce expected output',()=>{
   }
  }
  assert.match(app,/let chukeiMode="ascii"/);
- assert.match(app,/el\("language"\)\.value="chukei"/);
+ const init=app.split('\n').find(line=>line.startsWith('el("language").value=')&&line.includes('requestedLanguage'));
+ assert.ok(init);
+ const select={};
+ const pick=(requestedLanguage,returning)=>vm.runInNewContext(init,{el:()=>select,requestedLanguage,returning});
+ assert.equal(pick(null,null),'chukei');
+ assert.equal(pick('queena',null),'queena');
+ assert.equal(pick(null,{language:'queena'}),'queena');
  assert.match(uiSamples.samples.hello,/naku\(6 \* 7\)/);
 });
 
