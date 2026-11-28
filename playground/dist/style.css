@@ -73,3 +73,10 @@ th, td { text-align: left; padding: .3rem .75rem .3rem .25rem; border-bottom: 1p
 .cheat-result small { display:block; color:var(--muted); font-size:.75rem; }
 .cheat-panel th, .cheat-panel td { text-align:left; padding:.35rem .65rem .35rem .2rem; border-bottom:1px solid var(--line); }
 .cheat-panel td code { overflow-wrap:anywhere; }
+
+/* Same layout and editor controls for all language choices. */
+#clap-mark:not([hidden]) { display:grid; place-items:center; font:750 34px var(--mono); letter-spacing:0; background:#e5efe7; color:var(--green); }
+#clap-trace { max-height:360px; overflow:auto; font-size:12px; }
+#clap-guide table { margin:0 0 .8rem; width:100%; }
+#clap-guide caption { text-align:left; font-weight:650; }
+#clap-guide th, #clap-guide td { text-align:left; padding:.25rem .45rem; }

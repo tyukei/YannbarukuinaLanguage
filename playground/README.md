@@ -1,8 +1,8 @@
-# Queena Playground — hosted browser edition
+# YanbaruKuina Playground — hosted browser edition
 
-Static, browser-local Yambaru Queena playground. No code execution endpoint, credentials, user database or code upload is required. The editor runs each program in a fresh Web Worker. A watchdog terminates runs exceeding 15 seconds.
+Static, browser-local YanbaruKuina playground. No code execution endpoint, credentials, user database or code upload is required. The editor runs each program in a fresh Web Worker. A watchdog terminates runs exceeding 15 seconds.
 
-The compiler is based on tyukei/YannbarukuinaLanguage, with the corrected parser and Z80 generator. The hosted runtime compiles to Z80 machine code and executes through a Z80 CPU emulator with minimal CP/M console support, not a complete CP/M operating system. The CPU emulator is not written in Queena.
+The compiler is based on tyukei/YannbarukuinaLanguage, with the corrected parser and Z80 generator. The hosted runtime compiles to Z80 machine code and executes through a Z80 CPU emulator with minimal CP/M console support, not a complete CP/M operating system. The CPU emulator is not written in YanbaruKuina.
 
 Source code entered by visitors is not persisted or sent to an execution server. Hosting access logs are outside this application's control.
 
@@ -18,7 +18,7 @@ Separate selectable language with six case-sensitive commands with no required s
 
 CHUKEI uses ASCII output only. CHUK emits one character without an automatic newline; 0–127 only, with 10 for newline and 32 for space. Values above 127 report an error. UI examples include ABC, AZaz, multiple cells and newlines.
 
-UI uses the same language/output controls, editor/result pair, and token/tree/generated-code/execution-step disclosures for both languages. Language details and illustrations are collapsed; Queena's unsupported ASCII selector is disabled and its step panel explicitly says CHUKEI only.
+YanbaruKuina, CHUKEI, and 8888 share one editor and output panel. The language tabs update only the `lang` query parameter and keep drafts in the same tab. Source files download as `.🐧`, `.🔴`, and `.👏`, respectively; the old extensions still open. The shared debugger replays up to 4,096 steps: cell values for the teaching VMs and actual Z80 assembly, register and memory states for YanbaruKuina.
 
 ## Compact CHUKEI source
 The default HELLO greeting and all CHUKEI examples now contain no whitespace. Whitespace-separated source still works, but all output uses ASCII characters rather than decimal cell values. See `runtime-source/chukei-README.md` for the scanner, build and regression checks.
@@ -34,10 +34,10 @@ Run `node runtime-source/ast-view-test.mjs` for presentation and DOM-adapter uni
 ## 8888言語（試作 v0.2）
 数字の `8` を1〜8個並べて1命令を書き、命令は空白か改行で区切ります。ベンガル数字の `৪` とオリヤー数字の `୪` も `8` と同じ1文字として数え、同じ命令内で混ぜられます。ASCIIの `4` は単独では命令になりません（`set 4` は値の指定として有効）。`👏 メモ 👏` はコメントです。行をまたげますが入れ子にはできません。コメントは命令の区切りとして扱い、閉じ忘れはエラーになります。`8` が現在のセルを1増やし、`88888` が値を出力します。例：`8 8 8 8 8 88888` → `5`。既存言語とは別の試作仕様です。
 
-- [ブラウザで動かす](https://yanbarukuina.chukei.online/8888/)
+- [ブラウザで動かす](https://yanbarukuina.chukei.online/?lang=8888)
 - `dist/8888/engine.mjs` がバイトコード生成とVM実行を担当します。一命令3バイト（命令番号、即値やジャンプ先の下位・上位バイト）で、ジャンプ先はバイト単位のアドレスです。Z80の機械語ではありません。
-- `playground/` 直下で `node --test runtime-source/8888.test.mjs`。ローカル表示は `python3 -m http.server 8000 --bind 127.0.0.1 --directory dist` のあと `http://127.0.0.1:8000/8888/`。
-- Pages公開時は `dist/8888/` とトップページのリンクを保持します。外部ライブラリ・実行サーバーは不要です。
+- `playground/` 直下で `node --test runtime-source/8888.test.mjs`。ローカル表示は `python3 -m http.server 8000 --bind 127.0.0.1 --directory dist` のあと `http://127.0.0.1:8000/?lang=8888`。
+- 8888は同じPlayground内で切り替えます。旧 `/8888/` URLは引き続き使えます。外部ライブラリ・実行サーバーは不要です。
 
 - `set 2 push set 3 add 88888` は `5` を表示します。 `sub` は左の保存値から現在値を引きます。結果は8ビットで循環します。
 - `set 65 char` は `A` を出力します。文字出力は表示可能な ASCII と改行に対応します。

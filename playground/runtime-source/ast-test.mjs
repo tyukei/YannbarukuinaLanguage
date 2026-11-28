@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import assert from 'node:assert/strict';
 import {runQueena} from './runtime.js';
-const wasm=fs.readFileSync('dist/queena.wasm');
+const wasm=fs.readFileSync(new URL('../dist/yanbarukuina.wasm',import.meta.url));
 function flatten(root){const nodes=[];const walk=n=>{assert.equal(typeof n.label,'string');assert.ok(Array.isArray(n.children));nodes.push(n);n.children.forEach(walk);};walk(root);assert.equal(new Set(nodes.map(n=>n.id)).size,nodes.length);return nodes;}
 let passed=0;
 const r=await runQueena('x=(2+3)*4\nnaku(x)',wasm);

@@ -1,4 +1,4 @@
-# Queena browser runtime
+# YanbaruKuina browser runtime
 
 Existing corrected Zig lexer/parser/Z80 code generator compiled to WebAssembly, followed by an MIT-licensed browser assembler and Z80 CPU emulator. This is actual generated Z80 machine-code execution, not a JavaScript language interpreter. A minimal CP/M BDOS console shim handles calls 2 and 9; no full CP/M OS or ROM is loaded.
 
@@ -6,11 +6,11 @@ Existing corrected Zig lexer/parser/Z80 code generator compiled to WebAssembly, 
 - Install Zig 0.14.1 (build-only).
 - `npm ci`
 - `zig build`
-- `cp zig-out/bin/queena.wasm dist/`
-- `node_modules/.bin/esbuild worker.js --bundle --format=esm --platform=browser --target=es2020 --outfile=dist/worker.js`
+- `cp zig-out/bin/yanbarukuina.wasm ../dist/`
+- `node_modules/.bin/esbuild worker.js --bundle --format=esm --platform=browser --target=es2020 --outfile=../dist/runtime-worker.js`
 - `node test.mjs` and `node extended-test.mjs`
 
-Deploy `dist/worker.js`, `dist/queena.wasm`, and `dist/THIRD-PARTY-LICENSES.txt` in one directory. UI creates a module Worker at worker.js and posts `{source}`. Worker returns `{ok,output,error?,assembly,binary_bytes,elapsed_ms,instructions?}`. Terminate Worker after each result and provide a UI watchdog (15 seconds) and Cancel button.
+Deploy `../dist/runtime-worker.js`, `../dist/yanbarukuina.wasm`, and `dist/THIRD-PARTY-LICENSES.txt` in one directory. UI creates a module Worker at runtime-worker.js and posts `{source, debug?}`. Worker returns `{ok,output,error?,assembly,binary_bytes,elapsed_ms,instructions?}`. Terminate Worker after each result and provide a UI watchdog (15 seconds) and Cancel button.
 
 Limits: UTF-8 source 16 KiB, output 16 KiB, compiled code below 0x7000 (entry 0x0100), 5 million instructions, 2.5 second internal execution deadline, 32 MiB WASM maximum memory. No network other than static same-origin WASM fetch; source never leaves the device. Each run has fresh WASM instance and CPU memory.
 
@@ -43,3 +43,7 @@ never as HTML. Tokens do not imply syntax or code generation support: for exampl
 the lexer recognizes strings even though this compiler cannot execute them.
 
 Run `node token-test.mjs` for 10 additional lexer-export regression tests.
+
+## Debugger
+
+With `debug: true` the worker records the first 4,096 completed Z80 instructions, the loaded bytes, the actual PC and registers, and changed memory bytes. The displayed source position refers to the generated assembly, not the original high-level code. The browser replays snapshots rather than starting the emulator again per step.

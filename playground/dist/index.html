@@ -3,14 +3,15 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="やんばるくいな言語を書いて、Z80 で動かすブラウザ内実験室。">
+  <meta name="description" content="YanbaruKuina、CHUKEI、8888を同じ画面で試せるブラウザ内実験室。">
   <title>YanbaruKuina Playground</title>
-  <link rel="stylesheet" href="./style.css?v=language-tabs-1">
+  <link rel="stylesheet" href="./style.css?v=unified-1">
   <link rel="stylesheet" href="./ast-view.css?v=visual-20261114">
   <script src="./ast-view.js?v=visual-20261114" defer></script>
-  <script src="./app.js?v=ascii-only-1" defer></script>
+  <link rel="stylesheet" href="./8888/style.css?v=unified-1">
+  <script type="module" src="./app.js?v=unified-1"></script>
   <style>
-    #bytecode[hidden] + .vm-command-guide { display: none; }
+
     .vm-command-guide { margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--line); font-size: 12px; }
     .vm-command-guide ul { margin: 8px 0; padding-left: 1.4em; }
     .vm-command-guide li { margin: 4px 0; }
@@ -19,19 +20,18 @@
 <body>
   <main>
     <header class="masthead">
-      <a class="brand" href="./" aria-label="Playground ホーム"><img id="queena-mark" class="language-logo" src="./images/yanbaru-logo.svg" width="64" height="64" alt="YanbaruKuina ロゴ"><img id="chukei-mark" class="language-logo" src="./images/chukei-logo.svg" width="64" height="64" alt="CHUKEI ロゴ" hidden> <span id="brand-name" class="sr-only">YanbaruKuina</span> </a>
+      <a class="brand" href="./" aria-label="Playground ホーム"><img id="queena-mark" class="language-logo" src="./images/yanbaru-logo.svg" width="64" height="64" alt="YanbaruKuina ロゴ"><img id="chukei-mark" class="language-logo" src="./images/chukei-logo.svg" width="64" height="64" alt="CHUKEI ロゴ" hidden> <span id="clap-mark" class="language-logo bird" aria-hidden="true" hidden>8</span><span id="brand-name" class="sr-only">YanbaruKuina</span> </a>
       
       <nav aria-label="関連ページ" style="display:flex;flex-wrap:wrap;gap:.5rem 1rem;justify-content:flex-end">
-        <a href="./8888/">8888</a>
         <a href="./guide/">コードはどうやって動く？</a>
       </nav>
     </header>
-    <nav class="language-tabs" aria-label="言語を切り替える"><span class="language-tabs-label">言語を切り替える</span><a href="./?lang=queena" data-language="queena">YanbaruKuina</a><a href="./?lang=chukei" data-language="chukei" aria-current="page">CHUKEI</a><a href="./8888/" data-language="8888">8888</a></nav>
+    <nav class="language-tabs" aria-label="言語を切り替える"><span class="language-tabs-label">言語を切り替える</span><a href="./?lang=yanbarukuina" data-language="yanbarukuina">YanbaruKuina</a><a href="./?lang=chukei" data-language="chukei" aria-current="page">CHUKEI</a><a href="./?lang=8888" data-language="8888">8888</a></nav>
 <h1 id="language-title" class="language-title">ちょっと中継しときますね型言語 CHUKEI</h1>
     <section class="language-bar">
-      <select id="language" aria-label="言語" hidden><option value="queena">YanbaruKuina</option><option value="chukei">CHUKEI</option><option value="8888">8888</option></select>
-      <span id="ascii-output-note" class="feature-note">出力：ASCII</span>
-      <a class="cheat-link" href="#cheatsheet">チートシート ↓</a><span id="debug-note" class="feature-note" hidden>Z80のステップ実行は未対応</span><span id="language-note" class="engine-badge">Z80</span>
+      <select id="language" aria-label="言語" hidden><option value="yanbarukuina">YanbaruKuina</option><option value="chukei">CHUKEI</option><option value="8888">8888</option></select>
+      <span id="output-format-note" class="feature-note">出力：ASCII</span>
+      <a class="cheat-link" href="#cheatsheet">チートシート ↓</a><span id="language-note" class="engine-badge">Z80</span>
     </section>
     <div class="workspace">
       <section class="panel editor-panel" aria-labelledby="editor-heading">
@@ -41,9 +41,9 @@
           <select id="example"><option value="hello">はじめの一歩</option><option value="branch">分岐してみる</option><option value="loop">くり返してみる</option><option value="control">スキップと脱出</option></select>
           
         </div>
-        <div class="file-tools"><button id="import-code" class="text-button" type="button">ファイルを開く</button><button id="download-code" class="text-button" type="button">ダウンロード</button><input id="code-file" type="file" accept=".🐧,.ykw,.chukei,.txt,text/plain" hidden><span id="file-status" role="status"></span></div><label class="sr-only" for="source">やんばるくいな言語のコード</label>
+        <div class="file-tools"><button id="import-code" class="text-button" type="button">ファイルを開く</button><button id="download-code" class="text-button" type="button">ダウンロード</button><input id="code-file" type="file" accept=".🐧,.ykw,.🔴,.chukei,.👏,.8888,.txt,text/plain" hidden><span id="file-status" role="status"></span></div><label class="sr-only" for="source">やんばるくいな言語のコード</label>
         <textarea id="source" spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off" aria-describedby="editor-help"></textarea>
-        <div class="editor-footer"><span id="editor-help">⌘ / Ctrl + Enter</span><button id="cancel" class="text-button" type="button" hidden>停止</button><button id="debug-run" class="text-button" type="button" aria-describedby="debug-note">デバッグ実行</button><button id="run" class="run-button" type="button"><span aria-hidden="true">▶</span> 2. 実行</button></div>
+        <div class="editor-footer"><span id="editor-help">⌘ / Ctrl + Enter</span><button id="cancel" class="text-button" type="button" hidden>停止</button><button id="debug-run" class="text-button" type="button">デバッグ実行</button><button id="run" class="run-button" type="button"><span aria-hidden="true">▶</span> 2. 実行</button></div>
       </section>
       <section class="panel result-panel" aria-labelledby="result-heading">
         <div class="panel-header"><h2 id="result-heading"><span class="step-badge">3</span> <span id="terminal-name">Z80 CONSOLE</span></h2><span id="status" class="status" role="status">待機中</span></div>
@@ -73,9 +73,28 @@ CHUK</code></pre><div class="cheat-result"><span class="sample-arrow" aria-hidde
 <h3>よく使う命令</h3>
 <div class="cheat-table-wrap"><table><thead><tr><th scope="col">命令</th><th scope="col">意味</th><th scope="col">書き方の例</th></tr></thead><tbody><tr><td><code>C / CH</code></td><td>1増やす / 減らす</td><td><code>CCH</code></td></tr><tr><td><code>CHU</code></td><td>右のセルへ</td><td><code>CHU</code></td></tr><tr><td><code>CHUK</code></td><td>現在のセルをASCIIで出力</td><td><code>CHUK</code></td></tr><tr><td><code>CHUKE … CHUKEI</code></td><td>現在セルが0になるまで繰り返す</td><td><code>CCCHUKECHUKCHCHUKEI</code></td></tr></tbody></table></div>
 <p class="cheat-tip"><code>65 → A</code> ／ <code>10 → 改行</code> ／ <code>32 → 空白</code>。128以上は出力エラーです。</p>
+</div><div id="clap-cheat" hidden>
+<div class="cheat-grid">
+<div class="cheat-example">
+<h3>まずは「こんにちは」</h3>
+<pre><code>マジ挨拶{
+  ৪৪৪神こんにちは神
+}
+めっちゃ{挨拶}</code></pre>
+<div class="cheat-result"><span class="sample-arrow" aria-hidden="true">↳</span><span>出力 </span><code>こんにちは</code></div>
+</div>
+<ol class="cheat-steps">
+<li><strong>宣言する：</strong><code>マジ名前{…}</code> にやりたいことを書く。</li>
+<li><strong>呼び出す：</strong><code>めっちゃ{名前}</code> で中身を実行する。</li>
+<li><strong>表示する：</strong><code>৪৪৪神文字神</code> で文字を出す。<code>৪৪৪</code> だけなら今の数を出す。</li>
+</ol>
+</div>
+<h3>よく使う命令</h3>
+<div class="cheat-table-wrap"><table><thead><tr><th scope="col">命令</th><th scope="col">意味</th><th scope="col">書き方の例</th></tr></thead><tbody id="commands-body"></tbody></table></div>
+<p class="cheat-tip"><code>神</code> は値の区切り、<code>👏メモ👏</code> はコメント。命令同士の空白や改行は省けます。<a href="#commands">全命令を見る ↓</a></p>
 </div></section>
     <h2 class="explore-heading">しくみを見る <span>開いて確認</span></h2>
-    <details class="tokens-panel panel stage">
+    <details id="tokens-panel" class="tokens-panel panel stage">
       <summary><span class="panel-number">01</span> トークン</summary>
       <div class="ast-body"><p id="tokens-note" role="status">実行で表示。</p><ol id="tokens-list" aria-label="ソース順のトークン"></ol></div>
     </details>
@@ -87,18 +106,69 @@ CHUK</code></pre><div class="cheat-result"><span class="sample-arrow" aria-hidde
         <p id="ast-summary"></p><div id="ast-tree" role="region" aria-label="構文木の親子関係。大きい木は縦横にスクロールできます" tabindex="0"></div><p id="ast-limit" role="status" hidden></p>
       </div>
     </details>
-    <details id="chukei-code" class="panel ast-panel stage"><summary><span class="panel-number">03</span> 生成コード <small id="code-kind">Z80アセンブリ</small></summary><div class="ast-body"><button id="download-generated" class="text-button" type="button" disabled>生成コードを保存</button><pre id="assembly">実行で表示。</pre><pre id="bytecode" hidden>実行で表示。</pre><aside class="vm-command-guide" aria-label="CHUKEIのVM命令"><p><strong>CHUKEI → VM命令</strong></p><ul>
+    <details id="chukei-code" class="panel ast-panel stage"><summary><span class="panel-number">03</span> 生成コード <small id="code-kind">Z80アセンブリ</small></summary><div class="ast-body"><button id="download-generated" class="text-button" type="button" disabled>生成コードを保存</button><pre id="assembly">実行で表示。</pre><pre id="bytecode" hidden>実行で表示。</pre><aside id="chukei-vm-guide" class="vm-command-guide" aria-label="CHUKEIのVM命令"><p><strong>CHUKEI → VM命令</strong></p><ul>
 <li><code>C → INC</code>：現在のセルを1増やす</li>
 <li><code>CH → DEC</code>：現在のセルを1減らす</li>
 <li><code>CHU → RIGHT</code>：右のセルへ移動</li>
-<li><code>CHUK → OUT</code>：現在のセルを数値または文字で出力</li>
+<li><code>CHUK → OUT</code>：現在のセルをASCII文字として出力</li>
 <li><code>CHUKE → JZ</code>：現在のセルが0なら、ループの後へ</li>
 <li><code>CHUKEI → JNZ</code>：現在のセルが0以外なら、ループ本体の先頭へ</li>
 </ul><p>JZ・JNZの後ろの数字は、移動先の命令番号（0始まり）です。セルの位置ではありません。</p></aside></div></details>
-    <details id="chukei-trace" class="panel ast-panel stage"><summary><span class="panel-number">04</span> 実行ステップ</summary><div class="ast-body"><p id="trace-note">CHUKEIのみ対応。</p><div class="trace-controls" hidden><button id="trace-prev" type="button">前へ</button><input id="trace-index" type="range" min="0" max="0" value="0" aria-label="実行ステップ"><button id="trace-next" type="button">次へ</button></div><pre id="trace-state"></pre></div></details>
+    <details id="execution-trace" class="panel ast-panel stage"><summary><span class="panel-number">04</span> 実行ステップ</summary><div class="ast-body"><p id="trace-note">実行で表示。</p><div class="trace-controls" hidden><button id="trace-prev" type="button">前へ</button><input id="trace-index" type="range" min="0" max="0" value="0" aria-label="実行ステップ"><button id="trace-next" type="button">次へ</button></div><pre id="trace-state"></pre><section id="debug-panel" aria-labelledby="debug-title" hidden>
+<h3 id="debug-title">デバッグ：1命令ずつ見る</h3>
+<p>前後に進めて、命令の位置と実行後の値を確認できます。</p>
+<p id="debug-limit" hidden></p>
+<div class="tools debug-actions">
+<button id="debug-prev" type="button">← 戻る</button>
+<button id="debug-next" type="button">進む →</button>
+</div>
+<label for="debug-step">デバッグ位置</label>
+<input id="debug-step" type="range" min="0" max="0" step="1" value="0">
+<p id="debug-status" role="status"></p>
+<div id="debug-source-view">
+<p id="debug-source-label">ソース上の位置</p>
+<pre id="debug-source" aria-labelledby="debug-source-label"></pre>
+<p id="debug-effect" aria-live="polite"></p>
+<section id="debug-addresses" aria-labelledby="debug-address-title">
+<h4 id="debug-address-title">命令のアドレス（PC）</h4>
+<dl class="debug-address-pair">
+<div><dt>実行した命令</dt><dd><code id="debug-pc">未実行</code></dd></div>
+<div><dt>次の命令</dt><dd><code id="debug-next-pc">0x0000</code></dd></div>
+</dl>
+<p id="debug-pc-note">アドレスはバイトコード上の位置です。セル番号とは別です。</p>
+<h5 id="debug-map-title">命令の配置</h5>
+<p id="debug-map-help">1行が1つのVM命令（3バイト）です。同じ8888コードが複数行に出るのは、1つの命令から複数のVM命令が作られたためです。</p>
+<div id="debug-map-scroll" tabindex="0" role="region" aria-labelledby="debug-map-title" aria-describedby="debug-map-help">
+<table id="debug-map"><thead><tr><th scope="col">アドレス</th><th scope="col" id="debug-map-source-heading">元のコード</th><th scope="col">バイト列</th><th scope="col">命令</th><th scope="col">実行位置</th></tr></thead><tbody id="debug-map-body"></tbody></table>
+</div>
+<p id="debug-map-empty" hidden>配置された命令はありません。</p>
+</section>
+</div>
+<pre id="debug-registers" aria-label="Z80レジスタ" hidden></pre>
+<div class="tools" id="debug-cell-picker"><label for="debug-page">表示するセル</label>
+<select id="debug-page"><option value="auto">現在のセルを追う</option></select></div>
+<div class="tools" id="debug-memory-picker" hidden><label for="debug-bank">メモリ（16進アドレス）</label><input id="debug-bank" maxlength="6" placeholder="自動で追う" spellcheck="false" pattern="(?:0[xX])?[0-9a-fA-F]{1,4}"></div>
+<ul id="debug-cells" aria-label="メモリの位置と値"></ul>
+</section><pre id="clap-trace" hidden></pre></div></details>
     <details class="help panel stage"><summary>使い方・仕様</summary><div class="ast-body">
       <div id="queena-help"><p>naku：出力 ／ moshi：分岐 ／ aruku：ループ ／ zz：コメント</p><p>Zig/WASM → Z80アセンブリ → 機械語 → 既存Z80エミュレータ。CP/Mはコンソール出力のみ。</p></div>
       <div id="chukei-guide" hidden><p>C：+1 ／ CH：−1 ／ CHU：右へ ／ CHUK：出力 ／ CHUKE・CHUKEI：ループ</p><p>スペース不要の6命令。次のCが命令の区切りです。既存の空白・改行区切りも使えます。256セル、値0〜255、値・ポインタは循環。現在セルが0ならループ終了。入力・コメントなし。</p><p>JavaScript製コンパイラ → 教材用VM（Z80ではありません）。JZ：0なら移動、JNZ：0以外なら移動。</p><p>ASCII：65=A、90=Z、97=a、122=z、10=改行、32=空白。0〜127のみ。自動改行・日本語なし。</p></div>
+      <div id="clap-guide" hidden><p>作ってみた88888<strong>👏👏👏</strong><br>とりあえず公開888888888っうぇ</p><p>名前の参考：<a href="https://web.archive.org/web/20241214191045/http://www.blue.sky.or.jp/grass/doc_ja.html">ちょっと草植えときますね型言語 Grass</a>（<a href="http://www.blue.sky.or.jp/grass/doc_ja.html">元サイト</a>）</p><h3 id="commands">全命令と詳しいルール</h3>
+<p>命令は3文字。先頭の <code>8</code> は計算、<code>৪</code> は値、<code>୪</code> は移動・ループ。値は <code>神</code> で区切ります。</p>
+<details class="panel stage"><summary>すべての命令（先頭の文字で分類）</summary><div class="doc-body">
+<table><caption>8：計算</caption><thead><tr><th scope="col">命令</th><th scope="col">意味</th></tr></thead><tbody id="command-group-0"></tbody></table>
+<table><caption>৪：値</caption><thead><tr><th scope="col">命令</th><th scope="col">意味</th></tr></thead><tbody id="command-group-1"></tbody></table>
+<table><caption>୪：移動・ループ</caption><thead><tr><th scope="col">命令</th><th scope="col">意味</th></tr></thead><tbody id="command-group-2"></tbody></table>
+</div></details>
+<h3>計算と文字</h3>
+<p><code>88৪神2神3神৪৪৪</code> は <code>5</code> を表示します。<code>88୪神5神2神৪৪৪</code> は <code>3</code>、<code>৪৪৪神こんにちは神</code> は文字を表示します。<code>神</code> は値の境界です。たとえば <code>88৪神8神3神</code> の先頭の <code>88৪</code> は足し算の命令、<code>神8神</code> の <code>8</code> は計算する数です。表示する文字の中では空白も残り、<code>\神</code> と書けば文字として「神」を表示できます。</p>
+<h3>関数</h3>
+<p><code>マジ名前{…}</code> で関数を宣言します。中身だけを <code>{ }</code> で囲み、<code>めっちゃ{名前}</code> で実行します。関数の内外で同じセルを使います。</p>
+<details class="panel stage"><summary>以前の書き方（互換モード）</summary><p class="doc-body"><code>マジ 名前</code> のように関数名を引用符で囲まない以前のコードも実行できます。<code>マジ"名前"</code> から始まる旧形式（v0.3）や、旧命令の並びもそのまま動きます。空白で区切る旧形式で、<code>8</code>・<code>৪</code>・<code>୪</code> を同じ1文字として数えます。<code>set</code> や <code>fn</code> / <code>end</code> / <code>call</code> も旧形式のまま使えます。</p></details>
+<p>最初は256個のセルがすべて0で、左端のセルから始まります。値（0〜255）とセルの位置は端で一周します。ループの入れ子も使えます。</p>
+<p><code>👏 メモ 👏</code> のように、2つの <code>👏</code> で囲んだ部分はコメントになり、実行されません。複数行にまたがって書けます。最後の <code>👏</code> がない場合はエラーです。プログラムへの入力機能はありません。</p>
+<p>入力と実行回数に上限があり、終わらないループは自動で停止します。コードは端末のブラウザ内だけで処理します。</p>
+</div>
       <p>すべてブラウザ内で処理。コードは送信しません。トークン・構文木は実際の解析結果です。YanbaruKuinaの列位置はUTF-8バイト単位。</p>
     </div></details>
     <details class="panel stage implementation"><summary>文法・実装コード</summary><div class="ast-body">
@@ -162,7 +232,13 @@ loop = "CHUKE", { statement }, "CHUKEI" ;</pre>
   if(stack.length){const t=stack.at(-1).token;throw Error(`Unmatched CHUKE at line ${t.line}, column ${t.column}`);}
 </code></pre><p>スタックで開始と終了を対応付け、JZはループ後、JNZは本体先頭へ。ASTと命令列を同時に作る。</p>
 <p><a href="https://github.com/tyukei/YannbarukuinaLanguage/blob/feat/queena-chukei-playground/playground/runtime-source/chukei-runtime.js" target="_blank" rel="noopener">実装全体</a> · <a href="https://github.com/tyukei/YannbarukuinaLanguage/blob/feat/queena-chukei-playground/playground/runtime-source/chukei-compact-test.mjs" target="_blank" rel="noopener">テスト</a></p>
-<p>JavaScript製の教材用VM。Z80ではありません。CHUKは値をASCII文字として1文字出力します。ASCIIは0〜127、自動改行なし。</p></div>
+<p>JavaScript製の教材用VM。Z80ではありません。CHUKは値をASCII文字として1文字出力します。ASCIIは0〜127、自動改行なし。</p></div><div id="clap-implementation" hidden><h3>8888 · EBNF（抜粋）</h3>
+<pre>関数宣言 = "マジ", 名前, "{", { 文 }, "}" ;
+関数呼出 = "めっちゃ", "{", 名前, "}" ;
+計算     = ("88৪" | "88୪"), [ "神", 数, "神", 数, "神" ] ;
+表示     = "৪৪৪", [ "神", 文字列, "神" ] ;</pre>
+<p><a href="https://github.com/tyukei/YannbarukuinaLanguage/blob/feat/queena-chukei-playground/playground/dist/8888/engine.mjs">コンパイラとVMの実装</a></p>
+<p>ソースは1命令3バイトの専用VM命令に変換されます。<a href="./guide/#z80">Z80の実機命令との違いを見る</a></p></div>
 <p class="notation">EBNF：{ } 繰り返し ／ [ ] 省略可能 ／ | 選択 ／ , 連結</p></div></details>
     <details class="illustration-disclosure panel stage"><summary>図で見る</summary>
     <section class="illustrated-guide" aria-labelledby="flow-heading">

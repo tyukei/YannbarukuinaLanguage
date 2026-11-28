@@ -1,6 +1,6 @@
 # CHUKEI educational VM
 
-This is a separate language/runtime, not Queena, native CPU machine code or Z80.
+This is a separate language/runtime, not YanbaruKuina, native CPU machine code or Z80.
 Exact case-sensitive commands; spaces are not required:
 C increment; CH decrement; CHU move right; CHUK emit current cell as one ASCII character;
 CHUKE begin loop while current cell != 0; CHUKEI end loop.

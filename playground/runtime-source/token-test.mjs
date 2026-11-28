@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import assert from 'node:assert/strict';
 import {runQueena} from './runtime.js';
-const wasm=fs.readFileSync('dist/queena.wasm');
+const wasm=fs.readFileSync(new URL('../dist/yanbarukuina.wasm',import.meta.url));
 let passed=0;
 let r=await runQueena('x=2\nnaku(x+3)',wasm);
 assert.equal(r.ok,true);assert.equal(r.output,'5\n');assert.deepEqual(r.tokens.map(t=>t.kind),['identifier','equal','number','kw_print','left_paren','identifier','plus','number','right_paren','eof']);assert.deepEqual(r.tokens[3],{kind:'kw_print',lexeme:'naku',line:2,column:1});passed++;

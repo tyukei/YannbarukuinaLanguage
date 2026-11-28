@@ -1,4 +1,4 @@
-// CHUKEI educational VM. Independent from Queena and the Z80 pipeline.
+// CHUKEI educational VM. Independent from YanbaruKuina and the Z80 pipeline.
 const COMMANDS = Object.freeze({C:'INC',CH:'DEC',CHU:'RIGHT',CHUK:'OUT',CHUKE:'JZ',CHUKEI:'JNZ'});
 const SOURCE_LIMIT=16384, OUTPUT_LIMIT=16384, STEP_LIMIT=1000000, TIME_LIMIT_MS=1500;
 export function runChukei(source, options={}) {
@@ -40,11 +40,14 @@ export function runChukei(source, options={}) {
   // Publish only a fully validated AST and bytecode, never partially patched jumps.
   result.ast=root;result.bytecode=code;
   const cells=new Uint8Array(256);let pointer=0,pc=0;
+  const frames=options.debug?[{next:0,pointer:0}]:null;
+  if(frames) result.debug={frames,steps:0};
   try {
    while(pc<code.length) {
     if(result.steps>=STEP_LIMIT) throw Error('命令実行上限（1,000,000ステップ）に達しました。');
     if((result.steps&4095)===0 && performance.now()-started>TIME_LIMIT_MS) throw Error('実行時間上限（1.5秒）に達しました。');
     const ins=code[pc];const executedPc=pc;let emitted;result.steps++;
+    const previousPointer=pointer, before=cells[pointer];
     switch(ins.op) {
      case 'INC':cells[pointer]=(cells[pointer]+1)&255;pc++;break;
      case 'DEC':cells[pointer]=(cells[pointer]+255)&255;pc++;break;
@@ -58,6 +61,15 @@ export function runChukei(source, options={}) {
      case 'JZ':pc=cells[pointer]===0?ins.arg:pc+1;break;
      case 'JNZ':pc=cells[pointer]!==0?ins.arg:pc+1;break;
      default:throw Error('Invalid VM instruction');
+    }
+    if(frames) {
+     result.debug.steps++;
+     if(frames.length<=4096){
+      const t=result.tokens[ins.sourceIndex], after=cells[previousPointer];
+      frames.push({pc:executedPc,next:pc,pointer,previousPointer,op:ins.op,before,after,emitted,
+       source:`${t.line}行 ${t.column}列`,sourceLength:t.lexeme.length,
+       change:before===after?null:{index:previousPointer,from:before,to:after}});
+     }
     }
     if(result.trace.length<200) result.trace.push({step:result.steps,pc:executedPc,op:ins.op,next_pc:pc,pointer,value:cells[pointer],...(emitted!==undefined?{output:emitted}:{})});
     else result.trace_truncated=true;

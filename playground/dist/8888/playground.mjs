@@ -1,66 +1,5 @@
-import {commandGroups, commandTable, compactCodes, compile, debugSnapshot, hex, instructions, run} from './engine.mjs?v=14';
+import {commandGroups, commandTable, compactCodes, debugSnapshot, hex, instructions} from './engine.mjs?v=unified-1';
 
-const $ = id => document.getElementById(id);
-const source = $('source'), output = $('output'), error = $('error');
-const draftKey = 'yanbarukuina.playground.8888-draft';
-// Keep the 8888 draft in this tab while switching to another language.
-try {
-  const draft = sessionStorage.getItem(draftKey);
-  if (draft !== null) source.value = draft;
-} catch { /* No storage in some private browsing modes. */ }
-if (typeof document.querySelectorAll === 'function') {
-  for (const link of document.querySelectorAll('.language-tabs [data-language]')) {
-    link.addEventListener('click', event => {
-      if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
-      if (link.dataset.language === '8888') {
-        event.preventDefault();
-        return;
-      }
-      try { sessionStorage.setItem(draftKey, source.value); } catch { /* Keep navigation available. */ }
-    });
-  }
-}
-const resultStatus = $('result-status');
-const bytes = $('bytes'), trace = $('trace'), runButton = $('run');
-let generated = null;
-function saveFile(contents, filename, kind) {
-  const url = URL.createObjectURL(new Blob([contents], {type:kind}));
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = filename;
-  document.body.append(link);
-  link.click();
-  link.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
-}
-$('import-code').addEventListener('click', () => $('code-file').click());
-$('code-file').addEventListener('change', async () => {
-  const input = $('code-file'), file = input.files[0];
-  try {
-    if (!file) return;
-    if (file.size > 16384) throw new Error('16 KiB以内のファイルを選んでください。');
-    const value = new TextDecoder('utf-8', {fatal:true}).decode(await file.arrayBuffer());
-    if (value.includes('\u0000')) throw new Error('テキストファイルを選んでください。');
-    if (source.value && !confirm('編集中のコードを置き換えます。必要なら先にダウンロードしてください。')) return;
-    source.value = value;
-    clear();
-    $('file-status').textContent = '読み込み完了。実行できます。';
-  } catch (error) {
-    $('file-status').textContent = error instanceof TypeError ? 'UTF-8のテキストを選んでください。' : error.message;
-  } finally { input.value = ''; }
-});
-$('download-code').addEventListener('click', () => {
-  if (new TextEncoder().encode(source.value).length > 16384) {
-    $('file-status').textContent = 'コードを16 KiB以内にしてください。';
-    return;
-  }
-  saveFile(source.value, 'main.8888', 'text/plain;charset=utf-8');
-});
-$('download-generated').addEventListener('click', () => {
-  if (!generated) return;
-  const {code, literals} = generated;
-  saveFile(JSON.stringify({format:'8888 educational VM', version:1, code:[...code], literals}, null, 2), 'main.8888-vm.json', 'application/json');
-});
 function example(name, body, calls = 1) {
   return 'マジ' + name + '{' + body + '}' + ('めっちゃ{' + name + '}').repeat(calls);
 }
@@ -68,8 +7,8 @@ const [inc, dec, right, left, print, loop, again, , set, , add, sub] = compactCo
 const plus = add + '神2神3神', minus = sub + '神5神2神';
 const put = n => set + '神' + n + '神';
 const display = text => print + '神' + text + '神';
-const examples = {
-  add: example('五を出す', '👏2と3を足して表示する👏' + plus + print),
+export const examples = {
+  hello: example('五を出す', '👏2と3を足して表示する👏' + plus + print),
   count: example('カウントダウン', '👏3から1まで順に表示する👏' + put(3) + loop + print + dec + again),
   move: example('セルを移動', '👏隣のセルに移って戻る👏' + put(1) + right + put(2) + print + left + print),
   bengali: example('ベンガル数字', '👏৪を含む命令で1ずつ増やす👏' + inc.repeat(5) + print),
@@ -80,6 +19,10 @@ const examples = {
   function: example('あいさつ', '👏この関数を呼ぶたびにHIを表示する👏' + display('HI'), 2),
 };
 
+export const exampleNames = ['2 + 3 → 5','カウントダウン → 3, 2, 1','別のセルに移動 → 2, 1','৪ を使って増やす → 5','8・৪・୪ を混ぜる → 5','👏 コメントを書く → 5','足し算・引き算 → 5, 3','文字を出す → こんにちは','関数を呼ぶ → HIHI'];
+
+export function initDebugger(document) {
+  const $ = id => document.getElementById(id);
 function showCommands(id, commands) {
   for (const [syntax, label, example] of commands) {
     const row = $(id).insertRow();
@@ -97,7 +40,7 @@ showCommands('commands-body', commandTable);
 for (const [i, [, commands]] of commandGroups.entries()) showCommands('command-group-' + i, commands);
 
 let recording = null;
-const debugPanel = $('debug-panel'), slider = $('debug-step'), pageSelect = $('debug-page');
+const debugPanel = $('debug-panel'), slider = $('debug-step'), pageSelect = $('debug-page'), bankInput = $('debug-bank');
 for (let index = 0; index < 256; index += 16) {
   const option = document.createElement('option');
   option.value = String(index);
@@ -107,6 +50,12 @@ for (let index = 0; index < 256; index += 16) {
 function showSource(frame) {
   const preview = $('debug-source');
   const label = $('debug-source-label');
+  if (recording.machine === 'z80') {
+    const row=recording.entries.get(frame.pc);
+    label.textContent=row?.line ? '▶ Z80アセンブリ：' + row.line + '行' : 'Z80アセンブリ';
+    preview.textContent=row ? '▶ ' + row.text : frame.pc===undefined ? '実行前：次は0x0100です。' : '▶ 実行アドレス 0x' + hex(frame.pc, 4);
+    return;
+  }
   const location = frame.source?.match(/^(\d+)行 (\d+)列$/u);
   if (!location) {
     label.textContent = 'ソース上の位置';
@@ -117,7 +66,7 @@ function showSource(frame) {
   const line = Array.from(recording.lines[Number(row) - 1] ?? '');
   const at = Number(column) - 1;
   const after = line.slice(at).join('');
-  const command = after.match(/^(?:マジ|めっちゃ|神|\}|[8৪୪]{3}|[^\s👏]+)/u)?.[0] ?? after.charAt(0);
+  const command = frame.sourceLength ? line.slice(at, at + frame.sourceLength).join('') : after.match(/^(?:マジ|めっちゃ|神|\}|[8৪୪]{3}|[^\s👏]+)/u)?.[0] ?? after.charAt(0);
   const end = at + Array.from(command).length;
   const startContext = Math.max(0, at - 38), endContext = Math.min(line.length, end + 38);
   const before = document.createElement('span'), arrow = document.createElement('span');
@@ -131,6 +80,24 @@ function showSource(frame) {
   preview.replaceChildren(before, arrow, current, rest);
 }
 function explainStep(frame) {
+  if(frame.pc===undefined) return 'ステップを進めると、ここに説明が出ます。';
+  if(recording.machine==='z80'){
+    const row=recording.entries.get(frame.pc);
+    const changes=(frame.writes??[]).map(w=>`0x${hex(w.index,4)}：${hex(w.from)} → ${hex(w.to)}`);
+    return (row?.text??'機械語を1命令実行しました。') +
+      (changes.length ? ' ／ メモリ ' + changes.join('、') : ' ／ メモリ書き込みなし') +
+      (frame.emitted===undefined ? '' : ' ／ 出力 ' + JSON.stringify(frame.emitted));
+  }
+  if(recording.machine==='chukei'){
+    const cell='セル'+frame.pointer;
+    switch(frame.op){
+      case 'INC': case 'DEC': return `${cell}：${frame.before} → ${frame.after}`;
+      case 'RIGHT': return `セル${frame.previousPointer}から右に移動して、${cell}を選びました。`;
+      case 'OUT': return `${cell}の値 ${frame.before} をASCII文字 ${JSON.stringify(frame.emitted)} として出力しました。`;
+      case 'JZ': return frame.before===0 ? '現在のセルが0なのでループを飛ばしました。' : '現在のセルが0でないのでループに入りました。';
+      case 'JNZ': return frame.before===0 ? '現在のセルが0なのでループを抜けました。' : '現在のセルが0でないのでループの先頭に戻りました。';
+    }
+  }
   const {op, before, after, pointer, previousPointer, leftValue, emitted, next} = frame;
   const cell = `セル${pointer}`;
   const jump = `アドレス 0x${hex(next, 4)}`;
@@ -167,10 +134,10 @@ function explainStep(frame) {
     default: return 'ステップを進めると、ここに説明が出ます。';
   }
 }
-function buildAddressMap({code, sourceCommands}) {
+function buildAddressMap(entries) {
   const rows = new Map();
   const body = $('debug-map-body');
-  for (let addr = 0; addr < code.length; addr += 3) {
+  for (const entry of entries.values()) {
     const row = document.createElement('tr');
     const addCell = (value, className) => {
       const cell = document.createElement('td');
@@ -179,14 +146,14 @@ function buildAddressMap({code, sourceCommands}) {
       row.append(cell);
       return cell;
     };
-    addCell('0x' + hex(addr, 4) + '（' + addr + '）', 'map-address');
-    const original = sourceCommands?.[addr / 3] ?? '';
-    const excerpt = Array.from(original);
-    const sourceCell = addCell(excerpt.length > 48 ? excerpt.slice(0, 48).join('') + '…' : original, 'map-source');
-    if (excerpt.length > 48) sourceCell.title = original;
-    addCell(Array.from(code.subarray(addr, addr + 3), n => hex(n)).join(' '), 'map-bytes');
-    addCell(instructions[code[addr] - 1]);
-    rows.set(addr, {row, status: addCell('')});
+    const {address, text, bytes, description} = entry;
+    addCell('0x' + hex(address, 4) + '（' + address + '）', 'map-address');
+    const excerpt = Array.from(text);
+    const sourceCell = addCell(excerpt.length > 48 ? excerpt.slice(0, 48).join('') + '…' : text, 'map-source');
+    if (excerpt.length > 48) sourceCell.title = text;
+    addCell(bytes, 'map-bytes');
+    addCell(description);
+    rows.set(address, {row, status: addCell('')});
   }
   body.replaceChildren(...Array.from(rows.values(), entry => entry.row));
   $('debug-map-scroll').hidden = !rows.size;
@@ -222,8 +189,12 @@ function showAddresses(frame) {
   const {pc, next} = frame;
   $('debug-pc').textContent = pc === undefined ? '未実行' : address(pc);
   $('debug-next-pc').textContent = address(next) + (next === recording.codeLength ? '（終了）' : '');
-  let explanation = 'アドレスはバイトコード上の位置です。セル番号とは別です。';
-  if (pc !== undefined && next !== pc + 3) explanation = 'ジャンプ：' + address(pc) + ' → ' + address(next) + '。' + explanation;
+  const base = recording.machine === 'z80' ? 'PCはZ80のメモリアドレスです。命令によって長さが異なります。'
+    : recording.machine === 'chukei' ? 'PCはVMの命令番号です。セル番号とは別です。'
+    : 'アドレスはバイトコード上の位置です。セル番号とは別です。';
+  const width=recording.entries.get(pc)?.width;
+  const explanation = pc !== undefined && width && next !== pc + width
+    ? 'ジャンプ：' + address(pc) + ' → ' + address(next) + '。' + base : base;
   $('debug-pc-note').textContent = explanation;
   markAddressRows(frame);
 }
@@ -235,11 +206,13 @@ function showStep(step) {
   slider.value = String(step);
   $('debug-prev').disabled = step === 0;
   $('debug-next').disabled = step === last;
-  const {cells, frame} = debugSnapshot(frames, step);
+  const z80 = recording.machine === 'z80';
+  const {cells, frame} = z80 ? z80Snapshot(recording,step) : debugSnapshot(frames, step);
   let label = `${step} / ${steps} ステップ · 現在のセル：${frame.pointer}`;
-  if (step === 0) label += ' · 実行前（全セル 0）';
+  if(z80) label=`${step} / ${steps} ステップ · Z80` + (step===0 ? ' · 実行前' : '');
+  else if (step === 0) label += ' · 実行前（全セル 0）';
   else {
-    label += ` · ${instructions[frame.op - 1]}（${frame.source}）`;
+    label += ` · ${recording.entries.get(frame.pc)?.description ?? frame.op}（${frame.source}）`;
     if (frame.change) label += ` · セル ${frame.change.index}：${frame.change.from} → ${frame.change.to}`;
     else if (frame.pointer !== frame.previousPointer) label += ` · 移動：${frame.previousPointer} → ${frame.pointer}`;
     else label += ' · 値の変化なし';
@@ -248,23 +221,68 @@ function showStep(step) {
   showSource(frame);
   showAddresses(frame);
   $('debug-effect').textContent = explainStep(frame);
-  const first = pageSelect.value === 'auto' || pageSelect.value === undefined
-    ? frame.pointer - frame.pointer % 16 : Number(pageSelect.value);
+  const bank=bankInput.value.trim().replace(/^0x/iu,'');
+  const manual=z80&&/^[0-9a-f]{1,4}$/iu.test(bank)?Number.parseInt(bank,16):null;
+  const pointer=manual??frame.pointer;
+  const first = z80||pageSelect.value === 'auto' || pageSelect.value === undefined
+    ? pointer - pointer % 16 : Number(pageSelect.value);
+  $('debug-registers').hidden=!z80;
+  if(z80) $('debug-registers').textContent=Object.entries(frame.regs??{}).map(([name,value])=>name+'='+hex(value,name.length===1?2:4)).join('  ');
+  const altered = z80 ? new Set((frame.writes??[]).map(w=>w.index)) : new Set([frame.change?.index]);
   const cards = [];
   for (let i = first; i < first + 16; i++) {
     const item = document.createElement('li');
-    item.className = 'debug-cell' + (i === frame.pointer ? ' active' : '') + (i === frame.change?.index ? ' changed' : '');
+    item.className = 'debug-cell' + (i === frame.pointer ? ' active' : '') + (altered.has(i) ? ' changed' : '');
     const name = document.createElement('small'), value = document.createElement('strong');
-    name.textContent = `セル ${i}`;
-    value.textContent = String(cells[i]);
+    name.textContent = z80 ? '0x'+hex(i,4) : `セル ${i}`;
+    value.textContent = z80 ? hex(cells[i]) : String(cells[i]);
     item.append(name, value);
     cards.push(item);
   }
   $('debug-cells').replaceChildren(...cards);
 }
-function openDebug(data, program) {
-  recording = {...data, codeLength:program.code.length, rows:buildAddressMap(program), marked:[], lines: source.value.split(/\r\n?|\n/u)};
+function z80Snapshot({initial, frames}, step) {
+  const cells=initial.slice();
+  for(let i=1;i<=step;i++) for(const {index,to} of frames[i].writes) cells[index]=to;
+  return {cells,frame:frames[step]};
+}
+function openDebug(machine, result, source) {
+  const data=result.debug;
+  const isZ80=machine==='yanbarukuina';
+  if(isZ80) machine='z80';
+  const entries = new Map();
+  let codeLength;
+  function add(address,text,bytes,description,width,line){
+    entries.set(address,{address,text,bytes,description,width,line});
+  }
+  if(isZ80){
+    codeLength=0;
+    for(const row of data.listing) add(row.address,row.text,Array.from(row.bytes,n=>hex(n)).join(' '),'Z80',row.bytes.length,row.line);
+  }else if(machine==='chukei'){
+    codeLength=result.bytecode.length;
+    for(const {pc,op,arg,sourceIndex} of result.bytecode){
+      const token=result.tokens[sourceIndex];
+      add(pc,token.lexeme,'—',op+(arg===undefined?'':' → '+arg),1);
+    }
+  }else{
+    const {code,sourceCommands}=result.program;
+    codeLength=code.length;
+    for(let addr=0;addr<code.length;addr+=3){
+      add(addr,sourceCommands[addr/3]??'',Array.from(code.subarray(addr,addr+3),n=>hex(n)).join(' '),instructions[code[addr]-1],3);
+    }
+  }
+  // Keep rendering bounded while retaining the address data for step explanations.
+  const mapEntries = new Map([...entries].slice(0,4096));
+  recording = {...data, machine, entries, codeLength, rows:buildAddressMap(mapEntries), marked:[], lines:source.split(/\r\n?|\n/u)};
   pageSelect.value = 'auto';
+  bankInput.value='';
+  $('debug-cell-picker').hidden=isZ80;
+  $('debug-memory-picker').hidden=!isZ80;
+  $('debug-map-source-heading').textContent=isZ80?'Z80アセンブリ':'元のコード';
+  $('debug-map-help').textContent=(isZ80 ? 'アセンブラが配置したバイト列です。CPUは左のアドレスから命令を読みます。'
+    : machine==='chukei'?'1行が1つのVM命令です。命令番号で表示します。'
+    :'1行が1つのVM命令（3バイト）です。1つの8888命令が複数のVM命令になることがあります。') +
+    (entries.size>mapEntries.size || (machine==='chukei' && result.bytecode.length>4096) ? ' 配置表は先頭4,096行まで。':'');
   slider.max = String(data.frames.length - 1);
   slider.disabled = data.frames.length <= 1;
   const limited = data.frames.length - 1 < data.steps;
@@ -277,73 +295,7 @@ $('debug-prev').addEventListener('click', () => showStep(Number(slider.value) - 
 $('debug-next').addEventListener('click', () => showStep(Number(slider.value) + 1));
 slider.addEventListener('input', () => showStep(Number(slider.value)));
 pageSelect.addEventListener('change', () => showStep(Number(slider.value)));
+bankInput.addEventListener('input', () => showStep(Number(slider.value)));
 
-function clear() {
-  recording = null;
-  generated = null;
-  $('download-generated').disabled = true;
-  debugPanel.hidden = true;
-  output.textContent = 'まだ実行していません。';
-  resultStatus.textContent = '待機中';
-  error.hidden = true;
-  error.textContent = '';
-  bytes.textContent = trace.textContent = '実行後に表示します。';
+  return {open:openDebug, reset(){ recording = null; debugPanel.hidden = true; }};
 }
-$('example').addEventListener('change', event => {
-  source.value = examples[event.target.value];
-  clear();
-});
-source.addEventListener('input', clear);
-
-function execute(debug = false) {
-  clear();
-  let program;
-  try {
-    program = compile(source.value, {sourceMap:debug});
-    const {code, literals} = program;
-    const listing = [];
-    for (let i = 0; i < Math.min(code.length, 96 * 3); i += 3) {
-      const arg = code[i + 1] + (code[i + 2] << 8);
-      const extra = code[i] === 17 ? ' ' + JSON.stringify(literals[arg]) : '';
-      listing.push(`${hex(i, 4)}  ${hex(code[i])} ${hex(code[i + 1])} ${hex(code[i + 2])}  ${instructions[code[i] - 1]}${extra}`);
-    }
-    if (code.length > 96 * 3) listing.push('…（先頭96命令のみ表示）');
-    bytes.textContent = listing.join('\n') || '（命令なし）';
-    generated = program;
-    $('download-generated').disabled = false;
-
-    const result = run(program, {debug});
-    if (result.debug) openDebug(result.debug, program);
-    resultStatus.textContent = '実行完了';
-    let rendered = '', previous;
-    for (const value of result.output) {
-      if (previous !== undefined) {
-        if (typeof previous !== typeof value && previous !== '\n') rendered += '\n';
-        if (typeof previous === 'number' && typeof value === 'number') rendered += ' ';
-      }
-      rendered += value;
-      previous = value;
-    }
-    output.textContent = result.output.length ? rendered : '（出力なし）';
-    const rows = result.trace.map(({pc, op, next, pointer, value, emitted}) =>
-      `${hex(pc, 4)} → ${hex(next, 4)}  ${hex(op)}  セル[${pointer}] = ${value}${emitted === null ? '' : `  出力: ${typeof emitted === 'string' ? JSON.stringify(emitted) : emitted}`}`);
-    if (result.steps > result.trace.length) rows.push('…（先頭48ステップのみ表示）');
-    trace.textContent = [`実行: ${result.steps} ステップ`, ...rows].join('\n');
-  } catch (e) {
-    output.textContent = '停止しました。';
-    resultStatus.textContent = 'エラー';
-    error.hidden = false;
-    error.textContent = e.message;
-    if (e.debug) openDebug(e.debug, program);
-  }
-}
-runButton.addEventListener('click', () => execute());
-$('run-debug').addEventListener('click', () => execute(true));
-$('run-debug').disabled = false;
-source.addEventListener('keydown', event => {
-  if ((event.metaKey || event.ctrlKey) && event.key === 'Enter') {
-    event.preventDefault();
-    execute();
-  }
-});
-runButton.disabled = false;

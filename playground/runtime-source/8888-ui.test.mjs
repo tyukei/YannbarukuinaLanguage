@@ -1,42 +1,40 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {readFile} from 'node:fs/promises';
+import {examples, exampleNames, initDebugger} from '../dist/8888/playground.mjs';
+import {execute8888} from '../dist/8888/worker.mjs';
 
 test('the initial source and every sample declare and invoke a named function', async () => {
-  const html = await readFile(new URL('../dist/8888/index.html', import.meta.url), 'utf8');
-  const sampleSelect = html.match(/<select id="example">([\s\S]*?)<\/select>/u)[1];
-  const keys = [...sampleSelect.matchAll(/<option value="([^"]+)">/gu)].map(m => m[1]);
-  const defaults = html.match(/<textarea[^>]+>([\s\S]*?)<\/textarea>/u)[1];
+  const keys = Object.keys(examples);
+  const defaults=examples.hello;
   const results = {
-    add: '5', count: '3 2 1', move: '2 1', bengali: '5', odia: '5',
+    hello: '5', count: '3 2 1', move: '2 1', bengali: '5', odia: '5',
     comment: '5', arithmetic: '5 3', letter: 'こんにちは', function: 'HIHI',
   };
-  const nodes = {source: {value: defaults, ...element()}};
+  const nodes = {};
   function element() {
     return {events:{}, children:[], append(...children){this.children.push(...children);}, replaceChildren(...children){this.children = children;}, insertRow:element, insertCell:element,
       addEventListener(name, f) { this.events[name] = f; }};
   }
-  const previous = globalThis.document;
-  globalThis.document = {getElementById: id => nodes[id] ??= element(), createElement: element};
-  try {
-    await import('../dist/8888/playground.mjs');
-    nodes.run.events.click();
-    assert.equal(nodes.output.textContent, '5');
-    assert.deepEqual(keys, Object.keys(results));
+  const dom = {getElementById: id => nodes[id] ??= {...element(),value:''}, createElement: element};
+  const debuggerUI=initDebugger(dom);
+  const runDebug=key=>debuggerUI.open('8888',execute8888(examples[key],true),examples[key]);
+  assert.equal(execute8888(defaults).output,'5');
+  assert.deepEqual(keys,Object.keys(results));
+  assert.equal(exampleNames.length,keys.length);
     for (const key of keys) {
-      nodes.example.events.change({target:{value:key}});
-      const source = nodes.source.value;
+      const source=examples[key];
       const name = source.match(/^マジ([^{]+)\{/u)?.[1];
       assert.ok(name, key);
       assert.ok(source.includes('}めっちゃ{' + name + '}'), key);
       assert.doesNotMatch(source, /\s/u, key);
       assert.match(source, /\{👏[^👏]+👏/u, key);
-      if (key === 'add') assert.equal(source, defaults);
-      nodes.run.events.click();
-      assert.equal(nodes.output.textContent, results[key], key);
+      if (key === 'hello') assert.equal(source, defaults);
+      const result=execute8888(source);
+      assert.equal(result.output,results[key],key);
+      assert.equal(result.tokens[0].lexeme,'マジ');
+      assert.equal(result.ast.children[0].kind,'function');
     }
-    nodes.example.events.change({target:{value:'move'}});
-    nodes['run-debug'].events.click();
+    runDebug('move');
     assert.equal(nodes['debug-panel'].hidden, false);
     assert.match(nodes['debug-status'].textContent, /全セル 0/u);
     assert.match(nodes['debug-source'].textContent, /実行前/u);
@@ -63,8 +61,7 @@ test('the initial source and every sample declare and invoke a named function', 
     nodes['debug-page'].value = '240';
     nodes['debug-page'].events.change();
     assert.equal(nodes['debug-cells'].children[15].children[0].textContent, 'セル 255');
-    nodes.example.events.change({target:{value:'add'}});
-    nodes['run-debug'].events.click();
+    runDebug('hello');
     const addressRows = nodes['debug-map-body'].children;
     assert.equal(addressRows.length, 8);
     assert.equal(addressRows[0].children[0].textContent, '0x0000（0）');
@@ -87,10 +84,6 @@ test('the initial source and every sample declare and invoke a named function', 
     step.value = '6';
     step.events.input();
     assert.equal(nodes['debug-effect'].textContent, '2 と 3 を足して、セル0に 5 を入れました。');
-    nodes.source.events.input();
+    debuggerUI.reset();
     assert.equal(nodes['debug-panel'].hidden, true);
-  } finally {
-    if (previous === undefined) delete globalThis.document;
-    else globalThis.document = previous;
-  }
 });

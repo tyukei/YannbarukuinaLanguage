@@ -57,6 +57,8 @@ function runChukei(source, options = {}) {
     result.bytecode = code;
     const cells = new Uint8Array(256);
     let pointer = 0, pc = 0;
+    const frames = options.debug ? [{ next: 0, pointer: 0 }] : null;
+    if (frames) result.debug = { frames, steps: 0 };
     try {
       while (pc < code.length) {
         if (result.steps >= STEP_LIMIT) throw Error("\u547D\u4EE4\u5B9F\u884C\u4E0A\u9650\uFF081,000,000\u30B9\u30C6\u30C3\u30D7\uFF09\u306B\u9054\u3057\u307E\u3057\u305F\u3002");
@@ -65,6 +67,7 @@ function runChukei(source, options = {}) {
         const executedPc = pc;
         let emitted;
         result.steps++;
+        const previousPointer = pointer, before = cells[pointer];
         switch (ins.op) {
           case "INC":
             cells[pointer] = cells[pointer] + 1 & 255;
@@ -96,6 +99,25 @@ function runChukei(source, options = {}) {
           default:
             throw Error("Invalid VM instruction");
         }
+        if (frames) {
+          result.debug.steps++;
+          if (frames.length <= 4096) {
+            const t = result.tokens[ins.sourceIndex], after = cells[previousPointer];
+            frames.push({
+              pc: executedPc,
+              next: pc,
+              pointer,
+              previousPointer,
+              op: ins.op,
+              before,
+              after,
+              emitted,
+              source: `${t.line}\u884C ${t.column}\u5217`,
+              sourceLength: t.lexeme.length,
+              change: before === after ? null : { index: previousPointer, from: before, to: after }
+            });
+          }
+        }
         if (result.trace.length < 200) result.trace.push({ step: result.steps, pc: executedPc, op: ins.op, next_pc: pc, pointer, value: cells[pointer], ...emitted !== void 0 ? { output: emitted } : {} });
         else result.trace_truncated = true;
       }
@@ -112,5 +134,5 @@ function runChukei(source, options = {}) {
 
 // chukei-worker.js
 self.onmessage = ({ data }) => {
-  self.postMessage(runChukei(data?.source, { outputMode: data?.outputMode }));
+  self.postMessage(runChukei(data?.source, { outputMode: data?.outputMode, debug: data?.debug }));
 };

@@ -1,5 +1,5 @@
 import fs from 'node:fs';import assert from 'node:assert/strict';import {runQueena} from './runtime.js';
-const wasm=fs.readFileSync('dist/queena.wasm');
+const wasm=fs.readFileSync(new URL('../dist/yanbarukuina.wasm',import.meta.url));
 let seed=1701; function next(){seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed;}
 let s='',want=''; for(let i=0;i<80;i++){let a=next()&65535,b=(next()&65535)||1; s+=`naku(${a}/${b})\n`;want+=Math.floor(a/b)+'\n';}
 const r=await runQueena(s,wasm);assert.equal(r.ok,true);assert.equal(r.output,want);console.log('80 seeded division cases passed');

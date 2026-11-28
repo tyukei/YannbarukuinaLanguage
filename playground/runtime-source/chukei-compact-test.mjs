@@ -103,7 +103,7 @@ test('compact ASCII output and error position stay unchanged',()=>{
 
 // Evaluate only the sample declarations, not the DOM/UI code or a browser mock.
 const app=projectFile('../dist/app.js');
-const uiSamples=vm.runInNewContext(app.slice(0,app.indexOf('const drafts='))+';({samples,asciiSamples})');
+const uiSamples=vm.runInNewContext(app.slice(app.indexOf('const samples ='),app.indexOf('const languages='))+';({samples,asciiSamples})');
 const expectedAscii={hello:'HELLO, I AM CHUKEI!',branch:'Hello',loop:'AB',control:'A\nB',letters:'AZaz',abc:'ABC'};
 
 test('all six UI samples are whitespace-free and produce expected output',()=>{
@@ -111,13 +111,8 @@ test('all six UI samples are whitespace-free and produce expected output',()=>{
   assert.doesNotMatch(s,/\s/u,name);const r=runChukei(s);assert.equal(r.ok,true,name);assert.equal(r.output,expectedAscii[name],name);
  }
  assert.doesNotMatch(app,/output-mode|chukeiMode/);
- const init=app.split('\n').find(line=>line.startsWith('el("language").value=')&&line.includes('requestedLanguage'));
- assert.ok(init);
- const select={};
- const pick=(requestedLanguage,returning)=>vm.runInNewContext(init,{el:()=>select,requestedLanguage,returning});
- assert.equal(pick(null,null),'chukei');
- assert.equal(pick('queena',null),'queena');
- assert.equal(pick(null,{language:'queena'}),'queena');
+ assert.match(app,/selectLanguage\(Object\.hasOwn\(languages,requestedLanguage\)\?requestedLanguage:"chukei",false\)/);
+ assert.match(app,/requested==="queena"\?"yanbarukuina":requested/);
  assert.match(uiSamples.samples.hello,/naku\(6 \* 7\)/);
 });
 
@@ -135,7 +130,7 @@ test('bundled worker message API agrees with runtime including errors',()=>{
 
 test('site explains compact syntax and retains VM instruction guide',()=>{
  const html=projectFile('../dist/index.html');
- assert.match(html,/app\.js\?v=[^"\s]+/);assert.match(app,/chukei-worker\.js\?v=ascii-only-1/);
+ assert.match(html,/app\.js\?v=[^"\s]+/);assert.match(app,/chukei-worker\.js\?v=unified-debug-1/);
  const example=html.split('id="chukei-cheat"')[1].match(/<pre><code>([\s\S]*?)<\/code><\/pre>/)[1];
  assert.equal(runChukei(example).output,'A');
  assert.doesNotMatch(html,/id="output-mode"/);

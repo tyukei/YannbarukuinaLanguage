@@ -27,7 +27,7 @@ function mount(){
  const view=api.create({document:{createElement:tag=>new Element(tag)},...elements});
  return {...elements,view};
 }
-const wasm=readFileSync(new URL('../dist/queena.wasm',import.meta.url));
+const wasm=readFileSync(new URL('../dist/yanbarukuina.wasm',import.meta.url));
 const {instance}=await WebAssembly.instantiate(wasm),e=instance.exports;
 function compilerAst(source){
  const bytes=new TextEncoder().encode(source);new Uint8Array(e.memory.buffer,e.input_ptr(),bytes.length).set(bytes);e.compile(bytes.length);
@@ -141,7 +141,7 @@ test('deep trees show truncation without unbounded recursion',()=>{
 });
 
 test('default HELLO AST displays grouped commands without changing output',()=>{
- const app=read('../dist/app.js');const samples=vm.runInNewContext(app.slice(0,app.indexOf('const drafts='))+';asciiSamples');
+ const app=read('../dist/app.js');const samples=vm.runInNewContext(app.slice(app.indexOf('const samples ='),app.indexOf('const languages='))+';asciiSamples');
  const r=runChukei(samples.hello,{outputMode:'ascii'}),before=JSON.stringify(r.ast),ui=mount();ui.view.render(r.ast,'chukei');
  assert.equal(r.output,'HELLO, I AM CHUKEI!');assert.ok(cards(ui).length<flat(r.ast).length/3);assert.equal(JSON.stringify(r.ast),before);
 });
