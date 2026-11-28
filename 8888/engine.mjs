@@ -254,14 +254,31 @@ export function compile(source) {
   return {code: Uint8Array.from(code), locations, literals};
 }
 
-export function run({code, locations, literals = []}) {
+export const debugLimit = 4096;
+
+export function debugSnapshot(frames, step) {
+  const cells = new Uint8Array(256);
+  for (let i = 1; i <= step; i++) {
+    const change = frames[i].change;
+    if (change) cells[change.index] = change.to;
+  }
+  return {cells, frame: frames[step]};
+}
+
+export function run({code, locations, literals = []}, {debug = false} = {}) {
   const cells = new Uint8Array(256), output = [], trace = [];
   const saved = [], returns = [];
+  const frames = debug ? [{pointer: 0, next: 0}] : null;
   let pointer = 0, pc = 0, steps = 0, outputChars = 0;
-  const fail = message => { throw new Error(`${locations[pc / width]}：${message}`); };
+  const fail = message => {
+    const error = new Error(`${locations[pc / width]}：${message}`);
+    if (frames) error.debug = {frames, steps};
+    throw error;
+  };
   while (pc < code.length) {
-    if (steps === 100000) throw new Error(`${locations[pc / width]}：100,000ステップで停止しました。ループや関数呼び出しを確認してください。`);
+    if (steps === 100000) fail('100,000ステップで停止しました。ループや関数呼び出しを確認してください。');
     const op = code[pc], target = code[pc + 1] + (code[pc + 2] << 8);
+    const previousPointer = pointer, previousValue = cells[pointer];
     let next = pc + width, emitted = null;
     switch (op) {
       case 1: cells[pointer]++; break;
@@ -312,10 +329,17 @@ export function run({code, locations, literals = []}) {
       output.push(emitted);
     }
     if (trace.length < 48) trace.push({pc, op, next, pointer, value: cells[pointer], emitted});
+    if (frames && steps < debugLimit) {
+      const to = cells[previousPointer];
+      frames.push({
+        pc, op, next, pointer, previousPointer, source: locations[pc / width],
+        change: previousValue === to ? null : {index: previousPointer, from: previousValue, to},
+      });
+    }
     steps++;
     pc = next;
   }
-  return {output, trace, steps, pointer, cells};
+  return {output, trace, steps, pointer, cells, ...(frames ? {debug: {frames, steps}} : {})};
 }
 
 export const hex = (n, digits = 2) => n.toString(16).toUpperCase().padStart(digits, '0');

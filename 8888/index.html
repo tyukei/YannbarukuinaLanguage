@@ -5,8 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="description" content="数字の8、ベンガル数字の৪、オリヤー数字の୪で命令を書く教育用言語。ブラウザで実行してバイトコードと実行の流れを見比べられます。">
 <title>8888言語（試作） | YanbaruKuina</title>
-<link rel="stylesheet" href="./style.css">
-<script type="module" src="./playground.mjs?v=12"></script>
+<link rel="stylesheet" href="./style.css?v=2">
+<script type="module" src="./playground.mjs?v=13"></script>
 </head>
 <body>
 <main>
@@ -25,11 +25,27 @@
 <textarea id="source" rows="5" maxlength="16384" autocomplete="off" autocapitalize="off" spellcheck="false" aria-describedby="hint">マジ五を出す{👏2と3を足して表示する👏88৪神2神3神৪৪৪}めっちゃ{五を出す}</textarea>
 <div class="tools">
 <button id="run" type="button" disabled>実行</button>
+<button id="run-debug" type="button" disabled>デバッグ実行</button>
 <span id="hint">命令は3文字ずつ読めるので、間に空白や改行はいりません。⌘ / Ctrl + Enter でも実行できます。</span>
 </div>
 <h3>出力</h3>
 <pre id="output" role="status">まだ実行していません。</pre>
 <p id="error" role="alert" hidden></p>
+<section id="debug-panel" aria-labelledby="debug-title" hidden>
+<h3 id="debug-title">デバッグ：セルの値を見る</h3>
+<p>1ステップずつ進めると、命令の実行後にセルがどうなったか見られます。足し算など1つの命令が複数ステップになることもあります。</p>
+<p id="debug-limit" hidden></p>
+<div class="tools debug-actions">
+<button id="debug-prev" type="button">← 戻る</button>
+<button id="debug-next" type="button">進む →</button>
+</div>
+<label for="debug-step">実行ステップ</label>
+<input id="debug-step" type="range" min="0" max="0" step="1" value="0">
+<p id="debug-status" role="status"></p>
+<div class="tools"><label for="debug-page">表示するセル</label>
+<select id="debug-page"><option value="auto">現在のセルを追う</option></select></div>
+<ul id="debug-cells" aria-label="セル番号と値"></ul>
+</section>
 <noscript><p>実行にはJavaScriptが必要です。</p></noscript>
 </section>
 <hr>
