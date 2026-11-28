@@ -23,7 +23,7 @@ test('the initial source and every sample declare and invoke a named function', 
   assert.equal(exampleNames.length,keys.length);
     for (const key of keys) {
       const source=examples[key];
-      if (key==='hello'||key==='compose') assert.match(source,/マジ[^()]+\([^)]*\)\{.*\}\n৪৪৪\(めっちゃ/u);
+      if (key==='hello'||key==='compose') assert.match(source,/マジ[^()]+\([^)]*\)神神神.*神神神\n৪৪৪\(めっちゃ/u);
       else {
         const name=source.match(/^マジ([^{]+)\{/u)?.[1];
         assert.ok(name&&source.includes('}めっちゃ{'+name+'}'),key);

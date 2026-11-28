@@ -36,3 +36,22 @@ test('wrong arity, unknown names, effects inside functions, and excessive recurs
   assert.match(result.error,error,source);
  }
 });
+
+test('triple 神 surrounds function bodies without changing their bytecode',()=>{
+ const source='マジ同じ(x)神神神x神神神マジ足す(x,y)👏 目印 👏神神神88৪(x,y)神神神৪৪৪(めっちゃ足す(めっちゃ同じ(2),3))';
+ const curly='マジ同じ(x){x}マジ足す(x,y){88৪(x,y)}৪৪৪(めっちゃ足す(めっちゃ同じ(2),3))';
+ const a=compile(source,{analysis:true,sourceMap:true}),b=compile(curly);
+ assert.deepEqual(a.code,b.code);
+ assert.deepEqual(run(a).output,[5]);
+ assert.equal(a.tokens.filter(t=>t.lexeme==='神神神'&&t.kind==='区切り').length,4);
+ assert.ok(a.sourceCommands.includes('神神神'));
+ assert.deepEqual(run(compile('マジ神神神(神神神){神神神}৪৪৪(めっちゃ神神神(2))')).output,[2]);
+});
+
+test('a triple-神 function body must end with its matching delimiter',()=>{
+ for(const source of ['マジa(x)神神神x}', 'マジa(x)神神神x', 'マジa(x){x神神神']){
+   const result=execute8888(source);
+   assert.equal(result.ok,false);
+ }
+ assert.match(execute8888('マジa()神神神2}',true).error,/「神神神」が必要/);
+});

@@ -1,12 +1,14 @@
 // Value-oriented 8888: functions are pure expressions; output lives at the top level.
 export const expressionInstructions = ['定数を積む', '引数を読む', '足し算', '引き算', '値を渡して呼ぶ', '値を返す', '結果を表示'];
 const scan = /\s+|👏[\s\S]*?👏|88[৪୪]|৪৪৪|[0-9]+|[\p{L}_][\p{L}\p{N}_]*|[(){},]/uy;
+const kami = '神神神';
+const kamiScan = /神神神|\s+|👏[\s\S]*?👏|88[৪୪]|৪৪৪|[0-9]+|[\p{L}_](?:(?!神神神)[\p{L}\p{N}_])*|[(){},]/uy;
 export function isExpressionProgram(source) {
   const start = source.replace(/^(?:\s+|👏[\s\S]*?👏)*/u,'');
   return /^(?:マジ\s*[\p{L}_][\p{L}\p{N}_]*\s*\(|৪৪৪\s*\()/u.test(start);
 }
 export function compileExpressions(source,{sourceMap,analysis}) {
-  let offset=0,line=1,column=1,cached;
+  let offset=0,line=1,column=1,cached,inKamiBody=false;
   const tokens=[],code=[],locations=[],sourceCommands=[],functions=[],definitions=new Map(),calls=[];
   const ast={label:'プログラム',kind:'program',children:[]};
   const at=t=>`${t.line}行 ${t.column}列`;
@@ -14,16 +16,17 @@ export function compileExpressions(source,{sourceMap,analysis}) {
   const make=(label,kind,children=[])=>({label,kind,children});
   function lex(){
     while(offset<source.length){
-      scan.lastIndex=offset;
+      const scanner=inKamiBody?kamiScan:scan;
+      scanner.lastIndex=offset;
       // Keywords are glued to names, so split them before reading a name.
-      let text=/^(?:マジ|めっちゃ)/u.exec(source.slice(offset))?.[0]??scan.exec(source)?.[0];
+      let text=/^(?:マジ|めっちゃ)/u.exec(source.slice(offset))?.[0]??scanner.exec(source)?.[0];
       const t={lexeme:text??'',line,column};
       if(!text) fail(t,source.startsWith('👏',offset)?'コメントを閉じる「👏」がありません。':'使えない文字です。');
       const lines=text.split(/\r\n?|\n/u);
       line+=lines.length-1;column=(lines.length===1?column:1)+Array.from(lines.at(-1)).length;
       offset+=text.length;
       if(/^\s/u.test(text)||text.startsWith('👏')) continue;
-      t.kind=/^(?:マジ|めっちゃ|88[৪୪]|৪৪৪)$/u.test(text)?'命令':/^\d/u.test(text)?'数値':/^[(){},]$/u.test(text)?'区切り':'名前';
+      t.kind=/^(?:マジ|めっちゃ|88[৪୪]|৪৪৪)$/u.test(text)?'命令':/^\d/u.test(text)?'数値':(text===kami&&inKamiBody||/^[(){},]$/u.test(text))?'区切り':'名前';
       tokens.push(t);
       return t;
     }
@@ -85,16 +88,20 @@ export function compileExpressions(source,{sourceMap,analysis}) {
         if(params.has(n.lexeme)) fail(n,'同じ引数名を2回使えません。');
         params.set(n.lexeme,i);
       }
-      expect('{');
+      inKamiBody=source.slice(offset).replace(/^(?:\s+|👏[\s\S]*?👏)*/u,'').startsWith(kami);
+      const open=take();
+      if(open.lexeme!=='{'&&open.lexeme!==kami) fail(open,'関数本体は「神神神」か「{」で始めてください。');
       const skip=emit(14,t);
       definitions.set(n.lexeme,functions.length);functions.push({pc:code.length,arity:params.size});
       const body=expression(params);
-      const end=expect('}');emit(23,end);patch(skip,code.length);
+      const end=expect(inKamiBody?kami:'}');
+      inKamiBody=false;
+      emit(23,end);patch(skip,code.length);
       ast.children.push(make('関数 · '+n.lexeme,'function',[make('引数 · '+names.map(n=>n.lexeme).join(', '),'parameters'),body]));
     }else if(t.lexeme==='৪৪৪'){
       expect('(');const value=expression(new Map());expect(')');
       emit(24,t);ast.children.push(make('結果を表示','instruction',[value]));
-    }else fail(t,'関数の定義「マジ 名前(引数){式}」か、表示「৪৪৪(式)」を書いてください。');
+    }else fail(t,'関数の定義「マジ 名前(引数)神神神 式 神神神」か、表示「৪৪৪(式)」を書いてください。');
   }
   for(const {token,pc,arity} of calls){
     const id=definitions.get(token.lexeme);

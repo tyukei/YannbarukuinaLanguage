@@ -1,4 +1,4 @@
-import {compile, hex, instructions, run} from './engine.mjs?v=values-1';
+import {compile, hex, instructions, run} from './engine.mjs?v=kami-body-1';
 
 export function execute8888(source, debug = false) {
   let program;
