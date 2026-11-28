@@ -27,7 +27,12 @@ test('one editor, terminal and debugger are shared across the three languages', 
  assert.deepEqual(run(compile(sample)).output,['こんにちは']);
  assert.doesNotMatch(html,/Z80のステップ実行は未対応|8888言語（試作）/u);
  assert.deepEqual([...html.matchAll(/data-idea="([^"]+)"/gu)].map(m=>m[1]),labels);
- assert.match(html,/関数型の発想.*純粋関数型ではありません/u);
+ const designNotes=Object.fromEntries([...html.matchAll(/data-idea="([^"]+)"[^>]*><strong>([^<]+)/gu)].map(m=>[m[1],m[2]]));
+ assert.deepEqual(designNotes,{
+  yanbarukuina:'読みやすい手順を、Z80で動かす。',
+  chukei:'6つの命令で、セルを直接操作する。',
+  8888:'手順に名前をつけて、何度でも呼ぶ。',
+ });
  assert.match(app,/idea\.hidden=idea\.dataset\.idea!==language/);
 
 });
