@@ -98,3 +98,12 @@ test('bad function declarations and excessive recursion are rejected', () => {
     ['fn a call a end call a', /64段/u],
   ]) assert.throws(() => execute(source), pattern);
 });
+
+test('Japanese function keywords compile to the same code and mix with English aliases', () => {
+  const original = 'fn あいさつ set 72 char set 73 char end call あいさつ call あいさつ';
+  const localized = 'マジ あいさつ set 72 char set 73 char end めっちゃ あいさつ call あいさつ';
+  assert.deepEqual(compile(localized).code, compile(original).code);
+  assert.deepEqual(execute(localized).output, [...'HIHI']);
+  assert.deepEqual(execute('めっちゃ f fn f set 65 char end').output, ['A']);
+  assert.throws(() => compile('めっちゃ 未定義'), /定義されていません/u);
+});

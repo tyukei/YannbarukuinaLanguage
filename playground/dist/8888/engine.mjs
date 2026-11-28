@@ -7,8 +7,10 @@ export const instructions = [
   '保存した値 − 現在値', 'ASCII文字を出力',
   '関数宣言を飛ばす', '呼び出し元に戻る', '関数を呼ぶ',
 ];
-export const extendedSyntax = ['set 値', 'push', 'add', 'sub', 'char', 'fn 名前', 'end', 'call 名前'];
+export const extendedSyntax = ['set 値', 'push', 'add', 'sub', 'char', 'マジ 名前', 'end', 'めっちゃ 名前'];
 const keywords = new Map(['set', 'push', 'add', 'sub', 'char', 'fn', 'end', 'call'].map((key, i) => [key, i + 9]));
+keywords.set('マジ', keywords.get('fn'));
+keywords.set('めっちゃ', keywords.get('call'));
 const width = 3;
 const maxInstructions = 4096;
 
@@ -66,7 +68,7 @@ export function compile(source) {
       if (op === 14 && (active !== null || loops.length)) throw new Error(`${pos}：関数宣言は関数やループの外に書いてください。`);
       if (op === 9 || op === 14 || op === 16) pending = {op, pc, pos, token};
       if (op === 15) {
-        if (active === null) throw new Error(`${pos}：end に対応する fn がありません。`);
+        if (active === null) throw new Error(`${pos}：end に対応する fn（マジ）がありません。`);
         if (loops.length) throw new Error(`${pos}：関数内のループが閉じていません。`);
         setTarget(active.pc, pc + width);
         active = null;
