@@ -37,3 +37,5 @@ th, td { text-align: left; padding: .2rem .75rem .2rem 0; border-bottom: 1px sol
 #debug-source { white-space: pre-wrap; overflow-wrap: anywhere; margin-bottom: .75rem; }
 #debug-source mark { background: #fff0a8; color: #181818; border-radius: .15rem; font-weight: 700; }
 .debug-source-arrow { color: #8c3500; font-weight: 700; padding-inline-end: .1rem; }
+
+#debug-effect { margin: .4rem 0 .8rem; border-left: 3px solid #225847; padding-inline-start: .55rem; font-size: .92rem; }
