@@ -11,15 +11,15 @@ const plus = add + '神2神3神', minus = sub + '神5神2神';
 const put = n => set + '神' + n + '神';
 const display = text => print + '神' + text + '神';
 const examples = {
-  add: example('五を出す', plus + print),
-  count: example('カウントダウン', put(3) + loop + print + dec + again),
-  move: example('セルを移動', put(1) + right + put(2) + print + left + print),
-  bengali: example('ベンガル数字', inc.repeat(5) + print),
-  odia: example('三つの数字', inc.repeat(6) + dec + print),
-  comment: example('コメントの例', plus + '👏この中の命令は実行しない👏' + print),
-  arithmetic: example('足し引き', plus + print + minus + print),
-  letter: example('文字を出す', display('こんにちは')),
-  function: example('あいさつ', display('HI'), 2),
+  add: example('五を出す', '👏2と3を足して表示する👏' + plus + print),
+  count: example('カウントダウン', '👏3から1まで順に表示する👏' + put(3) + loop + print + dec + again),
+  move: example('セルを移動', '👏隣のセルに移って戻る👏' + put(1) + right + put(2) + print + left + print),
+  bengali: example('ベンガル数字', '👏৪を含む命令で1ずつ増やす👏' + inc.repeat(5) + print),
+  odia: example('三つの数字', '👏6回増やしてから1回減らす👏' + inc.repeat(6) + dec + print),
+  comment: example('コメントの例', '👏囲んだ中の৪৪৪は実行しない👏' + plus + print),
+  arithmetic: example('足し引き', '👏足し算と引き算を1回ずつ👏' + plus + print + minus + print),
+  letter: example('文字を出す', '👏神で囲んだ文字を表示する👏' + display('こんにちは')),
+  function: example('あいさつ', '👏この関数を呼ぶたびにHIを表示する👏' + display('HI'), 2),
 };
 
 function showCommands(id, commands) {

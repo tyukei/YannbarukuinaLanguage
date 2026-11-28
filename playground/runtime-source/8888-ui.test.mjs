@@ -29,6 +29,7 @@ test('the initial source and every sample declare and invoke a named function', 
       assert.ok(name, key);
       assert.ok(source.includes('}めっちゃ{' + name + '}'), key);
       assert.doesNotMatch(source, /\s/u, key);
+      assert.match(source, /\{👏[^👏]+👏/u, key);
       if (key === 'add') assert.equal(source, defaults);
       nodes.run.events.click();
       assert.equal(nodes.output.textContent, results[key], key);
