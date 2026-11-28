@@ -5,9 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="description" content="数字の8、ベンガル数字の৪、オリヤー数字の୪で命令を書く教育用言語。ブラウザで実行してバイトコードと実行の流れを見比べられます。">
 <title>ちょっと拍手しときますね型言語 8888 | YanbaruKuina</title>
-<link rel="stylesheet" href="../style.css">
-<link rel="stylesheet" href="./style.css?v=shared-1">
-<script type="module" src="./playground.mjs?v=19"></script>
+<link rel="stylesheet" href="../style.css?v=language-tabs-1">
+<link rel="stylesheet" href="./style.css?v=shared-2">
+<script type="module" src="./playground.mjs?v=20"></script>
 </head>
 <body>
 <main>
@@ -15,16 +15,16 @@
 <a class="brand" href="../" aria-label="元のPlaygroundに戻る"><span class="bird" aria-hidden="true">👏</span><span class="brand-word">8888 Playground</span></a>
 <nav class="mast-links" aria-label="関連ページ"><a href="../">元のPlayground</a><a href="../guide/">コードはどうやって動く？</a></nav>
 </header>
+<nav class="language-tabs" aria-label="言語を切り替える"><span class="language-tabs-label">言語を切り替える</span><a href="../?lang=queena" data-language="queena">YanbaruKuina</a><a href="../?lang=chukei" data-language="chukei">CHUKEI</a><a href="./" data-language="8888" aria-current="page">8888</a></nav>
 <div class="intro">
 <h1>ちょっと拍手しときますね型言語 8888</h1>
 <p>作ってみた88888<strong>👏👏👏</strong><br>
 とりあえず公開888888888っうぇ</p>
-<p><code>8</code>、ベンガル数字の <code lang="bn">৪</code>、オリヤー数字の <code lang="or">୪</code> を使う小さな言語です。3文字の組み合わせで命令を表します。命令をそのままつなげて書けます。まずは「実行」を押してみてください。</p>
+<p class="intro-symbols"><code>8</code> <code lang="bn">৪</code> <code lang="or">୪</code> <span>3文字で1命令</span></p>
 <p class="credit">デザインの参考：<a href="https://web.archive.org/web/20241214191045/http://www.blue.sky.or.jp/grass/doc_ja.html">ちょっと草植えときますね型言語 Grass</a>（日本語アーカイブ）・<a href="http://www.blue.sky.or.jp/grass/doc_ja.html">元サイト</a></p>
 </div>
-<section class="language-bar" aria-label="言語の選択">
-<label for="language-select">言語</label>
-<select id="language-select"><option value="queena">YanbaruKuina</option><option value="chukei">CHUKEI</option><option value="8888" selected>8888言語（試作）</option></select>
+<section class="language-bar" aria-label="実行設定">
+<span class="common-output">出力：数値・文字</span>
 <a class="cheat-link" href="#cheatsheet">チートシート ↓</a>
 <span class="engine-badge">教材用VM</span>
 </section>
@@ -35,6 +35,7 @@
 <label for="example">サンプル</label>
 <select id="example"><option value="add">2 + 3 → 5</option><option value="count">カウントダウン → 3, 2, 1</option><option value="move">別のセルに移動 → 2, 1</option><option value="bengali">৪ を使って増やす → 5</option><option value="odia">8・৪・୪ を混ぜる → 5</option><option value="comment">👏 コメントを書く → 5</option><option value="arithmetic">足し算・引き算 → 5, 3</option><option value="letter">文字を出す → こんにちは</option><option value="function">関数を呼ぶ → HIHI</option></select>
 </div>
+<div class="file-tools"><button id="import-code" class="text-button" type="button">ファイルを開く</button><button id="download-code" class="text-button" type="button">ダウンロード</button><input id="code-file" type="file" accept=".8888,.txt,text/plain" hidden><span id="file-status" role="status"></span></div>
 <label class="sr-only" for="source">8888のソースコード</label>
 <textarea id="source" rows="5" maxlength="16384" autocomplete="off" autocapitalize="off" spellcheck="false" aria-describedby="hint">マジ五を出す{👏2と3を足して表示する👏88৪神2神3神৪৪৪}めっちゃ{五を出す}</textarea>
 <div class="editor-footer">
@@ -93,7 +94,7 @@
   ৪৪৪神こんにちは神
 }
 めっちゃ{挨拶}</code></pre>
-<p class="cheat-result">出力：<code>こんにちは</code></p>
+<div class="cheat-result"><span class="sample-arrow" aria-hidden="true">↳</span><span>出力 </span><code>こんにちは</code></div>
 </div>
 <ol class="cheat-steps">
 <li><strong>宣言する：</strong><code>マジ名前{…}</code> にやりたいことを書く。</li>
@@ -108,10 +109,18 @@
 <section class="docs-section" aria-labelledby="inside">
 <h2 id="inside" class="explore-heading">実行の中をのぞく</h2>
 <p><code>88৪神2神3神</code> は「2と3を足す」、<code>৪৪৪</code> は「値を出力」です。ソースコードを専用VMのバイトコードに変換し、ブラウザで実行します。ここで表示するバイトはZ80や実機CPUの機械語ではありません。<a href="../guide/#z80">本物のZ80命令の例を見る</a></p>
-<details class="panel stage"><summary>生成したバイトコード</summary><div class="doc-body"><pre id="bytes">実行後に表示します。</pre></div></details>
+<details class="panel stage"><summary>生成したバイトコード</summary><div class="doc-body"><button id="download-generated" class="text-button" type="button" disabled>生成コードを保存</button><pre id="bytes">実行後に表示します。</pre></div></details>
 <details class="panel stage"><summary>実行の跡</summary><div class="doc-body"><pre id="trace">実行後に表示します。</pre></div></details>
 <p>PCは次に読む命令の位置です。各命令は3バイト（命令番号、数値・ジャンプ先・文字列番号の下位・上位バイト）なので、分岐しないときは3ずつ進みます。アドレスとバイトは16進数です。</p>
 </section>
+<details class="panel stage implementation"><summary>文法・実装コード</summary><div class="doc-body">
+<h3>8888 · EBNF（抜粋）</h3>
+<pre>関数宣言 = "マジ", 名前, "{", { 文 }, "}" ;
+関数呼出 = "めっちゃ", "{", 名前, "}" ;
+計算     = ("88৪" | "88୪"), [ "神", 数, "神", 数, "神" ] ;
+表示     = "৪৪৪", [ "神", 文字列, "神" ] ;</pre>
+<p><a href="https://github.com/tyukei/YannbarukuinaLanguage/blob/feat/queena-chukei-playground/playground/dist/8888/engine.mjs">コンパイラとVMの実装</a></p>
+</div></details>
 <section class="docs-section" aria-labelledby="commands">
 <h2 id="commands" class="explore-heading">全命令と詳しいルール</h2>
 <p>命令は3文字。先頭の <code>8</code> は計算、<code>৪</code> は値、<code>୪</code> は移動・ループ。値は <code>神</code> で区切ります。</p>

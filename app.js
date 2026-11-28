@@ -106,7 +106,7 @@ document.addEventListener("keydown", (event) => {
     run();
   }
 });
-async function run() {
+async function run({debug=false}={}) {
   if (busy) return;
   invalidateGenerated();
   const code = source.value;
@@ -131,10 +131,10 @@ async function run() {
     return;
   }
   busy = true;
-  openRunDialog();
+  if (!debug) openRunDialog();
   el("cancel").hidden = false;
   lastSource = code;
-  runButton.disabled = el("example").disabled = el("language").disabled = el("output-mode").disabled = true;
+  runButton.disabled = el("debug-run").disabled = el("example").disabled = el("language").disabled = el("output-mode").disabled = true;
   runButton.textContent = "実行中…";
   setStatus("実行中", "running");
   el("output").textContent = "";
@@ -147,7 +147,7 @@ async function run() {
 
   try {
     const result = await execute(code);
-    replayStages(result);
+    if (!debug) replayStages(result);
     if(language==="chukei") renderChukei(result);
     renderTokens(result.tokens);
     renderAst(result.ast);
@@ -184,12 +184,18 @@ async function run() {
     cancelRun = null;
     el("cancel").hidden = true;
     runButton.disabled = el("example").disabled = el("language").disabled = false;
-    el("output-mode").disabled=language!=="chukei";
+    el("output-mode").disabled=el("debug-run").disabled=language!=="chukei";
     runButton.innerHTML = '<span aria-hidden="true">▶</span> 2. 実行';
-    finishRunDialog();
+    if (!debug) finishRunDialog();
   }
 }
-runButton.addEventListener("click", run);
+runButton.addEventListener("click", () => run());
+el("debug-run").addEventListener("click", async () => {
+  if (busy || language !== "chukei") return;
+  el("chukei-trace").open=true;
+  await run({debug:true});
+  el("chukei-trace").scrollIntoView({block:"nearest"});
+});
 window.addEventListener("pagehide", () => controller?.terminate());
 
 el("cancel").addEventListener("click", () => cancelRun?.());
@@ -229,6 +235,18 @@ el("language").addEventListener("change",()=>{
   el("tokens-note").textContent="実行で表示。";el("ast-note").textContent="実行で表示。";
   el("result-note").textContent="実行で表示。";
   const isChukei=language==="chukei";
+  const fullName=isChukei?"ちょっと刻んどきますね型言語 CHUKEI":"ちょっと鳴いときますね型言語 YanbaruKuina";
+  el("language-title").textContent=fullName;
+  document.title=fullName+" | Playground";
+  el("chukei-cheat").hidden=!isChukei;
+  el("queena-cheat").hidden=isChukei;
+  el("debug-run").disabled=!isChukei;
+  el("debug-run").title=isChukei?"VMの実行ステップを見る":"Z80のステップ実行は未対応です";
+  el("debug-note").hidden=isChukei;
+  for(const tab of document.querySelectorAll(".language-tabs [data-language]")){
+    if(tab.dataset.language===language)tab.setAttribute("aria-current","page");
+    else tab.removeAttribute("aria-current");
+  }
   el("chukei-implementation").hidden=!isChukei;
   el("queena-implementation").hidden=isChukei;
   el("chukei-mark").hidden=!isChukei;
@@ -240,7 +258,7 @@ el("language").addEventListener("change",()=>{
   el("code-kind").textContent=isChukei?"教材用VM":"Z80アセンブリ";
   document.querySelector(".trace-controls").hidden=!isChukei;
   el("trace-note").textContent=isChukei?"実行で表示。":"CHUKEIのみ対応。";
-  document.querySelector(".file-name").textContent="main.🐧";
+  document.querySelector(".file-name").textContent=isChukei?"main.chukei":"main.🐧";
   el("language-note").textContent=isChukei?"教材用VM":"Z80";
   el("terminal-name").textContent=isChukei?"CHUKEI VM":"Z80 CONSOLE";
   el("z80-chip").hidden=isChukei;
@@ -289,7 +307,7 @@ el("download-code").addEventListener("click",()=>{
  if(new TextEncoder().encode(source.value).length>16384){el("file-status").textContent="コードを16 KiB以内にしてください。";return;}
  const blob=new Blob([source.value],{type:"text/plain;charset=utf-8"});
  const url=URL.createObjectURL(blob),a=document.createElement("a");
- a.href=url;a.download="main.🐧";document.body.append(a);a.click();a.remove();
+ a.href=url;a.download=language==="chukei"?"main.chukei":"main.🐧";document.body.append(a);a.click();a.remove();
  setTimeout(()=>URL.revokeObjectURL(url),60000);
  el("file-status").textContent="ダウンロードを開始しました。";
 });
@@ -358,6 +376,22 @@ function replayStages(result){
  phases.slice(1).forEach((_,i)=>stageTimers.push(setTimeout(()=>show(i+1),(i+1)*550)));
 }
 
+for(const tab of document.querySelectorAll(".language-tabs [data-language]")){
+  tab.addEventListener("click",e=>{
+    if(e.button!==0||e.metaKey||e.ctrlKey||e.shiftKey||e.altKey) return;
+    e.preventDefault();
+    if(busy)return;
+    const next=tab.dataset.language;
+    if(next==="8888"){
+      saveFor8888();
+      location.assign(tab.href);
+    }else if(next!==language){
+      el("language").value=next;
+      el("language").dispatchEvent(new Event("change"));
+      history.replaceState(null,"",tab.href);
+    }
+  });
+}
 // Default to the CHUKEI greeting, or restore a draft when returning from 8888.
 const returning=takeReturnFrom8888();
 if(returning?.chukeiMode==="numeric") chukeiMode="numeric";
