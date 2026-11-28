@@ -85,3 +85,10 @@ th, td { text-align: left; padding: .3rem .75rem .3rem .25rem; border-bottom: 1p
 .language-idea h2 { color:var(--green); font-size:.79rem; white-space:nowrap; }
 .language-idea p { flex:1 1 26rem; margin:0; font-size:.85rem; color:var(--muted); }
 .language-idea strong { color:var(--ink); }
+
+.language-idea .paradigm-tag { display:block; margin-top:.25rem; color:var(--green); font-weight:650; }
+.paradigm-guide { flex:1 0 100%; min-width:0; font-size:.85rem; }
+.paradigm-guide summary { width:fit-content; padding:.3rem 0; color:var(--green); cursor:pointer; }
+.paradigm-guide table { border-spacing:0; }
+.paradigm-guide th[scope="row"] { white-space:nowrap; }
+.paradigm-guide p { margin:.5rem 0; }
