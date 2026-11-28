@@ -1,4 +1,4 @@
-import {commandGroups, commandTable, compactCodes, compile, hex, instructions, run} from './engine.mjs?v=11';
+import {commandGroups, commandTable, compactCodes, compile, debugSnapshot, hex, instructions, run} from './engine.mjs?v=12';
 
 const $ = id => document.getElementById(id);
 const source = $('source'), output = $('output'), error = $('error');
@@ -38,7 +38,65 @@ function showCommands(id, commands) {
 showCommands('commands-body', commandTable);
 for (const [i, [, commands]] of commandGroups.entries()) showCommands('command-group-' + i, commands);
 
+let recording = null;
+const debugPanel = $('debug-panel'), slider = $('debug-step'), pageSelect = $('debug-page');
+for (let index = 0; index < 256; index += 16) {
+  const option = document.createElement('option');
+  option.value = String(index);
+  option.textContent = `セル ${index}〜${index + 15}`;
+  pageSelect.append(option);
+}
+function showStep(step) {
+  if (!recording) return;
+  const {frames, steps} = recording;
+  const last = frames.length - 1;
+  step = Math.max(0, Math.min(step, last));
+  slider.value = String(step);
+  $('debug-prev').disabled = step === 0;
+  $('debug-next').disabled = step === last;
+  const {cells, frame} = debugSnapshot(frames, step);
+  let label = `${step} / ${steps} ステップ · 現在のセル：${frame.pointer}`;
+  if (step === 0) label += ' · 実行前（全セル 0）';
+  else {
+    label += ` · ${instructions[frame.op - 1]}（${frame.source}）`;
+    if (frame.change) label += ` · セル ${frame.change.index}：${frame.change.from} → ${frame.change.to}`;
+    else if (frame.pointer !== frame.previousPointer) label += ` · 移動：${frame.previousPointer} → ${frame.pointer}`;
+    else label += ' · 値の変化なし';
+  }
+  $('debug-status').textContent = label;
+  const first = pageSelect.value === 'auto' || pageSelect.value === undefined
+    ? frame.pointer - frame.pointer % 16 : Number(pageSelect.value);
+  const cards = [];
+  for (let i = first; i < first + 16; i++) {
+    const item = document.createElement('li');
+    item.className = 'debug-cell' + (i === frame.pointer ? ' active' : '') + (i === frame.change?.index ? ' changed' : '');
+    const name = document.createElement('small'), value = document.createElement('strong');
+    name.textContent = `セル ${i}`;
+    value.textContent = String(cells[i]);
+    item.append(name, value);
+    cards.push(item);
+  }
+  $('debug-cells').replaceChildren(...cards);
+}
+function openDebug(data) {
+  recording = data;
+  pageSelect.value = 'auto';
+  slider.max = String(data.frames.length - 1);
+  slider.disabled = data.frames.length <= 1;
+  const limited = data.frames.length - 1 < data.steps;
+  $('debug-limit').hidden = !limited;
+  $('debug-limit').textContent = limited ? `先頭 ${data.frames.length - 1} ステップまで確認できます。` : '';
+  debugPanel.hidden = false;
+  showStep(0);
+}
+$('debug-prev').addEventListener('click', () => showStep(Number(slider.value) - 1));
+$('debug-next').addEventListener('click', () => showStep(Number(slider.value) + 1));
+slider.addEventListener('input', () => showStep(Number(slider.value)));
+pageSelect.addEventListener('change', () => showStep(Number(slider.value)));
+
 function clear() {
+  recording = null;
+  debugPanel.hidden = true;
   output.textContent = 'まだ実行していません。';
   error.hidden = true;
   error.textContent = '';
@@ -50,7 +108,7 @@ $('example').addEventListener('change', event => {
 });
 source.addEventListener('input', clear);
 
-function execute() {
+function execute(debug = false) {
   clear();
   try {
     const program = compile(source.value);
@@ -64,7 +122,8 @@ function execute() {
     if (code.length > 96 * 3) listing.push('…（先頭96命令のみ表示）');
     bytes.textContent = listing.join('\n') || '（命令なし）';
 
-    const result = run(program);
+    const result = run(program, {debug});
+    if (result.debug) openDebug(result.debug);
     let rendered = '', previous;
     for (const value of result.output) {
       if (previous !== undefined) {
@@ -83,9 +142,12 @@ function execute() {
     output.textContent = '停止しました。';
     error.hidden = false;
     error.textContent = e.message;
+    if (e.debug) openDebug(e.debug);
   }
 }
-runButton.addEventListener('click', execute);
+runButton.addEventListener('click', () => execute());
+$('run-debug').addEventListener('click', () => execute(true));
+$('run-debug').disabled = false;
 source.addEventListener('keydown', event => {
   if ((event.metaKey || event.ctrlKey) && event.key === 'Enter') {
     event.preventDefault();

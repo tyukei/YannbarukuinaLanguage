@@ -20,3 +20,15 @@ pre { margin: .35rem 0 .8rem; padding: .5rem .65rem; border-left: 2px solid #aaa
 #output { white-space: pre-wrap; overflow-wrap: anywhere; }
 #error { color: #9b1c1c; }
 th, td { text-align: left; padding: .2rem .75rem .2rem 0; border-bottom: 1px solid #ccc; }
+
+#debug-panel { background: #f7faf9; border: 1px solid #a3bdb2; border-radius: .5rem; padding: .8rem; margin-top: 1rem; }
+#debug-panel h3 { margin-top: 0; }
+#debug-step { width: 100%; accent-color: #225847; }
+#debug-status { font-size: .9rem; }
+#debug-cells { list-style: none; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(3.1rem, 1fr)); gap: .35rem; }
+.debug-cell { background: #fff; border: 1px solid #a3bdb2; text-align: center; padding: .3rem .1rem; border-radius: .3rem; }
+.debug-cell small, .debug-cell strong { display: block; }
+.debug-cell small { font-size: .7rem; }
+.debug-cell strong { font: bold 1rem ui-monospace, monospace; }
+.debug-cell.active { outline: 2px solid #225847; outline-offset: -2px; }
+.debug-cell.changed { background: #fff0b0; border-color: #8c620d; }

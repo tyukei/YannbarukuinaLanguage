@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {compactCodes, compile, run} from '../dist/8888/engine.mjs';
+import {compactCodes, compile, debugLimit, debugSnapshot, run} from '../dist/8888/engine.mjs';
 
 const execute = source => run(compile(source));
 test('2 + 3 gives 5 and PC advances 3 bytes per instruction', () => {
@@ -150,4 +150,27 @@ test('v0.5 command families use distinct prefixes without breaking v0.4', () => 
   const previous = 'マジ数{8୪৪神8神3神8৪୪৪৪8神8神3神8৪୪8৪୪神8神}めっちゃ{数}';
   assert.deepEqual(compile(current).code, compile(previous).code);
   assert.deepEqual(execute(current).output, [11, 5, '8']);
+});
+
+test('debug snapshots restore memory before and after a move or cell update', () => {
+  const p = compile('set 7 888 set 42 8888 88');
+  const result = run(p, {debug:true});
+  const {frames} = result.debug;
+  assert.deepEqual([...debugSnapshot(frames, 0).cells.slice(0, 2)], [0,0]);
+  assert.deepEqual(frames[1].change, {index:0, from:0, to:7});
+  assert.equal(frames[2].pointer, 1);
+  assert.equal(frames[2].change, null);
+  assert.deepEqual([...debugSnapshot(frames, 3).cells.slice(0, 2)], [7,42]);
+  assert.deepEqual([...debugSnapshot(frames, 5).cells.slice(0, 2)], [6,42]);
+  assert.equal(run(p).debug, undefined);
+});
+
+test('debugging retains successful steps when the VM stops at an error', () => {
+  assert.throws(() => run(compile('8 888888 8888888'), {debug:true}), error => {
+    assert.match(error.message, /100,000/u);
+    assert.equal(error.debug.steps, 100000);
+    assert.equal(error.debug.frames.length, debugLimit + 1);
+    assert.equal(debugSnapshot(error.debug.frames, debugLimit).cells[0], 1);
+    return true;
+  });
 });

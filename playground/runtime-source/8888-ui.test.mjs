@@ -4,7 +4,8 @@ import {readFile} from 'node:fs/promises';
 
 test('the initial source and every sample declare and invoke a named function', async () => {
   const html = await readFile(new URL('../dist/8888/index.html', import.meta.url), 'utf8');
-  const keys = [...html.matchAll(/<option value="([^"]+)">/gu)].map(m => m[1]);
+  const sampleSelect = html.match(/<select id="example">([\s\S]*?)<\/select>/u)[1];
+  const keys = [...sampleSelect.matchAll(/<option value="([^"]+)">/gu)].map(m => m[1]);
   const defaults = html.match(/<textarea[^>]+>([\s\S]*?)<\/textarea>/u)[1];
   const results = {
     add: '5', count: '3 2 1', move: '2 1', bengali: '5', odia: '5',
@@ -12,7 +13,7 @@ test('the initial source and every sample declare and invoke a named function', 
   };
   const nodes = {source: {value: defaults, ...element()}};
   function element() {
-    return {events:{}, append(){}, insertRow:element, insertCell:element,
+    return {events:{}, children:[], append(...children){this.children.push(...children);}, replaceChildren(...children){this.children = children;}, insertRow:element, insertCell:element,
       addEventListener(name, f) { this.events[name] = f; }};
   }
   const previous = globalThis.document;
@@ -34,6 +35,27 @@ test('the initial source and every sample declare and invoke a named function', 
       nodes.run.events.click();
       assert.equal(nodes.output.textContent, results[key], key);
     }
+    nodes.example.events.change({target:{value:'move'}});
+    nodes['run-debug'].events.click();
+    assert.equal(nodes['debug-panel'].hidden, false);
+    assert.match(nodes['debug-status'].textContent, /全セル 0/u);
+    assert.equal(nodes['debug-cells'].children.length, 16);
+    const step = nodes['debug-step'];
+    for (let n = 0; n < 3; n++) nodes['debug-next'].events.click();
+    assert.match(nodes['debug-status'].textContent, /セル 0：0 → 1/u);
+    assert.match(nodes['debug-cells'].children[0].className, /active changed/u);
+    nodes['debug-next'].events.click();
+    assert.match(nodes['debug-status'].textContent, /移動：0 → 1/u);
+    nodes['debug-prev'].events.click();
+    assert.match(nodes['debug-status'].textContent, /現在のセル：0/u);
+    step.value = step.max;
+    step.events.input();
+    assert.deepEqual(nodes['debug-cells'].children.slice(0, 2).map(x=>x.children[1].textContent), ['1','2']);
+    nodes['debug-page'].value = '240';
+    nodes['debug-page'].events.change();
+    assert.equal(nodes['debug-cells'].children[15].children[0].textContent, 'セル 255');
+    nodes.source.events.input();
+    assert.equal(nodes['debug-panel'].hidden, true);
   } finally {
     if (previous === undefined) delete globalThis.document;
     else globalThis.document = previous;
