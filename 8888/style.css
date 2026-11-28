@@ -1,0 +1,22 @@
+* { box-sizing: border-box; }
+body { margin: 0; color: #181818; background: #fff; font: 1rem/1.7 system-ui, sans-serif; }
+main { max-width: 46rem; margin: auto; padding: 1.25rem clamp(1rem, 5vw, 2rem) 3rem; }
+h1, h2, h3 { line-height: 1.35; }
+h1 { font-size: clamp(1.9rem, 6vw, 2.6rem); margin: .7em 0 .3em; }
+h1 small { font-size: .45em; font-weight: 500; white-space: nowrap; }
+h2 { font-size: 1.3rem; }
+h3 { font-size: 1rem; margin-bottom: .35em; }
+a { color: #0645ad; text-underline-offset: .15em; }
+a:visited { color: #551a8b; }
+:focus-visible { outline: 2px solid #0645ad; outline-offset: 3px; }
+hr { border: 0; border-top: 1px solid #aaa; margin: 1.5rem 0; }
+code, pre, textarea { font-family: ui-monospace, Menlo, Consolas, monospace; }
+textarea { display: block; width: 100%; min-height: 8rem; resize: vertical; padding: .6rem; font-size: 1rem; border: 1px solid #777; margin: .25rem 0 .65rem; }
+.tools { display: flex; flex-wrap: wrap; align-items: center; gap: .55rem .75rem; margin-bottom: .6rem; }
+button, select { min-height: 44px; max-width: 100%; padding: .3rem .6rem; font: inherit; }
+button, summary { cursor: pointer; }
+#hint { font-size: .88rem; color: #444; }
+pre { margin: .35rem 0 .8rem; padding: .5rem .65rem; border-left: 2px solid #aaa; background: #f6f6f6; overflow: auto; max-height: 18rem; font-size: .875rem; }
+#output { white-space: pre-wrap; overflow-wrap: anywhere; }
+#error { color: #9b1c1c; }
+th, td { text-align: left; padding: .2rem .75rem .2rem 0; border-bottom: 1px solid #ccc; }
