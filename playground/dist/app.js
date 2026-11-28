@@ -25,6 +25,21 @@ const asciiSamples={
 };
 const drafts={};
 let chukeiMode="ascii";
+const returnFrom8888Key="yanbarukuina.playground.return-from-8888";
+function saveFor8888(){
+  drafts[language]=source.value;
+  if(language==="chukei") chukeiMode=el("output-mode").value;
+  try { sessionStorage.setItem(returnFrom8888Key, JSON.stringify({language,chukeiMode,drafts})); }
+  catch { /* Navigation still works if session storage is unavailable. */ }
+}
+function takeReturnFrom8888(){
+  try {
+    const value=sessionStorage.getItem(returnFrom8888Key);
+    if(!value) return null;
+    sessionStorage.removeItem(returnFrom8888Key);
+    return JSON.parse(value);
+  } catch { return null; }
+}
 function currentSamples(){return language==="chukei"?(el("output-mode").value==="ascii"?asciiSamples:chukeiSamples):samples;}
 const el = (id) => document.getElementById(id);
 const source = el("source"), runButton = el("run"), exampleSelect = el("example");
@@ -196,6 +211,12 @@ el("trace-prev").addEventListener("click",()=>{traceIndex=Math.max(0,traceIndex-
 el("trace-next").addEventListener("click",()=>{traceIndex=Math.min(trace.length-1,traceIndex+1);showTrace()});
 el("trace-index").addEventListener("input",e=>{traceIndex=Number(e.target.value);showTrace()});
 el("language").addEventListener("change",()=>{
+  if(el("language").value==="8888"){
+    saveFor8888();
+    el("language").value=language;
+    location.assign("./8888/");
+    return;
+  }
   invalidateGenerated();
   drafts[language]=source.value;
   if(language==="chukei") chukeiMode=el("output-mode").value;
@@ -337,6 +358,15 @@ function replayStages(result){
  phases.slice(1).forEach((_,i)=>stageTimers.push(setTimeout(()=>show(i+1),(i+1)*550)));
 }
 
-// Start with the explicitly selected CHUKEI greeting.
-el("language").value="chukei";
+// Default to the CHUKEI greeting, or restore a draft when returning from 8888.
+const returning=takeReturnFrom8888();
+if(returning?.chukeiMode==="numeric") chukeiMode="numeric";
+el("language").value=returning?.language==="queena"?"queena":"chukei";
 el("language").dispatchEvent(new Event("change"));
+for (const key of ["queena","chukei"]) {
+  if(typeof returning?.drafts?.[key]==="string") drafts[key]=returning.drafts[key];
+}
+if(typeof returning?.drafts?.[language]==="string") source.value=drafts[language];
+window.addEventListener("pageshow", e=>{
+  if(e.persisted) takeReturnFrom8888(); // Back/forward cache already keeps the live editor.
+});
