@@ -1,4 +1,4 @@
-import {commandGroups, commandTable, compactCodes, debugSnapshot, hex, instructions} from './engine.mjs?v=kami-body-1';
+import {commandGroups, commandTable, compactCodes, debugSnapshot, hex, instructions} from './engine.mjs?v=kami-parens-1';
 
 function example(name, body, calls = 1) {
   return 'マジ' + name + '{' + body + '}' + ('めっちゃ{' + name + '}').repeat(calls);
@@ -8,8 +8,8 @@ const plus = add + '神2神3神', minus = sub + '神5神2神';
 const put = n => set + '神' + n + '神';
 const display = text => print + '神' + text + '神';
 export const examples = {
-  hello: '👏足す関数に2と3を渡して、戻り値を表示👏\nマジ足す(x,y)神神神88৪(x,y)神神神\n৪৪৪(めっちゃ足す(2,3))',
-  compose: '👏増やすを2回つないで、戻り値を表示👏\nマジ増やす(x)神神神88৪(x,1)神神神\n৪৪৪(めっちゃ増やす(めっちゃ増やす(3)))',
+  hello: '👏足す関数に2と3を渡して、戻り値を表示👏\nマジ足す神x,y神{88৪神x,y神}\n৪৪৪神めっちゃ足す神2,3神神',
+  compose: '👏増やすを2回つないで、戻り値を表示👏\nマジ増やす神x神{88৪神x,1神}\n৪৪৪神めっちゃ増やす神めっちゃ増やす神3神神神',
   legacy: example('五を出す', '👏2と3を足して表示する👏' + plus + print),
   count: example('カウントダウン', '👏3から1まで順に表示する👏' + put(3) + loop + print + dec + again),
   move: example('セルを移動', '👏隣のセルに移って戻る👏' + put(1) + right + put(2) + print + left + print),

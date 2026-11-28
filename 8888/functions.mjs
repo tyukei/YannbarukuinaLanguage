@@ -3,11 +3,21 @@ export const expressionInstructions = ['定数を積む', '引数を読む', '�
 const scan = /\s+|👏[\s\S]*?👏|88[৪୪]|৪৪৪|[0-9]+|[\p{L}_][\p{L}\p{N}_]*|[(){},]/uy;
 const kami = '神神神';
 const kamiScan = /神神神|\s+|👏[\s\S]*?👏|88[৪୪]|৪৪৪|[0-9]+|[\p{L}_](?:(?!神神神)[\p{L}\p{N}_])*|[(){},]/uy;
-export function isExpressionProgram(source) {
+const singleKamiScan = /神|\s+|👏[\s\S]*?👏|88[৪୪]|৪৪৪|[0-9]+|(?:(?!神)[\p{L}_])(?:(?!神)[\p{L}\p{N}_])*|[(){},]/uy;
+// Require a complete header so a legacy function name containing 神 is not mistaken for syntax.
+const headerGap = String.raw`(?:\s|👏[\s\S]*?👏)*`;
+const headerName = String.raw`(?:(?!神)[\p{L}_])(?:(?!神)[\p{L}\p{N}_])*`;
+const singleKamiHeader = new RegExp(
+  `^マジ${headerGap}${headerName}${headerGap}神${headerGap}(?:${headerName}${headerGap}(?:,${headerGap}${headerName}${headerGap})*)?神${headerGap}\\{`, 'u'
+);
+export function expressionStyle(source) {
   const start = source.replace(/^(?:\s+|👏[\s\S]*?👏)*/u,'');
-  return /^(?:マジ\s*[\p{L}_][\p{L}\p{N}_]*\s*\(|৪৪৪\s*\()/u.test(start);
+  if (/^(?:マジ\s*[\p{L}_][\p{L}\p{N}_]*\s*\(|৪৪৪\s*\()/u.test(start)) return 'classic';
+  if (singleKamiHeader.test(start)) return 'singleKami';
+  return null;
 }
-export function compileExpressions(source,{sourceMap,analysis}) {
+export function compileExpressions(source,{sourceMap,analysis},style) {
+  const singleKami=style==='singleKami';
   let offset=0,line=1,column=1,cached,inKamiBody=false;
   const tokens=[],code=[],locations=[],sourceCommands=[],functions=[],definitions=new Map(),calls=[];
   const ast={label:'プログラム',kind:'program',children:[]};
@@ -16,7 +26,7 @@ export function compileExpressions(source,{sourceMap,analysis}) {
   const make=(label,kind,children=[])=>({label,kind,children});
   function lex(){
     while(offset<source.length){
-      const scanner=inKamiBody?kamiScan:scan;
+      const scanner=singleKami?singleKamiScan:inKamiBody?kamiScan:scan;
       scanner.lastIndex=offset;
       // Keywords are glued to names, so split them before reading a name.
       let text=/^(?:マジ|めっちゃ)/u.exec(source.slice(offset))?.[0]??scanner.exec(source)?.[0];
@@ -26,7 +36,7 @@ export function compileExpressions(source,{sourceMap,analysis}) {
       line+=lines.length-1;column=(lines.length===1?column:1)+Array.from(lines.at(-1)).length;
       offset+=text.length;
       if(/^\s/u.test(text)||text.startsWith('👏')) continue;
-      t.kind=/^(?:マジ|めっちゃ|88[৪୪]|৪৪৪)$/u.test(text)?'命令':/^\d/u.test(text)?'数値':(text===kami&&inKamiBody||/^[(){},]$/u.test(text))?'区切り':'名前';
+      t.kind=/^(?:マジ|めっちゃ|88[৪୪]|৪৪৪)$/u.test(text)?'命令':/^\d/u.test(text)?'数値':(text===kami&&inKamiBody||text==='神'&&singleKami||/^[(){},]$/u.test(text))?'区切り':'名前';
       tokens.push(t);
       return t;
     }
@@ -43,9 +53,15 @@ export function compileExpressions(source,{sourceMap,analysis}) {
     return pc;
   }
   function patch(pc,value){code[pc+1]=value&255;code[pc+2]=value>>>8;}
+  function opening() {
+    const t=take();
+    if(t.lexeme==='(') return ')';
+    if(singleKami&&t.lexeme==='神') return '神';
+    fail(t,singleKami?'「神」か「(」が必要です。':'「(」が必要です。');
+  }
   function list(parse,depth){
-    expect('(');const values=[];
-    if(peek().lexeme!==')'){
+    const close=opening(),values=[];
+    if(peek().lexeme!==close){
       do {
         if(values.length>=16) fail(peek(),'引数は16個までです。');
         values.push(parse(depth));
@@ -53,7 +69,7 @@ export function compileExpressions(source,{sourceMap,analysis}) {
         take();
       } while(true);
     }
-    expect(')');return values;
+    expect(close);return values;
   }
   function expression(params,depth=0) {
     const t=take(),text=t.lexeme;
@@ -88,9 +104,9 @@ export function compileExpressions(source,{sourceMap,analysis}) {
         if(params.has(n.lexeme)) fail(n,'同じ引数名を2回使えません。');
         params.set(n.lexeme,i);
       }
-      inKamiBody=source.slice(offset).replace(/^(?:\s+|👏[\s\S]*?👏)*/u,'').startsWith(kami);
+      inKamiBody=!singleKami&&source.slice(offset).replace(/^(?:\s+|👏[\s\S]*?👏)*/u,'').startsWith(kami);
       const open=take();
-      if(open.lexeme!=='{'&&open.lexeme!==kami) fail(open,'関数本体は「神神神」か「{」で始めてください。');
+      if(open.lexeme!=='{'&&open.lexeme!==kami) fail(open,singleKami?'関数本体は「{」で始めてください。':'関数本体は「神神神」か「{」で始めてください。');
       const skip=emit(14,t);
       definitions.set(n.lexeme,functions.length);functions.push({pc:code.length,arity:params.size});
       const body=expression(params);
@@ -99,9 +115,9 @@ export function compileExpressions(source,{sourceMap,analysis}) {
       emit(23,end);patch(skip,code.length);
       ast.children.push(make('関数 · '+n.lexeme,'function',[make('引数 · '+names.map(n=>n.lexeme).join(', '),'parameters'),body]));
     }else if(t.lexeme==='৪৪৪'){
-      expect('(');const value=expression(new Map());expect(')');
+      const close=opening(),value=expression(new Map());expect(close);
       emit(24,t);ast.children.push(make('結果を表示','instruction',[value]));
-    }else fail(t,'関数の定義「マジ 名前(引数)神神神 式 神神神」か、表示「৪৪৪(式)」を書いてください。');
+    }else fail(t,'関数の定義「マジ名前神引数神{式}」か、表示「৪৪৪神式神」を書いてください。');
   }
   for(const {token,pc,arity} of calls){
     const id=definitions.get(token.lexeme);
