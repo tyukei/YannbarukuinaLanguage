@@ -108,3 +108,25 @@ test('Japanese function keywords compile to the same code and mix with English a
   assert.throws(() => compile('めっちゃ 未定義'), /定義されていません/u);
   assert.throws(() => compile('神'), /対応する関数宣言/u);
 });
+
+test('compact commands use three distinct symbols and ignore whitespace between commands', () => {
+  const flat = 'マジ"計算"8୪৪"2""3"8৪୪৪৪8"5""2"8৪୪神めっちゃ"計算"';
+  const spaced = '👏説明👏\nマジ "計算"\n\t8୪৪ "2" "3" 8৪୪\r\n৪৪8"5""2" 8৪୪ 神 めっちゃ "計算"';
+  assert.deepEqual(compile(spaced).code, compile(flat).code);
+  assert.deepEqual(execute(flat).output, [5, 3]);
+  assert.deepEqual(execute('マジ"二つ"8৪88୪88৪୪神めっちゃ"二つ"').output, [0]);
+  assert.throws(() => compile('マジ"f"888神めっちゃ"f"'), /不明な命令/u);
+});
+
+test('quoted display preserves Unicode, spaces and clap characters without executing them', () => {
+  const display = 'こんにちは 👏 "88888" 神\n';
+  const source = 'マジ"挨拶"8৪୪' + JSON.stringify(display) + '神めっちゃ"挨拶"';
+  assert.deepEqual(execute(source).output, [display]);
+  assert.deepEqual(execute('マジ"字"8৪୪"123"神めっちゃ"字"').output, ['123']);
+  assert.deepEqual(execute('マジ"字"8৪୪""神めっちゃ"字"').output, ['']);
+  assert.throws(() => compile('マジ"f"8୪৪"2"神めっちゃ"f"'), /右の数/u);
+  assert.throws(() => compile('マジ"f"8୪৪"2""字"神めっちゃ"f"'), /0〜255/u);
+  assert.throws(() => compile('マジ"f"8৪୪"閉じ忘れ'), /表示する文字/u);
+  const large = 'マジ"f"8৪୪"' + 'あ'.repeat(6000) + '"神' + 'めっちゃ"f"'.repeat(3);
+  assert.throws(() => execute(large), /16,384文字/u);
+});

@@ -1,28 +1,28 @@
-import {compile, extendedSyntax, hex, instructions, run} from './engine.mjs?v=8';
+import {commandTable, compile, hex, instructions, run} from './engine.mjs?v=9';
 
 const $ = id => document.getElementById(id);
 const source = $('source'), output = $('output'), error = $('error');
 const bytes = $('bytes'), trace = $('trace'), runButton = $('run');
 function example(name, body, calls = 1) {
-  const definition = ['マジ ' + name, ...body.split('\n').map(line => '  ' + line), '神'];
-  return [...definition, '', ...Array(calls).fill('めっちゃ ' + name)].join('\n');
+  const quoted = JSON.stringify(name);
+  return 'マジ' + quoted + body + '神' + ('めっちゃ' + quoted).repeat(calls);
 }
 const examples = {
-  add: example('五を出す', '8 8\n8 8 8\n88888'),
-  count: example('カウントダウン', '8 8 8\n888888\n  88888 88\n8888888'),
-  move: example('セルを移動', '8 888 8 8 88888 8888 88888'),
-  bengali: example('数字を混ぜる', '8 ৪\n৪ 8 ৪\n8৪8৪8'),
-  odia: example('三つの数字', '8 ৪\n୪ 8 ୪\n8৪୪8୪'),
-  comment: example('コメントの例', '8 ৪ 👏 ここまでで 2\nコメント内の 88888 は実行しません 👏\n୪ 8 ୪ 88888'),
-  arithmetic: example('足し引き', 'set 2 push set 3 add 88888\nset 5 push set 2 sub 88888'),
-  letter: example('文字を出す', 'set 72 char\nset 73 char'),
-  function: example('あいさつ', 'set 72 char\nset 73 char', 2),
+  add: example('五を出す', '8୪৪"2""3"8৪୪'),
+  count: example('カウントダウン', '৪8৪"3"৪୪88৪୪8୪8୪৪8'),
+  move: example('セルを移動', '৪8৪"1"৪8୪৪8৪"2"8৪୪୪8৪8৪୪'),
+  bengali: example('ベンガル数字', '8৪8'.repeat(5) + '8৪୪'),
+  odia: example('三つの数字', '8୪৪"2""3"8৪୪'),
+  comment: example('コメントの例', '8୪৪"2""3"👏この中の命令8৪୪は実行しない👏8৪୪'),
+  arithmetic: example('足し引き', '8୪৪"2""3"8৪୪৪৪8"5""2"8৪୪'),
+  letter: example('文字を出す', '8৪୪"こんにちは"'),
+  function: example('あいさつ', '8৪୪"HI"', 2),
 };
 
-for (const [i, description] of instructions.entries()) {
+for (const [syntax, description] of commandTable) {
   const row = $('commands-body').insertRow();
   const token = document.createElement('code');
-  token.textContent = i < 8 ? '8'.repeat(i + 1) : extendedSyntax[i - 8];
+  token.textContent = syntax;
   row.insertCell().append(token);
   row.insertCell().textContent = description;
 }
@@ -43,10 +43,12 @@ function execute() {
   clear();
   try {
     const program = compile(source.value);
-    const {code} = program;
+    const {code, literals} = program;
     const listing = [];
     for (let i = 0; i < Math.min(code.length, 96 * 3); i += 3) {
-      listing.push(`${hex(i, 4)}  ${hex(code[i])} ${hex(code[i + 1])} ${hex(code[i + 2])}  ${instructions[code[i] - 1]}`);
+      const arg = code[i + 1] + (code[i + 2] << 8);
+      const extra = code[i] === 17 ? ' ' + JSON.stringify(literals[arg]) : '';
+      listing.push(`${hex(i, 4)}  ${hex(code[i])} ${hex(code[i + 1])} ${hex(code[i + 2])}  ${instructions[code[i] - 1]}${extra}`);
     }
     if (code.length > 96 * 3) listing.push('…（先頭96命令のみ表示）');
     bytes.textContent = listing.join('\n') || '（命令なし）';

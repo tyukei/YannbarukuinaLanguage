@@ -8,7 +8,7 @@ test('the initial source and every sample declare and invoke a named function', 
   const defaults = html.match(/<textarea[^>]+>([\s\S]*?)<\/textarea>/u)[1];
   const results = {
     add: '5', count: '3 2 1', move: '2 1', bengali: '5', odia: '5',
-    comment: '5', arithmetic: '5 3', letter: 'HI', function: 'HIHI',
+    comment: '5', arithmetic: '5 3', letter: 'こんにちは', function: 'HIHI',
   };
   const nodes = {source: {value: defaults, ...element()}};
   function element() {
@@ -25,10 +25,11 @@ test('the initial source and every sample declare and invoke a named function', 
     for (const key of keys) {
       nodes.example.events.change({target:{value:key}});
       const source = nodes.source.value;
-      const name = source.match(/^マジ ([^\s]+)/u)?.[1];
+      const name = source.match(/^マジ("[^"]+")/u)?.[1];
       assert.ok(name, key);
-      assert.ok(source.includes('\n神\n\nめっちゃ ' + name), key);
-      assert.equal(key === 'add' ? source : defaults, defaults);
+      assert.ok(source.includes('神めっちゃ' + name), key);
+      assert.doesNotMatch(source, /\s/u, key);
+      if (key === 'add') assert.equal(source, defaults);
       nodes.run.events.click();
       assert.equal(nodes.output.textContent, results[key], key);
     }
