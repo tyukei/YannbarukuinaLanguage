@@ -55,3 +55,20 @@ test('a triple-神 function body must end with its matching delimiter',()=>{
  }
  assert.match(execute8888('マジa()神神神2}',true).error,/「神神神」が必要/);
 });
+
+test('single 神 replaces paired parentheses while braces enclose the function body',()=>{
+ const source='マジ増やす神x神{88৪神x,1神}マジ三神神{3}৪৪৪神めっちゃ増やす神めっちゃ増やす神めっちゃ三神神神神神';
+ const equivalent='マジ増やす(x){88৪(x,1)}マジ三(){3}৪৪৪(めっちゃ増やす(めっちゃ増やす(めっちゃ三())))';
+ const program=compile(source,{analysis:true});
+ assert.deepEqual(program.code,compile(equivalent).code);
+ assert.deepEqual(run(program).output,[5]);
+ assert.ok(program.tokens.filter(t=>t.lexeme==='神').every(t=>t.kind==='区切り'));
+ assert.equal(execute8888('マジそのまま 👏引数👏 神x神 {x}৪৪৪(めっちゃそのまま神5神)').output,'5');
+ assert.match(execute8888('マジ零神神{0}৪৪৪神めっちゃ零神神',true).error,/「神」が必要/);
+});
+
+test('legacy functions with 神 in names and older delimiters still work',()=>{
+ assert.equal(execute8888('マジ女神王神{8৪8৪৪৪}めっちゃ{女神王神}').output,'1');
+ assert.equal(execute8888('マジ 女神 8 88888 神 めっちゃ 女神').output,'1');
+ assert.equal(execute8888('マジ女神(x)神神神x神神神৪৪৪(めっちゃ女神(5))').output,'5');
+});

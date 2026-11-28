@@ -1,4 +1,4 @@
-import {compileExpressions, expressionInstructions, isExpressionProgram} from './functions.mjs?v=kami-body-1';
+import {compileExpressions, expressionInstructions, expressionStyle} from './functions.mjs?v=kami-parens-1';
 // 8888 v0.5: compact and legacy syntax compiled to 3-byte VM records.
 export const instructions = [
   'セルの値を +1', 'セルの値を −1', '右のセルへ', '左のセルへ',
@@ -195,7 +195,20 @@ function compactMode(source) {
 
 export function compile(source, {sourceMap = false, analysis = false} = {}) {
   if (source.length > 16384) throw new Error('入力は16,384文字までです。');
-  if (isExpressionProgram(source)) return compileExpressions(source,{sourceMap,analysis});
+  const style=expressionStyle(source);
+  if(style==='classic') return compileExpressions(source,{sourceMap,analysis},style);
+  if(style==='singleKami'){
+    // A legacy function name may itself contain 神. Prefer it if the whole legacy program is valid.
+    const reader=compactReader(source);
+    reader.skip();
+    if(reader.declaration()){
+      try { return compileLegacy(source,{sourceMap,analysis}); } catch { /* try the new header */ }
+    }
+    return compileExpressions(source,{sourceMap,analysis},style);
+  }
+  return compileLegacy(source,{sourceMap,analysis});
+}
+function compileLegacy(source,{sourceMap,analysis}) {
   const code = [], locations = [], loops = [], literals = [];
   const sourceCommands = sourceMap ? [] : null;
   const ast = analysis ? {kind:'program', label:'プログラム', children:[]} : null;

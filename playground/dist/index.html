@@ -8,8 +8,8 @@
   <link rel="stylesheet" href="./style.css?v=paradigms-1">
   <link rel="stylesheet" href="./ast-view.css?v=visual-20261114">
   <script src="./ast-view.js?v=visual-20261114" defer></script>
-  <link rel="stylesheet" href="./8888/style.css?v=kami-body-1">
-  <script type="module" src="./app.js?v=kami-body-1"></script>
+  <link rel="stylesheet" href="./8888/style.css?v=kami-parens-1">
+  <script type="module" src="./app.js?v=kami-parens-1"></script>
   <style>
 
     .vm-command-guide { margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--line); font-size: 12px; }
@@ -97,18 +97,18 @@ CHUK</code></pre><div class="cheat-result"><span class="sample-arrow" aria-hidde
 </div><div id="clap-cheat" hidden>
 <div class="cheat-grid">
 <div class="cheat-example"><h3>2と3を渡してみる</h3>
-<pre><code>マジ足す(x,y)神神神88৪(x,y)神神神
-৪৪৪(めっちゃ足す(2,3))</code></pre>
+<pre><code>マジ足す神x,y神{88৪神x,y神}
+৪৪৪神めっちゃ足す神2,3神神</code></pre>
 <div class="cheat-result"><span class="sample-arrow" aria-hidden="true">↳</span><span>出力 </span><code>5</code></div></div>
 <ol class="cheat-steps">
-<li><strong>定義する：</strong><code>マジ足す(x,y)神神神…神神神</code> で2つの値を受け取る。</li>
-<li><strong>値を返す：</strong><code>88৪(x,y)</code> が足した結果になる。</li>
-<li><strong>使う：</strong><code>めっちゃ足す(2,3)</code> の結果を、表示や別の関数に渡す。</li>
+<li><strong>定義する：</strong><code>マジ足す神x,y神{…}</code> で2つの値を受け取る。</li>
+<li><strong>値を返す：</strong><code>88৪神x,y神</code> が足した結果になる。</li>
+<li><strong>使う：</strong><code>めっちゃ足す神2,3神</code> の結果を、表示や別の関数に渡す。</li>
 </ol></div>
 <h3>式の書き方</h3>
 <div class="cheat-table-wrap"><table><thead><tr><th scope="col">書き方</th><th scope="col">意味</th></tr></thead><tbody>
-<tr><td><code>88৪(x,y)</code></td><td>足す</td></tr><tr><td><code>88୪(x,y)</code></td><td>引く</td></tr>
-<tr><td><code>めっちゃ足す(2,3)</code></td><td>関数を呼び、結果を受け取る</td></tr><tr><td><code>৪৪৪(式)</code></td><td>式の結果を表示する</td></tr>
+<tr><td><code>88৪神x,y神</code></td><td>足す</td></tr><tr><td><code>88୪神x,y神</code></td><td>引く</td></tr>
+<tr><td><code>めっちゃ足す神2,3神</code></td><td>関数を呼び、結果を受け取る</td></tr><tr><td><code>৪৪৪神式神</code></td><td>式の結果を表示する</td></tr>
 </tbody></table></div>
 <p class="cheat-tip"><code>👏メモ👏</code> はコメント。旧形式も使えます。<a href="#commands">従来のメモリ操作を見る ↓</a></p>
 </div></section>
@@ -172,7 +172,7 @@ CHUK</code></pre><div class="cheat-result"><span class="sample-arrow" aria-hidde
     <details class="help panel stage"><summary>使い方・仕様</summary><div class="ast-body">
       <div id="queena-help"><p>naku：出力 ／ moshi：分岐 ／ aruku：ループ ／ zz：コメント</p><p>Zig/WASM → Z80アセンブリ → 機械語 → 既存Z80エミュレータ。CP/Mはコンソール出力のみ。</p></div>
       <div id="chukei-guide" hidden><p>C：+1 ／ CH：−1 ／ CHU：右へ ／ CHUK：出力 ／ CHUKE・CHUKEI：ループ</p><p>スペース不要の6命令。次のCが命令の区切りです。既存の空白・改行区切りも使えます。256セル、値0〜255、値・ポインタは循環。現在セルが0ならループ終了。入力・コメントなし。</p><p>JavaScript製コンパイラ → 教材用VM（Z80ではありません）。JZ：0なら移動、JNZ：0以外なら移動。</p><p>ASCII：65=A、90=Z、97=a、122=z、10=改行、32=空白。0〜127のみ。自動改行・日本語なし。</p></div>
-      <div id="clap-guide" hidden><p>作ってみた88888<strong>👏👏👏</strong><br>とりあえず公開888888888っうぇ</p><p>名前の参考：<a href="https://web.archive.org/web/20241214191045/http://www.blue.sky.or.jp/grass/doc_ja.html">ちょっと草植えときますね型言語 Grass</a>（<a href="http://www.blue.sky.or.jp/grass/doc_ja.html">元サイト</a>）</p><h3>値を返す関数</h3><p>関数本体は <code>神神神…神神神</code> で囲みます。今までの <code>{…}</code> も使えます。中身は1つの式です。引数には数値や別の呼び出しの結果を渡せます。関数の中では共有メモリの操作や表示はできません。表示は外で <code>৪৪৪(式)</code> と書きます。この書き方と旧形式は同じプログラム内では混ぜません。数値は0〜255で、計算結果は範囲を超えると一周します。</p>
+      <div id="clap-guide" hidden><p>作ってみた88888<strong>👏👏👏</strong><br>とりあえず公開888888888っうぇ</p><p>名前の参考：<a href="https://web.archive.org/web/20241214191045/http://www.blue.sky.or.jp/grass/doc_ja.html">ちょっと草植えときますね型言語 Grass</a>（<a href="http://www.blue.sky.or.jp/grass/doc_ja.html">元サイト</a>）</p><h3>値を返す関数</h3><p>本体は <code>{…}</code> で囲みます。引数・計算・表示の括弧は、左右1つずつ <code>神</code> で書けます。この形式では関数の定義から書き始めます。従来の <code>()</code> と <code>神神神…神神神</code> で書いたプログラムも動きます。引数には数値や別の呼び出しの結果を渡せます。関数の中では共有メモリの操作や表示はできません。表示は外で <code>৪৪৪神式神</code> と書きます。この書き方と旧形式は同じプログラム内では混ぜません。数値は0〜255で、計算結果は範囲を超えると一周します。</p>
 <h3 id="commands">従来のメモリ操作と全命令</h3><div class="cheat-table-wrap"><table><thead><tr><th scope="col">命令</th><th scope="col">意味</th><th scope="col">書き方の例</th></tr></thead><tbody id="commands-body"></tbody></table></div>
 <p>命令は3文字。先頭の <code>8</code> は計算、<code>৪</code> は値、<code>୪</code> は移動・ループ。値は <code>神</code> で区切ります。</p>
 <details class="panel stage"><summary>すべての命令（先頭の文字で分類）</summary><div class="doc-body">
@@ -252,13 +252,12 @@ loop = "CHUKE", { statement }, "CHUKEI" ;</pre>
   if(stack.length){const t=stack.at(-1).token;throw Error(`Unmatched CHUKE at line ${t.line}, column ${t.column}`);}
 </code></pre><p>スタックで開始と終了を対応付け、JZはループ後、JNZは本体先頭へ。ASTと命令列を同時に作る。</p>
 <p><a href="https://github.com/tyukei/YannbarukuinaLanguage/blob/feat/queena-chukei-playground/playground/runtime-source/chukei-runtime.js" target="_blank" rel="noopener">実装全体</a> · <a href="https://github.com/tyukei/YannbarukuinaLanguage/blob/feat/queena-chukei-playground/playground/runtime-source/chukei-compact-test.mjs" target="_blank" rel="noopener">テスト</a></p>
-<p>JavaScript製の教材用VM。Z80ではありません。CHUKは値をASCII文字として1文字出力します。ASCIIは0〜127、自動改行なし。</p></div><div id="clap-implementation" hidden><h3>8888 · 値を返す関数（EBNF抜粋）</h3>
-<pre>定義 = "マジ", 名前, "(", [ 名前, { ",", 名前 } ], ")", 本体 ;
-本体 = "神神神", 式, "神神神" | "{", 式, "}" ;
+<p>JavaScript製の教材用VM。Z80ではありません。CHUKは値をASCII文字として1文字出力します。ASCIIは0〜127、自動改行なし。</p></div><div id="clap-implementation" hidden><h3>8888 · 値を返す関数（神を使う書き方のEBNF抜粋）</h3>
+<pre>定義 = "マジ", 名前, "神", [ 名前, { ",", 名前 } ], "神", "{", 式, "}" ;
 式   = 数値 | 引数名 | 計算 | 呼出 ;
-計算 = ("88৪" | "88୪"), "(", 式, ",", 式, ")" ;
-呼出 = "めっちゃ", 名前, "(", [ 式, { ",", 式 } ], ")" ;
-表示 = "৪৪৪", "(", 式, ")" ;</pre>
+計算 = ("88৪" | "88୪"), "神", 式, ",", 式, "神" ;
+呼出 = "めっちゃ", 名前, "神", [ 式, { ",", 式 } ], "神" ;
+表示 = "৪৪৪", "神", 式, "神" ;</pre>
 <h3>従来のメモリ操作（EBNF抜粋）</h3>
 <pre>関数宣言 = "マジ", 名前, "{", { 文 }, "}" ;
 関数呼出 = "めっちゃ", "{", 名前, "}" ;
