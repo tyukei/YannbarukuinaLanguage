@@ -23,15 +23,15 @@ test('one editor, terminal and debugger are shared across the three languages', 
  assert.match(app,/main\.👏/u);
  assert.match(html,/\.🔴,\.chukei,\.👏,\.8888/u);
  for(const name of ['queena','chukei','clap']) assert.ok(html.includes('id="'+name+'-cheat"'),name);
- const sample=html.match(/<pre><code>(マジ挨拶[\s\S]*?)<\/code><\/pre>/u)[1];
- assert.deepEqual(run(compile(sample)).output,['こんにちは']);
+ const sample=html.match(/<pre><code>(マジ足す[\s\S]*?)<\/code><\/pre>/u)[1];
+ assert.deepEqual(run(compile(sample)).output,[5]);
  assert.doesNotMatch(html,/Z80のステップ実行は未対応|8888言語（試作）/u);
  assert.deepEqual([...html.matchAll(/data-idea="([^"]+)"/gu)].map(m=>m[1]),labels);
  const designNotes=Object.fromEntries([...html.matchAll(/data-idea="([^"]+)"[^>]*><strong>([^<]+)/gu)].map(m=>[m[1],m[2]]));
  assert.deepEqual(designNotes,{
   yanbarukuina:'読みやすい手順を、Z80で動かす。',
   chukei:'6つの命令で、セルを直接操作する。',
-  8888:'手順に名前をつけて、何度でも呼ぶ。',
+  8888:'値を受け取り、次の値を返す。',
  });
  assert.match(app,/idea\.hidden=idea\.dataset\.idea!==language/);
 

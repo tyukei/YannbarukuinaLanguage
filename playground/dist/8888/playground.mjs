@@ -1,4 +1,4 @@
-import {commandGroups, commandTable, compactCodes, debugSnapshot, hex, instructions} from './engine.mjs?v=unified-1';
+import {commandGroups, commandTable, compactCodes, debugSnapshot, hex, instructions} from './engine.mjs?v=values-1';
 
 function example(name, body, calls = 1) {
   return 'マジ' + name + '{' + body + '}' + ('めっちゃ{' + name + '}').repeat(calls);
@@ -8,7 +8,9 @@ const plus = add + '神2神3神', minus = sub + '神5神2神';
 const put = n => set + '神' + n + '神';
 const display = text => print + '神' + text + '神';
 export const examples = {
-  hello: example('五を出す', '👏2と3を足して表示する👏' + plus + print),
+  hello: '👏足す関数に2と3を渡して、戻り値を表示👏\nマジ足す(x,y){88৪(x,y)}\n৪৪৪(めっちゃ足す(2,3))',
+  compose: '👏増やすを2回つないで、戻り値を表示👏\nマジ増やす(x){88৪(x,1)}\n৪৪৪(めっちゃ増やす(めっちゃ増やす(3)))',
+  legacy: example('五を出す', '👏2と3を足して表示する👏' + plus + print),
   count: example('カウントダウン', '👏3から1まで順に表示する👏' + put(3) + loop + print + dec + again),
   move: example('セルを移動', '👏隣のセルに移って戻る👏' + put(1) + right + put(2) + print + left + print),
   bengali: example('ベンガル数字', '👏৪を含む命令で1ずつ増やす👏' + inc.repeat(5) + print),
@@ -19,7 +21,7 @@ export const examples = {
   function: example('あいさつ', '👏この関数を呼ぶたびにHIを表示する👏' + display('HI'), 2),
 };
 
-export const exampleNames = ['2 + 3 → 5','カウントダウン → 3, 2, 1','別のセルに移動 → 2, 1','৪ を使って増やす → 5','8・৪・୪ を混ぜる → 5','👏 コメントを書く → 5','足し算・引き算 → 5, 3','文字を出す → こんにちは','関数を呼ぶ → HIHI'];
+export const exampleNames = ['関数に2と3を渡す → 5','関数をつなぐ → 5','従来のメモリ操作 → 5','カウントダウン → 3, 2, 1','別のセルに移動 → 2, 1','৪ を使って増やす → 5','8・৪・୪ を混ぜる → 5','👏 コメントを書く → 5','足し算・引き算 → 5, 3','文字を出す → こんにちは','関数を呼ぶ → HIHI'];
 
 export function initDebugger(document) {
   const $ = id => document.getElementById(id);
@@ -44,7 +46,7 @@ const debugPanel = $('debug-panel'), slider = $('debug-step'), pageSelect = $('d
 for (let index = 0; index < 256; index += 16) {
   const option = document.createElement('option');
   option.value = String(index);
-  option.textContent = `セル ${index}〜${index + 15}`;
+  option.textContent = `0x${hex(index,4)}〜0x${hex(index+15,4)}`;
   pageSelect.append(option);
 }
 function showSource(frame) {
@@ -66,7 +68,8 @@ function showSource(frame) {
   const line = Array.from(recording.lines[Number(row) - 1] ?? '');
   const at = Number(column) - 1;
   const after = line.slice(at).join('');
-  const command = frame.sourceLength ? line.slice(at, at + frame.sourceLength).join('') : after.match(/^(?:マジ|めっちゃ|神|\}|[8৪୪]{3}|[^\s👏]+)/u)?.[0] ?? after.charAt(0);
+  const highlightLength = frame.sourceLength ?? (recording.functional ? Array.from(recording.entries.get(frame.pc)?.text??'').length : 0);
+  const command = highlightLength ? line.slice(at, at + highlightLength).join('') : after.match(/^(?:マジ|めっちゃ|神|\}|[8৪୪]{3}|[^\s👏]+)/u)?.[0] ?? after.charAt(0);
   const end = at + Array.from(command).length;
   const startContext = Math.max(0, at - 38), endContext = Math.min(line.length, end + 38);
   const before = document.createElement('span'), arrow = document.createElement('span');
@@ -101,6 +104,7 @@ function explainStep(frame) {
   const {op, before, after, pointer, previousPointer, leftValue, emitted, next} = frame;
   const cell = `セル${pointer}`;
   const jump = `アドレス 0x${hex(next, 4)}`;
+  const result = frame.values?.at(-1);
   switch (op) {
     case 1:
     case 2: {
@@ -130,6 +134,12 @@ function explainStep(frame) {
     case 14: return `関数を宣言しただけなので中身は実行せず、${jump} に進みました。`;
     case 15: return `関数の実行が終わり、呼び出した場所の次（${jump}）に戻りました。`;
     case 16: return `関数を呼び出し、中身の先頭（${jump}）へ進みました。`;
+    case 18: return `定数 ${result} を計算用スタックに置きました。`;
+    case 19: return `引数の値 ${result} を読みました。引数や共有メモリは変えません。`;
+    case 20: case 21: return `計算結果 ${result} をスタックに置きました。`;
+    case 22: return `引数 [${frame.args.join(', ')}] を渡して、関数の先頭（${jump}）へ進みました。`;
+    case 23: return `結果 ${result} を返して、呼び出し元（${jump}）に戻りました。`;
+    case 24: return `関数の外で、結果 ${emitted} を表示しました。`;
     case 17: return `文字列 ${JSON.stringify(emitted.length > 48 ? emitted.slice(0, 48) + '…' : emitted)} を表示しました。セルの値は変わりません。`;
     default: return 'ステップを進めると、ここに説明が出ます。';
   }
@@ -190,8 +200,8 @@ function showAddresses(frame) {
   $('debug-pc').textContent = pc === undefined ? '未実行' : address(pc);
   $('debug-next-pc').textContent = address(next) + (next === recording.codeLength ? '（終了）' : '');
   const base = recording.machine === 'z80' ? 'PCはZ80のメモリアドレスです。命令によって長さが異なります。'
-    : recording.machine === 'chukei' ? 'PCはVMの命令番号です。セル番号とは別です。'
-    : 'アドレスはバイトコード上の位置です。セル番号とは別です。';
+    : recording.machine === 'chukei' ? 'PCはVMの命令番号です。データ用のメモリアドレスとは別です。'
+    : 'PCはバイトコード上の位置です。データ用のメモリアドレスとは別です。';
   const width=recording.entries.get(pc)?.width;
   const explanation = pc !== undefined && width && next !== pc + width
     ? 'ジャンプ：' + address(pc) + ' → ' + address(next) + '。' + base : base;
@@ -208,13 +218,14 @@ function showStep(step) {
   $('debug-next').disabled = step === last;
   const z80 = recording.machine === 'z80';
   const {cells, frame} = z80 ? z80Snapshot(recording,step) : debugSnapshot(frames, step);
-  let label = `${step} / ${steps} ステップ · 現在のセル：${frame.pointer}`;
+  let label = `${step} / ${steps} ステップ · データ位置：0x${hex(frame.pointer,4)}`;
   if(z80) label=`${step} / ${steps} ステップ · Z80` + (step===0 ? ' · 実行前' : '');
-  else if (step === 0) label += ' · 実行前（全セル 0）';
+  else if(recording.functional) label=`${step} / ${steps} ステップ · 関数の深さ：${frame.depth}`+(step?' · '+recording.entries.get(frame.pc)?.description:' · 実行前');
+  else if (step === 0) label += ' · 実行前（全メモリ 0）';
   else {
     label += ` · ${recording.entries.get(frame.pc)?.description ?? frame.op}（${frame.source}）`;
-    if (frame.change) label += ` · セル ${frame.change.index}：${frame.change.from} → ${frame.change.to}`;
-    else if (frame.pointer !== frame.previousPointer) label += ` · 移動：${frame.previousPointer} → ${frame.pointer}`;
+    if (frame.change) label += ` · メモリ 0x${hex(frame.change.index,4)}：${frame.change.from} → ${frame.change.to}`;
+    else if (frame.pointer !== frame.previousPointer) label += ` · 移動：0x${hex(frame.previousPointer,4)} → 0x${hex(frame.pointer,4)}`;
     else label += ' · 値の変化なし';
   }
   $('debug-status').textContent = label;
@@ -228,13 +239,15 @@ function showStep(step) {
     ? pointer - pointer % 16 : Number(pageSelect.value);
   $('debug-registers').hidden=!z80;
   if(z80) $('debug-registers').textContent=Object.entries(frame.regs??{}).map(([name,value])=>name+'='+hex(value,name.length===1?2:4)).join('  ');
+  $('debug-values').hidden=!recording.functional;
+  if(recording.functional) $('debug-values').textContent=`引数：[${frame.args.join(', ')}]\n計算用スタック（末尾16個まで）：[${frame.values.join(', ')}]\n共有メモリへの書き込みなし`;
   const altered = z80 ? new Set((frame.writes??[]).map(w=>w.index)) : new Set([frame.change?.index]);
   const cards = [];
   for (let i = first; i < first + 16; i++) {
     const item = document.createElement('li');
-    item.className = 'debug-cell' + (i === frame.pointer ? ' active' : '') + (altered.has(i) ? ' changed' : '');
+    item.className = 'debug-cell' + (i === frame.pointer && !recording.functional ? ' active' : '') + (altered.has(i) ? ' changed' : '');
     const name = document.createElement('small'), value = document.createElement('strong');
-    name.textContent = z80 ? '0x'+hex(i,4) : `セル ${i}`;
+    name.textContent = '0x'+hex(i,4);
     value.textContent = z80 ? hex(cells[i]) : String(cells[i]);
     item.append(name, value);
     cards.push(item);

@@ -40,5 +40,5 @@
 #debug-panel .tools { display:flex; flex-wrap:wrap; align-items:center; gap:.55rem .75rem; margin-bottom:.6rem; }
 #debug-panel .tools button, #debug-bank { border: 1px solid var(--line); border-radius: 8px; background: var(--paper); padding: .3rem .65rem; }
 #debug-bank { max-width:12rem; min-height:44px; font:inherit; }
-#debug-registers { margin-bottom:.8rem; padding:.45rem; background:#eef5f0; border-radius:.35rem; }
+#debug-registers, #debug-values { margin-bottom:.8rem; padding:.45rem; background:#eef5f0; border-radius:.35rem; }
 #debug-addresses, #debug-map th { background: #eef5f0; }

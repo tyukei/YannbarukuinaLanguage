@@ -1,11 +1,11 @@
-import {compile, hex, instructions, run} from './engine.mjs?v=unified-1';
+import {compile, hex, instructions, run} from './engine.mjs?v=values-1';
 
 export function execute8888(source, debug = false) {
   let program;
   const result = {ok:false, tokens:[], ast:null, output:''};
   try {
     program = compile(source, {sourceMap:debug, analysis:true});
-    const {code, literals, tokens, ast} = program;
+    const {code, literals, tokens, ast, functions} = program;
     result.tokens = tokens;
     result.ast = ast;
     const listing = [];
@@ -16,7 +16,7 @@ export function execute8888(source, debug = false) {
     }
     if (code.length > 96 * 3) listing.push('…（先頭96命令のみ表示）');
     result.listing = listing.join('\n') || '（命令なし）';
-    result.generated = JSON.stringify({format:'8888 educational VM', version:1, code:[...code], literals}, null, 2);
+    result.generated = JSON.stringify({format:'8888 educational VM', version:functions?2:1, code:[...code], literals, ...(functions?{functions}:{})}, null, 2);
     const finished = run(program, {debug});
     if (finished.debug) result.debug = finished.debug;
     let previous;
@@ -29,7 +29,7 @@ export function execute8888(source, debug = false) {
       previous = value;
     }
     const rows = finished.trace.map(({pc, op, next, pointer, value, emitted}) =>
-      `${hex(pc, 4)} → ${hex(next, 4)}  ${hex(op)}  セル[${pointer}] = ${value}${emitted === null ? '' : `  出力: ${typeof emitted === 'string' ? JSON.stringify(emitted) : emitted}`}`);
+      `${hex(pc, 4)} → ${hex(next, 4)}  ${hex(op)}  ${functions?('スタック先頭（最新値）: '+(value??'空')):('データ[0x'+hex(pointer,4)+'] = '+value)}${emitted === null ? '' : `  出力: ${typeof emitted === 'string' ? JSON.stringify(emitted) : emitted}`}`);
     if (finished.steps > finished.trace.length) rows.push('…（先頭48ステップのみ表示）');
     result.traceText = [`実行: ${finished.steps} ステップ`, ...rows].join('\n');
     result.steps = finished.steps;
