@@ -56,3 +56,5 @@ th, td { text-align: left; padding: .2rem .75rem .2rem 0; border-bottom: 1px sol
 #debug-map .map-address, #debug-map .map-bytes { font-family: ui-monospace, monospace; white-space: nowrap; }
 #debug-map .map-done td { background: #fff0b0; }
 #debug-map .map-next td { background: #d8eafa; }
+
+#debug-map .map-source { font-family: ui-monospace, monospace; min-width: 8rem; max-width: 18rem; white-space: pre-wrap; overflow-wrap: anywhere; }

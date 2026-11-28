@@ -68,7 +68,9 @@ test('the initial source and every sample declare and invoke a named function', 
     const addressRows = nodes['debug-map-body'].children;
     assert.equal(addressRows.length, 8);
     assert.equal(addressRows[0].children[0].textContent, '0x0000（0）');
-    assert.equal(addressRows[0].children[1].textContent, '0E 15 00');
+    assert.equal(addressRows[0].children[1].textContent, 'マジ五を出す{');
+    assert.equal(addressRows[0].children[2].textContent, '0E 15 00');
+    for (const row of addressRows.slice(1, 5)) assert.equal(row.children[1].textContent, '88৪神2神3神');
     assert.equal(addressRows[0].className, 'map-next');
     step.value = '2';
     step.events.input();

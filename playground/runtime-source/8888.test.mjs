@@ -174,3 +174,13 @@ test('debugging retains successful steps when the VM stops at an error', () => {
     return true;
   });
 });
+
+test('source map preserves high-level syntax per generated VM record', () => {
+  const options = {sourceMap:true};
+  const source = 'マジ数{88৪神8神3神৪৪৪神答え神}めっちゃ{数}';
+  const program = compile(source, options);
+  assert.deepEqual(program.sourceCommands, ['マジ数{', ...Array(4).fill('88৪神8神3神'), '৪৪৪神答え神', '}', 'めっちゃ{数}']);
+  assert.deepEqual(compile('マジ"旧"8৪୪"前の形式"神めっちゃ"旧"', options).sourceCommands, ['マジ"旧"', '8৪୪"前の形式"', '神', 'めっちゃ"旧"']);
+  assert.deepEqual(compile('fn f set 65 char end call f', options).sourceCommands, ['fn f', 'set 65', 'char', 'end', 'call f']);
+  assert.equal(compile(source).sourceCommands, undefined);
+});

@@ -5,8 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="description" content="数字の8、ベンガル数字の৪、オリヤー数字の୪で命令を書く教育用言語。ブラウザで実行してバイトコードと実行の流れを見比べられます。">
 <title>8888言語（試作） | YanbaruKuina</title>
-<link rel="stylesheet" href="./style.css?v=6">
-<script type="module" src="./playground.mjs?v=17"></script>
+<link rel="stylesheet" href="./style.css?v=7">
+<script type="module" src="./playground.mjs?v=18"></script>
 </head>
 <body>
 <main>
@@ -54,9 +54,9 @@
 </dl>
 <p id="debug-pc-note">アドレスはバイトコード上の位置です。セル番号とは別です。</p>
 <h5 id="debug-map-title">命令の配置</h5>
-<p id="debug-map-help">1行が1つのVM命令（3バイト）です。アドレスは16進数と10進数で表示します。</p>
+<p id="debug-map-help">1行が1つのVM命令（3バイト）です。同じ8888コードが複数行に出るのは、1つの命令から複数のVM命令が作られたためです。</p>
 <div id="debug-map-scroll" tabindex="0" role="region" aria-labelledby="debug-map-title" aria-describedby="debug-map-help">
-<table id="debug-map"><thead><tr><th scope="col">アドレス</th><th scope="col">バイト列</th><th scope="col">命令</th><th scope="col">実行位置</th></tr></thead><tbody id="debug-map-body"></tbody></table>
+<table id="debug-map"><thead><tr><th scope="col">アドレス</th><th scope="col">元の8888コード</th><th scope="col">バイト列</th><th scope="col">VM命令</th><th scope="col">実行位置</th></tr></thead><tbody id="debug-map-body"></tbody></table>
 </div>
 <p id="debug-map-empty" hidden>配置された命令はありません。</p>
 </section>
