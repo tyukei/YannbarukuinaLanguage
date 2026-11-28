@@ -5,11 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="YanbaruKuina、CHUKEI、8888を同じ画面で試せるブラウザ内実験室。">
   <title>YanbaruKuina Playground</title>
-  <link rel="stylesheet" href="./style.css?v=unified-1">
+  <link rel="stylesheet" href="./style.css?v=language-ideas-1">
   <link rel="stylesheet" href="./ast-view.css?v=visual-20261114">
   <script src="./ast-view.js?v=visual-20261114" defer></script>
   <link rel="stylesheet" href="./8888/style.css?v=unified-1">
-  <script type="module" src="./app.js?v=unified-1"></script>
+  <script type="module" src="./app.js?v=language-ideas-1"></script>
   <style>
 
     .vm-command-guide { margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--line); font-size: 12px; }
@@ -28,6 +28,12 @@
     </header>
     <nav class="language-tabs" aria-label="言語を切り替える"><span class="language-tabs-label">言語を切り替える</span><a href="./?lang=yanbarukuina" data-language="yanbarukuina">YanbaruKuina</a><a href="./?lang=chukei" data-language="chukei" aria-current="page">CHUKEI</a><a href="./?lang=8888" data-language="8888">8888</a></nav>
 <h1 id="language-title" class="language-title">ちょっと中継しときますね型言語 CHUKEI</h1>
+    <section class="language-idea" aria-labelledby="idea-title">
+      <h2 id="idea-title">言語の思想</h2>
+      <p id="idea-yanbarukuina" data-idea="yanbarukuina" hidden><strong>手続き型：読みやすいコードを、Z80まで。</strong> 変数・条件・繰り返しで書いた処理が、どんな機械語になるかを見られます。</p>
+      <p id="idea-chukei" data-idea="chukei"><strong>命令型：セルを、一手ずつ動かす。</strong> 6つの命令で、数を増やすところから文字が出るまでを追えます。</p>
+      <p id="idea-8888" data-idea="8888" hidden><strong>関数型の発想：処理に名前をつけて呼ぶ。</strong> <code>マジ</code>で処理をまとめ、<code>めっちゃ</code>で呼び出します。セルは共有するので、純粋関数型ではありません。</p>
+    </section>
     <section class="language-bar">
       <select id="language" aria-label="言語" hidden><option value="yanbarukuina">YanbaruKuina</option><option value="chukei">CHUKEI</option><option value="8888">8888</option></select>
       <span id="output-format-note" class="feature-note">出力：ASCII</span>

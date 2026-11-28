@@ -26,4 +26,8 @@ test('one editor, terminal and debugger are shared across the three languages', 
  const sample=html.match(/<pre><code>(マジ挨拶[\s\S]*?)<\/code><\/pre>/u)[1];
  assert.deepEqual(run(compile(sample)).output,['こんにちは']);
  assert.doesNotMatch(html,/Z80のステップ実行は未対応|8888言語（試作）/u);
+ assert.deepEqual([...html.matchAll(/data-idea="([^"]+)"/gu)].map(m=>m[1]),labels);
+ assert.match(html,/関数型の発想.*純粋関数型ではありません/u);
+ assert.match(app,/idea\.hidden=idea\.dataset\.idea!==language/);
+
 });

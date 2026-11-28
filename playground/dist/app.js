@@ -260,6 +260,7 @@ function selectLanguage(next, remember = true){
   el("file-status").textContent="";
   const isChukei=language==="chukei", isClap=language==="8888", isZ80=language==="yanbarukuina";
   el("language-title").textContent=config.title;
+  for(const idea of document.querySelectorAll("[data-idea]")) idea.hidden=idea.dataset.idea!==language;
   document.title=config.title+" | Playground";
   for(const [base, show] of [["queena",isZ80],["chukei",isChukei],["clap",isClap]]){
     for(const suffix of ["cheat","implementation","mark"]) el(base+"-"+suffix).hidden=!show;
