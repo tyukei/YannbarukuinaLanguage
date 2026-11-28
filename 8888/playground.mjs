@@ -1,4 +1,4 @@
-import {compile, hex, instructions, run} from './engine.mjs?v=4';
+import {compile, extendedSyntax, hex, instructions, run} from './engine.mjs?v=5';
 
 const $ = id => document.getElementById(id);
 const source = $('source'), output = $('output'), error = $('error');
@@ -10,12 +10,15 @@ const examples = {
   bengali: '8 ৪\n৪ 8 ৪\n8৪8৪8',
   odia: '8 ৪\n୪ 8 ୪\n8৪୪8୪',
   comment: '8 ৪ 👏 ここまでで 2\nコメント内の 88888 は実行しません 👏\n୪ 8 ୪ 88888',
+  arithmetic: 'set 2 push set 3 add 88888\nset 5 push set 2 sub 88888',
+  letter: 'set 72 char\nset 73 char',
+  function: 'fn あいさつ\n  set 72 char\n  set 73 char\nend\n\ncall あいさつ\ncall あいさつ',
 };
 
 for (const [i, description] of instructions.entries()) {
   const row = $('commands-body').insertRow();
   const token = document.createElement('code');
-  token.textContent = '8'.repeat(i + 1);
+  token.textContent = i < 8 ? '8'.repeat(i + 1) : extendedSyntax[i - 8];
   row.insertCell().append(token);
   row.insertCell().textContent = description;
 }
@@ -45,9 +48,18 @@ function execute() {
     bytes.textContent = listing.join('\n') || '（命令なし）';
 
     const result = run(program);
-    output.textContent = result.output.join(' ') || '（出力なし）';
+    let rendered = '', previous;
+    for (const value of result.output) {
+      if (previous !== undefined) {
+        if (typeof previous !== typeof value && previous !== '\n') rendered += '\n';
+        if (typeof previous === 'number' && typeof value === 'number') rendered += ' ';
+      }
+      rendered += value;
+      previous = value;
+    }
+    output.textContent = result.output.length ? rendered : '（出力なし）';
     const rows = result.trace.map(({pc, op, next, pointer, value, emitted}) =>
-      `${hex(pc, 4)} → ${hex(next, 4)}  ${hex(op)}  セル[${pointer}] = ${value}${emitted === null ? '' : `  出力: ${emitted}`}`);
+      `${hex(pc, 4)} → ${hex(next, 4)}  ${hex(op)}  セル[${pointer}] = ${value}${emitted === null ? '' : `  出力: ${typeof emitted === 'string' ? JSON.stringify(emitted) : emitted}`}`);
     if (result.steps > result.trace.length) rows.push('…（先頭48ステップのみ表示）');
     trace.textContent = [`実行: ${result.steps} ステップ`, ...rows].join('\n');
   } catch (e) {
