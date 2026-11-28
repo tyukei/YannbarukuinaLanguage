@@ -2,6 +2,14 @@ import {commandGroups, commandTable, compactCodes, compile, debugSnapshot, hex, 
 
 const $ = id => document.getElementById(id);
 const source = $('source'), output = $('output'), error = $('error');
+const languagePicker = $('language-select');
+languagePicker.addEventListener('change', () => {
+  const lang = languagePicker.value;
+  if (lang !== 'chukei' && lang !== 'queena') return;
+  languagePicker.value = '8888';
+  location.assign('../?lang=' + lang);
+});
+const resultStatus = $('result-status');
 const bytes = $('bytes'), trace = $('trace'), runButton = $('run');
 function example(name, body, calls = 1) {
   return 'マジ' + name + '{' + body + '}' + ('めっちゃ{' + name + '}').repeat(calls);
@@ -224,6 +232,7 @@ function clear() {
   recording = null;
   debugPanel.hidden = true;
   output.textContent = 'まだ実行していません。';
+  resultStatus.textContent = '待機中';
   error.hidden = true;
   error.textContent = '';
   bytes.textContent = trace.textContent = '実行後に表示します。';
@@ -251,6 +260,7 @@ function execute(debug = false) {
 
     const result = run(program, {debug});
     if (result.debug) openDebug(result.debug, program);
+    resultStatus.textContent = '実行完了';
     let rendered = '', previous;
     for (const value of result.output) {
       if (previous !== undefined) {
@@ -267,6 +277,7 @@ function execute(debug = false) {
     trace.textContent = [`実行: ${result.steps} ステップ`, ...rows].join('\n');
   } catch (e) {
     output.textContent = '停止しました。';
+    resultStatus.textContent = 'エラー';
     error.hidden = false;
     error.textContent = e.message;
     if (e.debug) openDebug(e.debug, program);
