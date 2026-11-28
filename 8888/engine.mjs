@@ -1,4 +1,4 @@
-// 8888 v0.3: compact and legacy syntax compiled to 3-byte VM records.
+// 8888 v0.4: compact and legacy syntax compiled to 3-byte VM records.
 export const instructions = [
   'セルの値を +1', 'セルの値を −1', '右のセルへ', '左のセルへ',
   '値を出力', '値が 0 ならループを飛ばす',
@@ -16,18 +16,16 @@ const width = 3;
 const maxInstructions = 4096;
 
 export const compactCodes = ['8৪8','8୪8','৪8୪','୪8৪','8৪୪','৪୪8','୪৪8','୪୪8','৪8৪','୪8୪','8୪৪','৪৪8','8୪୪'];
-export const compactSyntax = [
-  ...compactCodes.map((code, i) => code + ({4:'［"文字"］',8:'"数"',10:'［"左""右"］',11:'［"左""右"］'}[i] ?? '')),
-  'マジ"名前"', '神', 'めっちゃ"名前"',
-];
-const compactDescriptions = new Map([
-  [4, '現在値を数で表示。または "…" の文字を表示'],
-  [8, '現在のセルに0〜255の数を入れる'],
-  [10, '足し算。左・右の数を指定するか、保存した値と現在値を使う'],
-  [11, '引き算。左・右の数を指定するか、保存した値と現在値を使う'],
-  [13, '関数の宣言を始める'],
-]);
-export const commandTable = compactSyntax.map((syntax, i) => [syntax, compactDescriptions.get(i) ?? instructions[i]]);
+export const commandTable = [
+  [4, '表示', '神こんにちは神'],
+  [8, '値を入れる', '神8神'],
+  [10, '足す', '神2神3神'],
+  [11, '引く', '神5神2神'],
+].map(([i, label, suffix]) => [compactCodes[i], label, compactCodes[i] + suffix]);
+const mainCodes = new Set(commandTable.map(([code]) => code));
+export const extraCommands = compactCodes
+  .map((code, i) => [code, instructions[i]])
+  .filter(([code]) => !mainCodes.has(code));
 
 function* legacyTokens(source) {
   const lines = source.split(/\r\n?|\n/u);
@@ -74,6 +72,28 @@ function compactReader(source) {
     get cursor() { return cursor; },
     starts(text) { return source.startsWith(text, cursor); },
     atQuote() { skip(); return source[cursor] === '"'; },
+    declaration() { return /^マジ\s*([\p{L}_][\p{L}\p{N}_]{0,31})\s*\{/u.exec(source.slice(cursor)); },
+    invocation() { return /^めっちゃ\s*\{\s*([\p{L}_][\p{L}\p{N}_]{0,31})\s*\}/u.exec(source.slice(cursor)); },
+    atGod() { skip(); return source[cursor] === '神'; },
+    godFields(count, label) {
+      skip();
+      const pos = position();
+      if (source[cursor] !== '神') throw new Error(`${pos}：${label}を「神」で囲んでください。`);
+      const fields = [];
+      let from = cursor + 1;
+      for (let n = 0; n < count; n++) {
+        let end = from, token = '';
+        for (; end < source.length && source[end] !== '神'; end++) {
+          if (source[end] === '\\' && ['神', '\\'].includes(source[end + 1])) end++;
+          token += source[end];
+        }
+        if (end === source.length) throw new Error(`${pos}：${label}を閉じる「神」がありません。`);
+        fields.push({token, pos});
+        from = end + 1;
+      }
+      advance(from);
+      return fields;
+    },
     quoted(label) {
       skip();
       const pos = position();
@@ -90,18 +110,26 @@ function compactReader(source) {
   };
 }
 
-function* compactTokens(source) {
+function* compactTokens(source, braces) {
   const r = compactReader(source);
   while (true) {
     r.skip();
     if (r.cursor === source.length) return;
     const pos = r.position();
-    if (r.starts('神')) {
+    if (r.starts(braces ? '}' : '神')) {
       r.advance(r.cursor + 1);
       yield {token:'神', pos};
       continue;
     }
     const word = r.starts('マジ') ? 'マジ' : r.starts('めっちゃ') ? 'めっちゃ' : null;
+    if (word && braces) {
+      const match = word === 'マジ' ? r.declaration() : r.invocation();
+      if (!match) throw new Error(`${pos}：関数は「マジ名前{…}」で宣言し、「めっちゃ{名前}」で呼びます。`);
+      r.advance(r.cursor + match[0].length);
+      yield {token:word, pos};
+      yield {token:match[1], pos};
+      continue;
+    }
     if (word) {
       r.advance(r.cursor + word.length);
       yield {token:word, pos};
@@ -111,29 +139,38 @@ function* compactTokens(source) {
     const code = source.slice(r.cursor, r.cursor + 3), i = compactCodes.indexOf(code);
     if (i < 0) throw new Error(`${pos}：不明な命令です。命令は3文字ずつ、命令表どおりに書いてください。`);
     r.advance(r.cursor + 3);
-    if (i === 4 && r.atQuote()) {
-      const literal = r.quoted('表示する文字');
+    const atValue = () => braces ? r.atGod() : r.atQuote();
+    if (i === 4 && atValue()) {
+      const literal = braces ? r.godFields(1, '表示する文字')[0] : r.quoted('表示する文字');
       yield {literal:literal.token, pos};
       continue;
     }
-    if ((i === 10 || i === 11) && r.atQuote()) {
-      const left = r.quoted('左の数'), right = r.quoted('右の数');
+    if ((i === 10 || i === 11) && atValue()) {
+      const [left, right] = braces ? r.godFields(2, '左と右の数') : [r.quoted('左の数'), r.quoted('右の数')];
+      if (braces) { left.token = left.token.trim(); right.token = right.token.trim(); }
       yield {token:'set', pos}; yield left;
       yield {token:'push', pos};
       yield {token:'set', pos}; yield right;
     }
     yield {token: i < 8 ? '8'.repeat(i + 1) : ['set','push','add','sub','char'][i - 8], pos};
-    if (i === 8) yield r.quoted('数');
+    if (i === 8) {
+      const value = braces ? r.godFields(1, '数')[0] : r.quoted('数');
+      if (braces) value.token = value.token.trim();
+      yield value;
+    }
   }
 }
 
-function isCompact(source) {
+function compactMode(source) {
   const r = compactReader(source);
   r.skip();
   const word = r.starts('マジ') ? 'マジ' : r.starts('めっちゃ') ? 'めっちゃ' : null;
-  if (!word) return false;
+  if (!word) return null;
+  if (r.declaration() || r.invocation()) return 'braces';
   r.advance(r.cursor + word.length);
-  return r.atQuote();
+  if (r.atQuote()) return 'quotes';
+  if (word === 'めっちゃ' && r.starts('{')) return 'braces';
+  return null;
 }
 
 export function compile(source) {
@@ -145,7 +182,8 @@ export function compile(source) {
   }
   const definitions = new Map(), calls = [];
   let pending = null, active = null;
-  const tokens = isCompact(source) ? compactTokens(source) : legacyTokens(source);
+  const mode = compactMode(source);
+  const tokens = mode ? compactTokens(source, mode === 'braces') : legacyTokens(source);
   for (const {token, pos, literal} of tokens) {
     if (pending !== null) {
       const {op, pc} = pending;
@@ -196,7 +234,7 @@ export function compile(source) {
   }
   if (pending !== null) throw new Error(`${pending.pos}：${pending.token} の後に${pending.op === 9 ? '値' : '関数名'}を書いてください。`);
   if (loops.length) throw new Error(`${locations[loops.at(-1) / width]}：ループが閉じていません。`);
-  if (active !== null) throw new Error(`${locations[active.pc / width]}：関数「${active.name}」を閉じる「神」（end）がありません。`);
+  if (active !== null) throw new Error(`${locations[active.pc / width]}：関数「${active.name}」を閉じる${mode === 'braces' ? '「}」' : '「神」（end）'}がありません。`);
   for (const {pc, name, pos} of calls) {
     if (!definitions.has(name)) throw new Error(`${pos}：関数「${name}」が定義されていません。`);
     setTarget(pc, definitions.get(name));

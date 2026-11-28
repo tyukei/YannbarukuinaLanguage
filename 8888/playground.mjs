@@ -1,31 +1,38 @@
-import {commandTable, compile, hex, instructions, run} from './engine.mjs?v=9';
+import {commandTable, compile, extraCommands, hex, instructions, run} from './engine.mjs?v=10';
 
 const $ = id => document.getElementById(id);
 const source = $('source'), output = $('output'), error = $('error');
 const bytes = $('bytes'), trace = $('trace'), runButton = $('run');
 function example(name, body, calls = 1) {
-  const quoted = JSON.stringify(name);
-  return 'マジ' + quoted + body + '神' + ('めっちゃ' + quoted).repeat(calls);
+  return 'マジ' + name + '{' + body + '}' + ('めっちゃ{' + name + '}').repeat(calls);
 }
 const examples = {
-  add: example('五を出す', '8୪৪"2""3"8৪୪'),
-  count: example('カウントダウン', '৪8৪"3"৪୪88৪୪8୪8୪৪8'),
-  move: example('セルを移動', '৪8৪"1"৪8୪৪8৪"2"8৪୪୪8৪8৪୪'),
+  add: example('五を出す', '8୪৪神2神3神8৪୪'),
+  count: example('カウントダウン', '৪8৪神3神৪୪88৪୪8୪8୪৪8'),
+  move: example('セルを移動', '৪8৪神1神৪8୪৪8৪神2神8৪୪୪8৪8৪୪'),
   bengali: example('ベンガル数字', '8৪8'.repeat(5) + '8৪୪'),
-  odia: example('三つの数字', '8୪৪"2""3"8৪୪'),
-  comment: example('コメントの例', '8୪৪"2""3"👏この中の命令8৪୪は実行しない👏8৪୪'),
-  arithmetic: example('足し引き', '8୪৪"2""3"8৪୪৪৪8"5""2"8৪୪'),
-  letter: example('文字を出す', '8৪୪"こんにちは"'),
-  function: example('あいさつ', '8৪୪"HI"', 2),
+  odia: example('三つの数字', '8୪৪神2神3神8৪୪'),
+  comment: example('コメントの例', '8୪৪神2神3神👏この中の命令8৪୪は実行しない👏8৪୪'),
+  arithmetic: example('足し引き', '8୪৪神2神3神8৪୪৪৪8神5神2神8৪୪'),
+  letter: example('文字を出す', '8৪୪神こんにちは神'),
+  function: example('あいさつ', '8৪୪神HI神', 2),
 };
 
-for (const [syntax, description] of commandTable) {
-  const row = $('commands-body').insertRow();
-  const token = document.createElement('code');
-  token.textContent = syntax;
-  row.insertCell().append(token);
-  row.insertCell().textContent = description;
+function showCommands(id, commands) {
+  for (const [syntax, label, example] of commands) {
+    const row = $(id).insertRow();
+    const addCode = text => {
+      const code = document.createElement('code');
+      code.textContent = text;
+      row.insertCell().append(code);
+    };
+    addCode(syntax);
+    row.insertCell().textContent = label;
+    if (example) addCode(example);
+  }
 }
+showCommands('commands-body', commandTable);
+showCommands('extra-commands', extraCommands);
 
 function clear() {
   output.textContent = 'まだ実行していません。';
