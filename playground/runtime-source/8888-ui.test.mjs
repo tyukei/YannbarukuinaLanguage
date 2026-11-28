@@ -27,7 +27,7 @@ test('the initial source and every sample declare and invoke a named function', 
       const source = nodes.source.value;
       const name = source.match(/^マジ ([^\s]+)/u)?.[1];
       assert.ok(name, key);
-      assert.ok(source.includes('\nend\n\nめっちゃ ' + name), key);
+      assert.ok(source.includes('\n神\n\nめっちゃ ' + name), key);
       assert.equal(key === 'add' ? source : defaults, defaults);
       nodes.run.events.click();
       assert.equal(nodes.output.textContent, results[key], key);

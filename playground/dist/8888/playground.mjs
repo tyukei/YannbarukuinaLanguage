@@ -1,10 +1,10 @@
-import {compile, extendedSyntax, hex, instructions, run} from './engine.mjs?v=6';
+import {compile, extendedSyntax, hex, instructions, run} from './engine.mjs?v=8';
 
 const $ = id => document.getElementById(id);
 const source = $('source'), output = $('output'), error = $('error');
 const bytes = $('bytes'), trace = $('trace'), runButton = $('run');
 function example(name, body, calls = 1) {
-  const definition = ['マジ ' + name, ...body.split('\n').map(line => '  ' + line), 'end'];
+  const definition = ['マジ ' + name, ...body.split('\n').map(line => '  ' + line), '神'];
   return [...definition, '', ...Array(calls).fill('めっちゃ ' + name)].join('\n');
 }
 const examples = {

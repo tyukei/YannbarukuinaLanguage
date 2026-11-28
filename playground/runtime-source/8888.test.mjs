@@ -89,8 +89,8 @@ test('declaration does not execute; calls can repeat, nest and reference later d
 test('bad function declarations and excessive recursion are rejected', () => {
   for (const [source, pattern] of [
     ['call missing', /定義されていません/u],
-    ['fn a set 1', /閉じる end/u],
-    ['end', /対応する fn/u],
+    ['fn a set 1', /閉じる「神」/u],
+    ['end', /対応する関数宣言/u],
     ['fn a fn b end end', /関数やループの外/u],
     ['fn a end fn a end', /定義済み/u],
     ['888888 fn f end 8888888', /関数やループの外/u],
@@ -101,9 +101,10 @@ test('bad function declarations and excessive recursion are rejected', () => {
 
 test('Japanese function keywords compile to the same code and mix with English aliases', () => {
   const original = 'fn あいさつ set 72 char set 73 char end call あいさつ call あいさつ';
-  const localized = 'マジ あいさつ set 72 char set 73 char end めっちゃ あいさつ call あいさつ';
+  const localized = 'マジ あいさつ set 72 char set 73 char 神 めっちゃ あいさつ call あいさつ';
   assert.deepEqual(compile(localized).code, compile(original).code);
   assert.deepEqual(execute(localized).output, [...'HIHI']);
   assert.deepEqual(execute('めっちゃ f fn f set 65 char end').output, ['A']);
   assert.throws(() => compile('めっちゃ 未定義'), /定義されていません/u);
+  assert.throws(() => compile('神'), /対応する関数宣言/u);
 });

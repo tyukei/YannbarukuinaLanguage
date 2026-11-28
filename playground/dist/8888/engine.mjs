@@ -7,10 +7,11 @@ export const instructions = [
   '保存した値 − 現在値', 'ASCII文字を出力',
   '関数宣言を飛ばす', '呼び出し元に戻る', '関数を呼ぶ',
 ];
-export const extendedSyntax = ['set 値', 'push', 'add', 'sub', 'char', 'マジ 名前', 'end', 'めっちゃ 名前'];
+export const extendedSyntax = ['set 値', 'push', 'add', 'sub', 'char', 'マジ 名前', '神', 'めっちゃ 名前'];
 const keywords = new Map(['set', 'push', 'add', 'sub', 'char', 'fn', 'end', 'call'].map((key, i) => [key, i + 9]));
 keywords.set('マジ', keywords.get('fn'));
 keywords.set('めっちゃ', keywords.get('call'));
+keywords.set('神', keywords.get('end'));
 const width = 3;
 const maxInstructions = 4096;
 
@@ -68,7 +69,7 @@ export function compile(source) {
       if (op === 14 && (active !== null || loops.length)) throw new Error(`${pos}：関数宣言は関数やループの外に書いてください。`);
       if (op === 9 || op === 14 || op === 16) pending = {op, pc, pos, token};
       if (op === 15) {
-        if (active === null) throw new Error(`${pos}：end に対応する fn（マジ）がありません。`);
+        if (active === null) throw new Error(`${pos}：${token} に対応する関数宣言（マジ）がありません。`);
         if (loops.length) throw new Error(`${pos}：関数内のループが閉じていません。`);
         setTarget(active.pc, pc + width);
         active = null;
@@ -84,7 +85,7 @@ export function compile(source) {
   if (commentStart !== null) throw new Error(`${commentStart}：コメントを閉じる「👏」がありません。`);
   if (pending !== null) throw new Error(`${pending.pos}：${pending.token} の後に${pending.op === 9 ? '値' : '関数名'}を書いてください。`);
   if (loops.length) throw new Error(`${locations[loops.at(-1) / width]}：ループが閉じていません。`);
-  if (active !== null) throw new Error(`${locations[active.pc / width]}：関数「${active.name}」を閉じる end がありません。`);
+  if (active !== null) throw new Error(`${locations[active.pc / width]}：関数「${active.name}」を閉じる「神」（end）がありません。`);
   for (const {pc, name, pos} of calls) {
     if (!definitions.has(name)) throw new Error(`${pos}：関数「${name}」が定義されていません。`);
     setTarget(pc, definitions.get(name));
