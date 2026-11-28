@@ -29,3 +29,12 @@ The AST panel presents the actual returned AST as connected, keyboard-expandable
 Cards are limited to 400 and depth 24 with an explicit truncation notice; counts inspect at most 20,000 nodes. Native details and nested lists provide keyboard and screen-reader semantics. The scroll region contains wide/deep trees on mobile. Parse failures clear the previous tree; runtime failures retain a successfully parsed tree. Edited source is marked stale.
 
 Run `node runtime-source/ast-view-test.mjs` for presentation and DOM-adapter unit tests, and the existing runtime AST/CHUKEI tests for compiler semantics. The DOM adapter is not browser/layout verification.
+
+
+## 8888言語（試作 v0.1）
+数字の `8` を1〜8個並べて1命令を書き、命令は空白か改行で区切ります。`8` が現在のセルを1増やし、`88888` が値を出力します。例：`8 8 8 8 8 88888` → `5`。既存言語とは別の試作仕様です。
+
+- [ブラウザで動かす](https://yanbarukuina.chukei.online/8888/)
+- `dist/8888/engine.mjs` がバイトコード生成とVM実行を担当します。一命令3バイト（命令番号、ジャンプ先の下位・上位バイト）で、ジャンプ先はバイト単位のアドレスです。Z80の機械語ではありません。
+- `playground/` 直下で `node --test runtime-source/8888.test.mjs`。ローカル表示は `python3 -m http.server 8000 --bind 127.0.0.1 --directory dist` のあと `http://127.0.0.1:8000/8888/`。
+- Pages公開時は `dist/8888/` とトップページのリンクを保持します。外部ライブラリ・実行サーバーは不要です。
