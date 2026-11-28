@@ -3,23 +3,23 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="description" content="数字の8だけで命令を書く教育用言語。ブラウザで実行してバイトコードと実行の流れを見比べられます。">
+<meta name="description" content="数字の8とベンガル数字の৪で命令を書く教育用言語。ブラウザで実行してバイトコードと実行の流れを見比べられます。">
 <title>8888言語（試作） | YanbaruKuina</title>
 <link rel="stylesheet" href="./style.css">
-<script type="module" src="./playground.mjs"></script>
+<script type="module" src="./playground.mjs?v=2"></script>
 </head>
 <body>
 <main>
 <header>
 <p><a href="../">← Playground に戻る</a></p>
 <h1>8888言語 <small>試作 v0.1</small></h1>
-<p>数字の <code>8</code> の数で命令が決まる小さな言語です。まずは「実行」を押してみてください。</p>
+<p><code>8</code> とベンガル数字の <code lang="bn">৪</code> を使う小さな言語です。この試作ではどちらも1文字と数え、混ぜて書けます。まずは「実行」を押してみてください。</p>
 </header>
 <section aria-labelledby="try">
 <h2 id="try">1. 書いて動かす</h2>
 <div class="tools">
 <label for="example">サンプル</label>
-<select id="example"><option value="add">2 + 3 → 5</option><option value="count">カウントダウン → 3, 2, 1</option><option value="move">別のセルに移動 → 2, 1</option></select>
+<select id="example"><option value="add">2 + 3 → 5</option><option value="count">カウントダウン → 3, 2, 1</option><option value="move">別のセルに移動 → 2, 1</option><option value="bengali">8 と ৪ を混ぜる → 5</option></select>
 </div>
 <label for="source">ソースコード</label>
 <textarea id="source" rows="5" maxlength="16384" autocomplete="off" autocapitalize="off" spellcheck="false" aria-describedby="hint">8 8

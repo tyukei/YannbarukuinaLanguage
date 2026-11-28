@@ -1,4 +1,4 @@
-import {compile, hex, instructions, run} from './engine.mjs';
+import {compile, hex, instructions, run} from './engine.mjs?v=2';
 
 const $ = id => document.getElementById(id);
 const source = $('source'), output = $('output'), error = $('error');
@@ -7,6 +7,7 @@ const examples = {
   add: '8 8\n8 8 8\n88888',
   count: '8 8 8\n888888\n  88888 88\n8888888',
   move: '8 888 8 8 88888 8888 88888',
+  bengali: '8 ৪\n৪ 8 ৪\n8৪8৪8',
 };
 
 for (const [i, description] of instructions.entries()) {
