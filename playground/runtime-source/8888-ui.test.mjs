@@ -40,6 +40,8 @@ test('the initial source and every sample declare and invoke a named function', 
     assert.equal(nodes['debug-panel'].hidden, false);
     assert.match(nodes['debug-status'].textContent, /全セル 0/u);
     assert.match(nodes['debug-source'].textContent, /実行前/u);
+    assert.equal(nodes['debug-pc'].textContent, '未実行');
+    assert.equal(nodes['debug-next-pc'].textContent, '0x0000');
     assert.equal(nodes['debug-cells'].children.length, 16);
     const step = nodes['debug-step'];
     for (let n = 0; n < 3; n++) nodes['debug-next'].events.click();
@@ -63,6 +65,14 @@ test('the initial source and every sample declare and invoke a named function', 
     assert.equal(nodes['debug-cells'].children[15].children[0].textContent, 'セル 255');
     nodes.example.events.change({target:{value:'add'}});
     nodes['run-debug'].events.click();
+    step.value = '2';
+    step.events.input();
+    assert.equal(nodes['debug-pc'].textContent, '0x0015');
+    assert.equal(nodes['debug-next-pc'].textContent, '0x0003');
+    assert.match(nodes['debug-pc-note'].textContent, /ジャンプ：0x0015 → 0x0003/u);
+    step.value = step.max;
+    step.events.input();
+    assert.match(nodes['debug-next-pc'].textContent, /（終了）/u);
     step.value = '6';
     step.events.input();
     assert.equal(nodes['debug-effect'].textContent, '2 と 3 を足して、セル0に 5 を入れました。');

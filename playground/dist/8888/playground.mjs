@@ -109,6 +109,15 @@ function explainStep(frame) {
     default: return 'ステップを進めると、ここに説明が出ます。';
   }
 }
+function showAddresses(frame) {
+  const address = n => '0x' + hex(n, 4);
+  const {pc, next} = frame;
+  $('debug-pc').textContent = pc === undefined ? '未実行' : address(pc);
+  $('debug-next-pc').textContent = address(next) + (next === recording.codeLength ? '（終了）' : '');
+  let explanation = 'アドレスはバイトコード上の位置です。セル番号とは別です。';
+  if (pc !== undefined && next !== pc + 3) explanation = 'ジャンプ：' + address(pc) + ' → ' + address(next) + '。' + explanation;
+  $('debug-pc-note').textContent = explanation;
+}
 function showStep(step) {
   if (!recording) return;
   const {frames, steps} = recording;
@@ -128,6 +137,7 @@ function showStep(step) {
   }
   $('debug-status').textContent = label;
   showSource(frame);
+  showAddresses(frame);
   $('debug-effect').textContent = explainStep(frame);
   const first = pageSelect.value === 'auto' || pageSelect.value === undefined
     ? frame.pointer - frame.pointer % 16 : Number(pageSelect.value);
@@ -143,8 +153,8 @@ function showStep(step) {
   }
   $('debug-cells').replaceChildren(...cards);
 }
-function openDebug(data) {
-  recording = {...data, lines: source.value.split(/\r\n?|\n/u)};
+function openDebug(data, codeLength) {
+  recording = {...data, codeLength, lines: source.value.split(/\r\n?|\n/u)};
   pageSelect.value = 'auto';
   slider.max = String(data.frames.length - 1);
   slider.disabled = data.frames.length <= 1;
@@ -175,8 +185,9 @@ source.addEventListener('input', clear);
 
 function execute(debug = false) {
   clear();
+  let program;
   try {
-    const program = compile(source.value);
+    program = compile(source.value);
     const {code, literals} = program;
     const listing = [];
     for (let i = 0; i < Math.min(code.length, 96 * 3); i += 3) {
@@ -188,7 +199,7 @@ function execute(debug = false) {
     bytes.textContent = listing.join('\n') || '（命令なし）';
 
     const result = run(program, {debug});
-    if (result.debug) openDebug(result.debug);
+    if (result.debug) openDebug(result.debug, code.length);
     let rendered = '', previous;
     for (const value of result.output) {
       if (previous !== undefined) {
@@ -207,7 +218,7 @@ function execute(debug = false) {
     output.textContent = '停止しました。';
     error.hidden = false;
     error.textContent = e.message;
-    if (e.debug) openDebug(e.debug);
+    if (e.debug) openDebug(e.debug, program.code.length);
   }
 }
 runButton.addEventListener('click', () => execute());

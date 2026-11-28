@@ -39,3 +39,10 @@ th, td { text-align: left; padding: .2rem .75rem .2rem 0; border-bottom: 1px sol
 .debug-source-arrow { color: #8c3500; font-weight: 700; padding-inline-end: .1rem; }
 
 #debug-effect { margin: .4rem 0 .8rem; border-left: 3px solid #225847; padding-inline-start: .55rem; font-size: .92rem; }
+
+#debug-addresses { margin: .65rem 0 1rem; padding: .55rem .65rem; border: 1px solid #b3c6df; background: #eff4fb; border-radius: .35rem; }
+#debug-address-title { margin: 0 0 .3rem; font-size: .9rem; }
+.debug-address-pair { display: flex; flex-wrap: wrap; gap: .35rem 1.25rem; margin: 0; }
+.debug-address-pair dt, #debug-pc-note { font-size: .83rem; }
+.debug-address-pair dd { margin: 0; font-weight: 700; }
+#debug-pc-note { margin: .3rem 0 0; }
