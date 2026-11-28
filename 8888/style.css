@@ -1,29 +1,4 @@
-/* The editor, panels and terminal use the main Playground stylesheet. */
-main { padding-bottom: 3rem; }
-.masthead .brand { gap: .6rem; }
-.mast-links { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: .25rem 1rem; }
-.intro { padding-block: .25rem .6rem; }
-.intro p { margin: .4rem 0; }
-.credit { color: var(--muted); font-size: .88em; }
-#source { min-height: 10rem; height: 15rem; }
-.editor-footer { flex-wrap: wrap; }
-.editor-footer .run-button { margin-left: auto; }
-.result-content { min-height: 14rem; }
-#output { white-space: pre-wrap; overflow-wrap: anywhere; }
-.js-note { margin-inline: 18px; }
-.tools { display: flex; align-items: center; gap: .55rem .75rem; flex-wrap: wrap; margin-bottom: .6rem; }
-code, pre { font-family: var(--mono); }
-.doc-body { padding: 0 18px 14px; }
-.doc-body pre { max-height: 18rem; overflow: auto; }
-.docs-section caption { text-align: left; margin-top: .6rem; font-weight: 650; }
-#cheatsheet, #commands { scroll-margin-top: 1rem; }
-@media (max-width: 760px) {
-  .masthead .brand-word { display: none; }
-  .result-content { min-height: 7rem; }
-  th, td { padding-right: .45rem; }
-}
-#debug-panel { background: #f7faf9; border: 1px solid #a3bdb2; border-radius: .5rem; padding: .8rem; margin-top: 1rem; }
-#debug-panel h3 { margin-top: 0; }
+/* 8888 debugger controls inside the common Playground. */
 #debug-step { width: 100%; accent-color: #225847; }
 #debug-status { font-size: .9rem; }
 #debug-cells { list-style: none; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(3.1rem, 1fr)); gap: .35rem; }
@@ -61,6 +36,9 @@ code, pre { font-family: var(--mono); }
 #debug-map .map-source { font-family: ui-monospace, monospace; min-width: 8rem; max-width: 18rem; white-space: pre-wrap; overflow-wrap: anywhere; }
 
 
-#debug-panel { margin: 0 0 1.4rem; border-radius: 14px; padding: 1.05rem; background: #fff; border-color: var(--line); }
-#debug-panel .tools button { border: 1px solid var(--line); border-radius: 8px; background: var(--paper); padding: .3rem .65rem; }
+
+#debug-panel .tools { display:flex; flex-wrap:wrap; align-items:center; gap:.55rem .75rem; margin-bottom:.6rem; }
+#debug-panel .tools button, #debug-bank { border: 1px solid var(--line); border-radius: 8px; background: var(--paper); padding: .3rem .65rem; }
+#debug-bank { max-width:12rem; min-height:44px; font:inherit; }
+#debug-registers { margin-bottom:.8rem; padding:.45rem; background:#eef5f0; border-radius:.35rem; }
 #debug-addresses, #debug-map th { background: #eef5f0; }

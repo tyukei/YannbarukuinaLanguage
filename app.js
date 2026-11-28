@@ -1,11 +1,11 @@
-"use strict";
+import {examples as clapSamples, exampleNames as clapExampleNames, initDebugger} from "./8888/playground.mjs?v=unified-1";
 const samples = {
   hello: "zz はじめの一歩。数字を鳴かせてみよう\nnaku(6 * 7)\nnaku(100 / 3)\n",
   branch: "zz 値を変えて、分岐を試してみよう\nx = 7\nmoshi (x < 5) {\n  naku(100)\n}\nmata (x < 10) {\n  naku(200)\n}\nhoka {\n  naku(300)\n}\n",
   loop: "zz 0 から 4 まで、ひとつずつ\ni = 0\naruku (i < 5) {\n  naku(i)\n  i = i + 1\n}\n",
   control: "zz 3 を飛ばして、6 の手前で止まる\ni = 0\naruku (i < 10) {\n  i = i + 1\n  moshi (i == 3) { hashiru }\n  moshi (i == 6) { tobu }\n  naku(i)\n}\n"
 };
-let language="queena", trace=[], traceIndex=0;
+let language="yanbarukuina", trace=[], traceIndex=0;
 function asciiExample(text){
  let value=0;const commands=[];
  for(const char of text){
@@ -22,37 +22,51 @@ const asciiSamples={
  letters:asciiExample("AZaz"),
  abc:asciiExample("ABC")
 };
-const drafts={};
-const returnFrom8888Key="yanbarukuina.playground.return-from-8888";
-function saveFor8888(){
-  drafts[language]=source.value;
-  try { sessionStorage.setItem(returnFrom8888Key, JSON.stringify({language,drafts})); }
-  catch { /* Navigation still works if session storage is unavailable. */ }
+const languages={
+ yanbarukuina:{name:"YanbaruKuina", title:"ちょっと鳴いときますね型言語 YanbaruKuina", file:"main.🐧",
+  worker:"./runtime-worker.js?v=unified-1", terminal:"Z80 CONSOLE", engine:"Z80", output:"出力：数値", generated:"main.z80.asm",
+  limits:"数値は 0〜65535 の整数。変数は最大 32 個。", samples, exampleNames:["はじめの一歩","分岐してみる","くり返してみる","スキップと脱出"]},
+ chukei:{name:"CHUKEI", title:"ちょっと中継しときますね型言語 CHUKEI", file:"main.🔴",
+  worker:"./chukei-worker.js?v=unified-debug-1", terminal:"CHUKEI VM", engine:"教材用VM", output:"出力：ASCII", generated:"main.chukei-vm.json",
+  limits:"CHUKEI：256セル・値0〜255・ポインタ循環・入力なし。", samples:asciiSamples, exampleNames:["HELLO, I AM CHUKEI!","Helloを出力","別のセルでAB","改行してA・B","AZazを出力","ABCを出力"]},
+ 8888:{name:"8888", title:"ちょっと拍手しときますね型言語 8888", file:"main.👏",
+  worker:"./8888/worker.mjs?v=unified-1", terminal:"8888 VM", engine:"教材用VM", output:"出力：数値・文字", generated:"main.8888-vm.json",
+  limits:"8888：256セル・値0〜255・ポインタ循環・入力なし。", samples:clapSamples, exampleNames:clapExampleNames},
+};
+const draftKey="yanbarukuina.playground.drafts";
+const drafts=Object.create(null);
+function saveDrafts(){
+ drafts[language]=source.value;
+ try { sessionStorage.setItem(draftKey, JSON.stringify(drafts)); } catch { /* In-page drafts still work. */ }
 }
-function takeReturnFrom8888(){
-  try {
-    const value=sessionStorage.getItem(returnFrom8888Key);
-    if(!value) return null;
-    sessionStorage.removeItem(returnFrom8888Key);
-    return JSON.parse(value);
-  } catch { return null; }
+function restoreDrafts(){
+ try {
+  const stored=JSON.parse(sessionStorage.getItem(draftKey));
+  const previous=JSON.parse(sessionStorage.getItem("yanbarukuina.playground.return-from-8888"));
+  for(const key of Object.keys(languages)){
+   const oldKey=key==="yanbarukuina"?"queena":key;
+   const value=stored?.[key]??stored?.[oldKey]??previous?.drafts?.[oldKey]??(key==="8888"?sessionStorage.getItem("yanbarukuina.playground.8888-draft"):null);
+   if(typeof value==="string") drafts[key]=value;
+  }
+ } catch { /* In-page drafts still work. */ }
 }
-function currentSamples(){return language==="chukei"?asciiSamples:samples;}
+function currentSamples(){return languages[language].samples;}
 const el = (id) => document.getElementById(id);
-const source = el("source"), runButton = el("run"), exampleSelect = el("example");
+const source = el("source"), runButton = el("run");
+const stepDebugger = initDebugger(document);
 let busy = false, lastSource = null, controller = null, cancelRun = null;
-function execute(code) {
+function execute(code, debug) {
   return new Promise((resolve, reject) => {
-    const worker = new Worker(language==="chukei"?"./chukei-worker.js?v=ascii-only-1":"./runtime-worker.js", {type:"module"});
+    const worker = new Worker(languages[language].worker, {type:"module"});
     controller = worker;
     cancelRun = () => { clearTimeout(timer); worker.terminate(); reject(new Error("実行を停止しました。")); };
     const timer = setTimeout(() => { worker.terminate(); reject(new Error("時間制限に達しました。ループや入力サイズを確認してください。")); }, 15000);
     worker.onmessage = ({data}) => { clearTimeout(timer); worker.terminate(); resolve(data); };
     worker.onerror = () => { clearTimeout(timer); worker.terminate(); reject(new Error("実行エンジンでエラーが発生しました。入力を短くして再実行してください。")); };
-    worker.postMessage({source:code});
+    worker.postMessage({source:code,debug});
   });
 }
-source.value = samples.hello;
+
 function setStatus(text, state) {
   el("status").textContent = text;
   el("status").dataset.state = state;
@@ -60,7 +74,7 @@ function setStatus(text, state) {
 function renderTokens(tokens) {
   el("tokens-list").replaceChildren();
   if (!Array.isArray(tokens) || !tokens.length) { el("tokens-note").textContent = "トークンなし。"; return; }
-  el("tokens-note").textContent = language==="chukei" ? "ソース順 · 種類 · 行/列" : "ソース順 · 種類 · 行/列";
+  el("tokens-note").textContent = language==="8888" ? "コンパイラが読む命令・引数（正規化後） · 行/列" : "ソース順 · 種類 · 行/列";
   for (const token of tokens.slice(0,5000)) {
     const item=document.createElement("li"); item.className="token"; item.dataset.kind=token.kind;
     const value=document.createElement("code"); value.textContent=token.lexeme || "EOF";
@@ -74,9 +88,10 @@ const astView=QueenaAstView.create({document,container:el("ast-tree"),note:el("a
 function renderAst(ast) { astView.render(ast,language); }
 
 function changed() {
+  saveDrafts();
   invalidateGenerated();
   if (lastSource !== null && source.value !== lastSource) {
-    if(language==="chukei") el("trace-note").textContent="編集前の記録。";
+    el("trace-note").textContent="編集前の記録。";
     el("result-note").textContent = "編集前の結果。再実行してください。";
     astView.markStale();
     el("tokens-note").textContent = "編集前のトークン。";
@@ -85,7 +100,7 @@ function changed() {
 let selectedSample="hello";
 el("example").addEventListener("change",()=>{
  const next=el("example").value;
- const known=[...Object.values(samples),...Object.values(asciiSamples)].includes(source.value);
+ const known=Object.values(currentSamples()).includes(source.value);
  if(source.value && !known && !confirm("編集したコードをサンプルで置き換えますか？")){el("example").value=selectedSample;return;}
  source.value=currentSamples()[next];selectedSample=next;changed();
 });
@@ -110,7 +125,7 @@ async function run({debug=false}={}) {
   el("tokens-list").replaceChildren();
   el("tokens-note").textContent = "解析中…";
   astView.clear("解析中…");
-  if (!code.trim() && language!=="chukei") {
+  if (!code.trim() && language==="yanbarukuina") {
     el("tokens-note").textContent = "コードを入力して実行してください。";
     el("ast-note").textContent = "コードを入力して実行してください。";
     setStatus("入力待ち", "error");
@@ -137,15 +152,33 @@ async function run({debug=false}={}) {
   el("output").textContent = "";
   el("error").hidden = true;
   el("error").textContent = "";
-  el("result-note").textContent = language==="chukei"?"教材用VM命令を生成して実行しています。":"コンパイルして、Z80 の機械語を実行しています。";
+  el("result-note").textContent = language!=="yanbarukuina"?"教材用VM命令を生成して実行しています。":"コンパイルして、Z80 の機械語を実行しています。";
   trace=[]; showTrace(); el("bytecode").textContent="実行で表示。";
   el("assembly").textContent = "実行で表示。";
-  el("metrics").textContent = language==="chukei"?"教材用VM":"";
+  el("clap-trace").textContent = "";
+  stepDebugger.reset();
+  el("metrics").textContent = language!=="yanbarukuina"?"教材用VM":"";
 
   try {
-    const result = await execute(code);
+    const result = await execute(code, debug);
     if (!debug) replayStages(result);
     if(language==="chukei") renderChukei(result);
+    if(language==="8888") {
+      el("bytecode").textContent=result.listing||"生成コードなし。";
+      el("clap-trace").hidden=Boolean(result.debug);
+      el("clap-trace").textContent=result.traceText||"実行記録なし。";
+      el("trace-note").textContent=result.debug?"PCとセルの変化を確認できます。":"「デバッグ実行」で前後にステップを移動できます。";
+
+    }
+    if(result.debug){
+      document.querySelector(".trace-controls").hidden=true;
+      el("trace-state").hidden=true;
+      el("trace-note").textContent=language==="yanbarukuina"?"Z80アセンブリ、レジスタ、メモリを確認できます。":"PCとセルの変化を確認できます。";
+      stepDebugger.open(language,result,code);
+    }else if(language==="chukei"){
+      document.querySelector(".trace-controls").hidden=false;
+      el("trace-state").hidden=false;
+    }else if(language==="yanbarukuina") el("trace-note").textContent="「デバッグ実行」でZ80命令を追えます。";
     renderTokens(result.tokens);
     renderAst(result.ast);
     el("output").textContent = result.output || "";
@@ -156,15 +189,15 @@ async function run({debug=false}={}) {
       el("result-note").textContent = "コードを確認して、もう一度どうぞ。";
     } else {
       setStatus("完了", "success");
-      el("result-note").textContent = result.output ? (language==="chukei"?"出力":"出力") : "出力なし。";
-      el("assembly").textContent = result.assembly || "CHUKEIは教材用VMを使います。";
-      el("metrics").textContent = language==="chukei" ? `${result.steps} steps · 教材用VM（Z80ではありません）` : `${result.binary_bytes} bytes · ${result.elapsed_ms} ms`;
+      el("result-note").textContent = result.output ? "出力" : "出力なし。";
+      el("assembly").textContent = result.assembly || "";
+      el("metrics").textContent = language!=="yanbarukuina" ? `${result.steps} ステップ · 教材用VM（Z80ではありません）` : `${result.binary_bytes} bytes · ${result.elapsed_ms} ms`;
     }
     changed();
-    if(result.ok){
+    if(result.ok || (language==="8888" && result.generated)){
       generated={source:code,language,
-        content:language==="chukei"?JSON.stringify({format:"CHUKEI educational VM",version:1,outputMode:result.outputMode,bytecode:result.bytecode},null,2):result.assembly,
-        filename:language==="chukei"?"main.chukei-vm.json":"main.z80.asm"};
+        content:language==="chukei"?JSON.stringify({format:"CHUKEI educational VM",version:1,outputMode:result.outputMode,bytecode:result.bytecode},null,2):language==="8888"?result.generated:result.assembly,
+        filename:languages[language].generated};
       el("download-generated").disabled=!generated.content;
     }
   } catch (error) {
@@ -181,19 +214,19 @@ async function run({debug=false}={}) {
     cancelRun = null;
     el("cancel").hidden = true;
     runButton.disabled = el("example").disabled = el("language").disabled = false;
-    el("debug-run").disabled=language!=="chukei";
+    el("debug-run").disabled=false;
     runButton.innerHTML = '<span aria-hidden="true">▶</span> 2. 実行';
     if (!debug) finishRunDialog();
   }
 }
 runButton.addEventListener("click", () => run());
 el("debug-run").addEventListener("click", async () => {
-  if (busy || language !== "chukei") return;
-  el("chukei-trace").open=true;
+  if (busy || language === "queena") return;
+  el("execution-trace").open=true;
   await run({debug:true});
-  el("chukei-trace").scrollIntoView({block:"nearest"});
+  el("execution-trace").scrollIntoView({block:"nearest"});
 });
-window.addEventListener("pagehide", () => controller?.terminate());
+window.addEventListener("pagehide", () => { saveDrafts(); controller?.terminate(); });
 
 el("cancel").addEventListener("click", () => cancelRun?.());
 
@@ -213,76 +246,72 @@ function showTrace(){
 el("trace-prev").addEventListener("click",()=>{traceIndex=Math.max(0,traceIndex-1);showTrace()});
 el("trace-next").addEventListener("click",()=>{traceIndex=Math.min(trace.length-1,traceIndex+1);showTrace()});
 el("trace-index").addEventListener("input",e=>{traceIndex=Number(e.target.value);showTrace()});
-el("language").addEventListener("change",()=>{
-  if(el("language").value==="8888"){
-    saveFor8888();
-    el("language").value=language;
-    location.assign("./8888/");
-    return;
-  }
+function selectLanguage(next, remember = true){
+  if(remember) saveDrafts();
   invalidateGenerated();
-  drafts[language]=source.value;
-  language=el("language").value;
-  source.value=drafts[language]??currentSamples().hello;lastSource=null;
+  language=next;
+  el("language").value=language;
+  const config=languages[language];
+  source.value=drafts[language]??config.samples.hello;lastSource=null;
   el("tokens-list").replaceChildren();astView.clear();
   el("output").textContent="";el("error").hidden=true;el("assembly").textContent="実行で表示。";setStatus("待機中","");
   el("tokens-note").textContent="実行で表示。";el("ast-note").textContent="実行で表示。";
   el("result-note").textContent="実行で表示。";
-  const isChukei=language==="chukei";
-  const fullName=isChukei?"ちょっと中継しときますね型言語 CHUKEI":"ちょっと鳴いときますね型言語 YanbaruKuina";
-  el("language-title").textContent=fullName;
-  document.title=fullName+" | Playground";
-  el("chukei-cheat").hidden=!isChukei;
-  el("queena-cheat").hidden=isChukei;
-  el("debug-run").disabled=!isChukei;
-  el("debug-run").title=isChukei?"VMの実行ステップを見る":"Z80のステップ実行は未対応です";
-  el("debug-note").hidden=isChukei;
+  el("file-status").textContent="";
+  const isChukei=language==="chukei", isClap=language==="8888", isZ80=language==="yanbarukuina";
+  el("language-title").textContent=config.title;
+  document.title=config.title+" | Playground";
+  for(const [base, show] of [["queena",isZ80],["chukei",isChukei],["clap",isClap]]){
+    for(const suffix of ["cheat","implementation","mark"]) el(base+"-"+suffix).hidden=!show;
+  }
+  el("debug-run").disabled=false;
+  el("debug-run").title="命令の実行ステップを見る";
   for(const tab of document.querySelectorAll(".language-tabs [data-language]")){
     if(tab.dataset.language===language)tab.setAttribute("aria-current","page");
     else tab.removeAttribute("aria-current");
   }
-  el("chukei-implementation").hidden=!isChukei;
-  el("queena-implementation").hidden=isChukei;
-  el("chukei-mark").hidden=!isChukei;
-  el("queena-mark").hidden=isChukei;
-  el("brand-name").textContent=isChukei?"CHUKEI":"YanbaruKuina";
-  document.querySelector('label[for="source"]').textContent=isChukei?"CHUKEIのコード":"やんばるくいな言語のコード";
-  el("chukei-guide").hidden=!isChukei;el("queena-help").hidden=isChukei;
-  el("assembly").hidden=isChukei;el("bytecode").hidden=!isChukei;
-  el("code-kind").textContent=isChukei?"教材用VM":"Z80アセンブリ";
-  document.querySelector(".trace-controls").hidden=!isChukei;
-  el("trace-note").textContent=isChukei?"実行で表示。":"CHUKEIのみ対応。";
-  document.querySelector(".file-name").textContent=isChukei?"main.chukei":"main.🐧";
-  el("language-note").textContent=isChukei?"教材用VM":"Z80";
-  el("ascii-output-note").hidden=!isChukei;
-  el("terminal-name").textContent=isChukei?"CHUKEI VM":"Z80 CONSOLE";
-  el("z80-chip").hidden=isChukei;
-  el("limits").textContent=isChukei?"CHUKEI：256セル・値0〜255・ポインタ循環・入力なし。":"数値は 0〜65535 の整数。変数は最大 32 個。";
-  el("metrics").textContent=isChukei?"教材用VM（Z80ではありません）":"";
-  refreshSampleNames();el("example").value="hello";selectedSample="hello";
+  el("brand-name").textContent=config.name;
+  document.querySelector('label[for="source"]').textContent=config.name+"のコード";
+  el("chukei-guide").hidden=!isChukei;el("queena-help").hidden=!isZ80;el("clap-guide").hidden=!isClap;
+  el("chukei-vm-guide").hidden=!isChukei;
+  el("assembly").hidden=!isZ80;el("bytecode").hidden=isZ80;
+  el("code-kind").textContent=isZ80?"Z80アセンブリ":"教材用VM";
+  document.querySelector(".trace-controls").hidden=true;
+  el("trace-state").hidden=true;
+  el("execution-trace").open=false;
+  el("trace-note").textContent="「デバッグ実行」で命令を1つずつ確認できます。";
+  stepDebugger.reset();
+  el("clap-trace").hidden=true;
+  el("clap-trace").textContent="";
+  document.querySelector(".file-name").textContent=config.file;
+  el("language-note").textContent=config.engine;
+  el("output-format-note").textContent=config.output;
+  el("terminal-name").textContent=config.terminal;
+  el("z80-chip").hidden=!isZ80;
+  el("limits").textContent=config.limits;
+  el("metrics").textContent=isZ80?"":"教材用VM（Z80ではありません）";
+  el("example").replaceChildren(...Object.keys(config.samples).map((key,i)=>{
+    const option=document.createElement("option");option.value=key;option.textContent=config.exampleNames[i];return option;
+  }));
+  el("example").value="hello";selectedSample="hello";
   trace=[];showTrace();el("bytecode").textContent="実行で表示。";
+}
+el("clap-cheat").querySelector('a[href="#commands"]').addEventListener("click",()=>{
+  el("clap-guide").closest("details").open=true;
 });
 
-
-function refreshSampleNames(){
- const keys=Object.keys(currentSamples());
- const names=language==="chukei"?["HELLO, I AM CHUKEI!","Helloを出力","別のセルでAB","改行してA・B","AZazを出力","ABCを出力"]:["はじめの一歩","分岐してみる","くり返してみる","スキップと脱出"];
- const selected=el("example").value;
- el("example").replaceChildren(...keys.map((key,i)=>{const option=document.createElement("option");option.value=key;option.textContent=names[i];return option;}));
- el("example").value=keys.includes(selected)?selected:"hello";
-}
 el("import-code").addEventListener("click",()=>{
  if(busy){el("file-status").textContent="実行終了後に開けます。";return;}
  el("code-file").click();
 });
 el("code-file").addEventListener("change",async()=>{
- const file=el("code-file").files[0];
+ const file=el("code-file").files[0], requested=language;
  try{
   if(!file)return;
   if(file.size>16384)throw Error("16 KiB以内のファイルを選んでください。");
   const text=new TextDecoder("utf-8",{fatal:true}).decode(await file.arrayBuffer());
   if(text.includes("\u0000"))throw Error("テキストファイルを選んでください。");
-  if(busy)throw Error("実行終了後に開いてください。");
+  if(busy||requested!==language)throw Error("言語を確認し、ファイルを選び直してください。");
   if(source.value && !confirm("編集中のコードを置き換えます。必要なら先にダウンロードしてください。"))return;
   source.value=text;drafts[language]=text;changed();
   el("file-status").textContent="読み込み完了。言語を確認して実行してください。";
@@ -293,7 +322,7 @@ el("download-code").addEventListener("click",()=>{
  if(new TextEncoder().encode(source.value).length>16384){el("file-status").textContent="コードを16 KiB以内にしてください。";return;}
  const blob=new Blob([source.value],{type:"text/plain;charset=utf-8"});
  const url=URL.createObjectURL(blob),a=document.createElement("a");
- a.href=url;a.download=language==="chukei"?"main.chukei":"main.🐧";document.body.append(a);a.click();a.remove();
+ a.href=url;a.download=languages[language].file;document.body.append(a);a.click();a.remove();
  setTimeout(()=>URL.revokeObjectURL(url),60000);
  el("file-status").textContent="ダウンロードを開始しました。";
 });
@@ -330,7 +359,7 @@ let generated=null;
 function invalidateGenerated(){generated=null;el("download-generated").disabled=true;}
 el("download-generated").addEventListener("click",()=>{
  if(!generated||busy||source.value!==generated.source||language!==generated.language){invalidateGenerated();return;}
- const url=URL.createObjectURL(new Blob([generated.content],{type:language==="chukei"?"application/json":"text/plain;charset=utf-8"}));
+ const url=URL.createObjectURL(new Blob([generated.content],{type:language!=="yanbarukuina"?"application/json":"text/plain;charset=utf-8"}));
  const a=document.createElement("a");a.href=url;a.download=generated.filename;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);
 });
 
@@ -345,7 +374,7 @@ function replayStages(result){
   dialogFadeTimer=setTimeout(()=>{el("run-dialog").classList.add("fading");dialogCloseTimer=setTimeout(()=>el("run-dialog").close(),matchMedia("(prefers-reduced-motion: reduce)").matches?0:250);},3000);
  }
  const tokens=result.tokens||[],ast=result.ast;
- const code=language==="chukei"?(result.bytecode?.length?JSON.stringify(result.bytecode.slice(0,4),null,2):""):(result.assembly||"");
+ const code=language==="chukei"?(result.bytecode?.length?JSON.stringify(result.bytecode.slice(0,4),null,2):""):(result.listing||result.assembly||"");
  const phases=[
   ["字句解析",tokens.length?tokens.slice(0,12).map(t=>t.lexeme??t.kind).join(" → "):"トークンなし"],
   ["構文木",ast?JSON.stringify(ast,null,2).slice(0,420):"構文木を取得できませんでした"],
@@ -366,27 +395,24 @@ for(const tab of document.querySelectorAll(".language-tabs [data-language]")){
   tab.addEventListener("click",e=>{
     if(e.button!==0||e.metaKey||e.ctrlKey||e.shiftKey||e.altKey) return;
     e.preventDefault();
-    if(busy)return;
-    const next=tab.dataset.language;
-    if(next==="8888"){
-      saveFor8888();
-      location.assign(tab.href);
-    }else if(next!==language){
-      el("language").value=next;
-      el("language").dispatchEvent(new Event("change"));
-      history.replaceState(null,"",tab.href);
-    }
+    if(busy || tab.dataset.language===language) return;
+    selectLanguage(tab.dataset.language);
+    history.replaceState(null,"",tab.href);
   });
 }
-// Default to the CHUKEI greeting, or restore a draft when returning from 8888.
-const returning=takeReturnFrom8888();
-const requestedLanguage=new URLSearchParams(location.search).get("lang");
-el("language").value=["queena","chukei"].includes(requestedLanguage)?requestedLanguage:(returning?.language==="queena"?"queena":"chukei");
-el("language").dispatchEvent(new Event("change"));
-for (const key of ["queena","chukei"]) {
-  if(typeof returning?.drafts?.[key]==="string") drafts[key]=returning.drafts[key];
+restoreDrafts();
+const requested=new URLSearchParams(location.search).get("lang");
+const requestedLanguage=requested==="queena"?"yanbarukuina":requested;
+if(requested==="queena"){
+ const canonical=new URL(location.href);canonical.searchParams.set("lang","yanbarukuina");history.replaceState(null,"",canonical);
 }
-if(typeof returning?.drafts?.[language]==="string") source.value=drafts[language];
-window.addEventListener("pageshow", e=>{
-  if(e.persisted) takeReturnFrom8888(); // Back/forward cache already keeps the live editor.
-});
+selectLanguage(Object.hasOwn(languages,requestedLanguage)?requestedLanguage:"chukei",false);
+const target=location.hash.slice(1);
+if(target){
+ const section=el(target);
+ if(section){
+  const details=section.closest("details");
+  if(details) details.open=true;
+  section.scrollIntoView();
+ }
+}

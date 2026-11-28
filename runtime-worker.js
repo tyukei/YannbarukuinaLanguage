@@ -12403,9 +12403,9 @@ var Z80 = class {
 };
 
 // runtime.js
-async function runQueena(source, wasmBytes) {
+async function runYanbaruKuina(source, wasmBytes, { debug = false } = {}) {
   const start = performance.now();
-  let output = "", assembly = "", ast = null, tokens = [];
+  let output = "", assembly = "", ast = null, tokens = [], recording;
   try {
     let put = function(ch) {
       if (output.length >= 16384) throw Error("\u51FA\u529B\u304C16 KiB\u3092\u8D85\u3048\u305F\u305F\u3081\u505C\u6B62\u3057\u307E\u3057\u305F\u3002");
@@ -12428,14 +12428,20 @@ async function runQueena(source, wasmBytes) {
     mem.fill(165);
     mem[5] = 201;
     let binaryBytes = 0;
+    const listing = debug ? [] : null;
     for (const line of built.listing) {
       if (!line.bytes.length) continue;
       if (line.load === null || line.load < 256 || line.load + line.bytes.length >= 28672) throw Error("\u751F\u6210\u30D7\u30ED\u30B0\u30E9\u30E0\u304C\u5B89\u5168\u306A\u30B3\u30FC\u30C9\u9818\u57DF\u3092\u8D85\u3048\u307E\u3057\u305F\u3002");
       mem.set(line.bytes, line.load);
       binaryBytes += line.bytes.length;
+      if (listing) listing.push({ address: line.load, bytes: line.bytes, text: line.text.trim(), line: line.line });
     }
+    let writes = null;
     const hal = { tStateCount: 0, readMemory: (a) => mem[a & 65535], writeMemory: (a, v) => {
-      mem[a & 65535] = v & 255;
+      a &= 65535;
+      v &= 255;
+      if (writes && mem[a] !== v) writes.push({ index: a, from: mem[a], to: v });
+      mem[a] = v;
     }, contendMemory() {
     }, readPort: () => 255, writePort() {
     }, contendPort() {
@@ -12444,10 +12450,17 @@ async function runQueena(source, wasmBytes) {
     cpu.regs.pc = 256;
     cpu.regs.sp = 61440;
     let count = 0;
+    const registers = () => Object.fromEntries(["a", "f", "bc", "de", "hl", "ix", "iy", "sp"].map((key) => [key.toUpperCase(), cpu.regs[key]]).filter(([, value]) => Number.isInteger(value)));
+    if (listing) {
+      listing.unshift({ address: 5, bytes: [201], text: "RET \xB7 CP/M \u30B3\u30F3\u30BD\u30FC\u30EB\u5165\u53E3" });
+      recording = { initial: mem.slice(), listing, frames: [{ next: 256, pointer: 256, regs: registers() }], steps: 0 };
+    }
     while (cpu.regs.pc !== 0) {
       if (++count > 5e6) throw Error("\u547D\u4EE4\u5B9F\u884C\u4E0A\u9650\u306B\u9054\u3057\u307E\u3057\u305F\u3002\u7E70\u308A\u8FD4\u3057\u6761\u4EF6\u3092\u78BA\u8A8D\u3057\u3066\u304F\u3060\u3055\u3044\u3002");
       if ((count & 4095) === 0 && performance.now() - start > 2500) throw Error("\u5B9F\u884C\u6642\u9593\u306E\u4E0A\u9650\u306B\u9054\u3057\u307E\u3057\u305F\u3002");
-      if (cpu.regs.pc === 5) {
+      const pc = cpu.regs.pc, beforeOutput = output.length;
+      writes = recording && recording.frames.length <= 4096 ? [] : null;
+      if (pc === 5) {
         const fn = cpu.regs.c;
         if (fn === 2) put(cpu.regs.e);
         else if (fn === 9) {
@@ -12460,22 +12473,33 @@ async function runQueena(source, wasmBytes) {
         } else throw Error(`\u672A\u5BFE\u5FDC\u306ECP/M\u30B3\u30F3\u30BD\u30FC\u30EB\u547C\u3073\u51FA\u3057: ${fn}`);
       }
       cpu.step();
+      if (recording) {
+        recording.steps++;
+        if (writes) recording.frames.push({
+          pc,
+          next: cpu.regs.pc,
+          pointer: writes.at(-1)?.index ?? pc,
+          writes,
+          regs: registers(),
+          emitted: output.length > beforeOutput ? output.slice(beforeOutput) : void 0
+        });
+      }
       if (cpu.regs.halted) throw Error("\u30D7\u30ED\u30B0\u30E9\u30E0\u304CHALT\u3067\u505C\u6B62\u3057\u307E\u3057\u305F\u3002");
     }
     if (output.includes("Division by zero")) throw Error("Division by zero");
-    return { ok: true, ast, tokens, output: output.replace(/\r\n/g, "\n"), assembly, binary_bytes: binaryBytes, elapsed_ms: Math.round(performance.now() - start), instructions: count };
+    return { ok: true, ast, tokens, output: output.replace(/\r\n/g, "\n"), assembly, binary_bytes: binaryBytes, elapsed_ms: Math.round(performance.now() - start), instructions: count, ...recording ? { debug: recording } : {} };
   } catch (err) {
-    return { ok: false, ast, tokens, output: output.replace(/\r\n/g, "\n"), error: err instanceof WebAssembly.RuntimeError ? "\u30B3\u30F3\u30D1\u30A4\u30E9\u306E\u5B9F\u884C\u4E0A\u9650\u306B\u9054\u3057\u307E\u3057\u305F\u3002\u30B3\u30FC\u30C9\u3092\u77ED\u304F\u3057\u3066\u304F\u3060\u3055\u3044\u3002" : String(err.message || err), assembly, binary_bytes: 0, elapsed_ms: Math.round(performance.now() - start) };
+    return { ok: false, ast, tokens, output: output.replace(/\r\n/g, "\n"), error: err instanceof WebAssembly.RuntimeError ? "\u30B3\u30F3\u30D1\u30A4\u30E9\u306E\u5B9F\u884C\u4E0A\u9650\u306B\u9054\u3057\u307E\u3057\u305F\u3002\u30B3\u30FC\u30C9\u3092\u77ED\u304F\u3057\u3066\u304F\u3060\u3055\u3044\u3002" : String(err.message || err), assembly, binary_bytes: 0, elapsed_ms: Math.round(performance.now() - start), ...recording ? { debug: recording } : {} };
   }
 }
 
 // worker.js
 self.onmessage = async ({ data }) => {
   try {
-    const response = await fetch(new URL("./queena.wasm", import.meta.url));
+    const response = await fetch(new URL("./yanbarukuina.wasm", import.meta.url));
     if (!response.ok) throw Error("WASM\u3092\u8AAD\u307F\u8FBC\u3081\u307E\u305B\u3093\u3067\u3057\u305F\u3002");
     const bytes = await response.arrayBuffer();
-    self.postMessage(await runQueena(data.source, bytes));
+    self.postMessage(await runYanbaruKuina(data.source, bytes, { debug: data.debug }));
   } catch (e) {
     self.postMessage({ ok: false, ast: null, tokens: [], output: "", error: e.message, assembly: "", binary_bytes: 0, elapsed_ms: 0 });
   }

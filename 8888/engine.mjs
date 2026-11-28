@@ -191,10 +191,15 @@ function compactMode(source) {
   return null;
 }
 
-export function compile(source, {sourceMap = false} = {}) {
+export function compile(source, {sourceMap = false, analysis = false} = {}) {
   if (source.length > 16384) throw new Error('入力は16,384文字までです。');
   const code = [], locations = [], loops = [], literals = [];
   const sourceCommands = sourceMap ? [] : null;
+  const ast = analysis ? {kind:'program', label:'プログラム', children:[]} : null;
+  const analyzedTokens = analysis ? [] : null;
+  const parents = ast ? [ast] : null;
+  let omittedDepth = 0;
+  let node;
   function setTarget(pc, target) {
     code[pc + 1] = target & 255;
     code[pc + 2] = target >>> 8;
@@ -204,9 +209,15 @@ export function compile(source, {sourceMap = false} = {}) {
   const mode = compactMode(source);
   const tokens = mode ? compactTokens(source, mode === 'braces') : legacyTokens(source);
   for (const {token, pos, literal, original} of tokens) {
+    if (analyzedTokens) {
+      const [line, column] = pos.match(/\d+/gu).map(Number);
+      analyzedTokens.push({lexeme:literal === undefined ? token : JSON.stringify(literal),
+        kind: pending ? (pending.op === 9 ? '数値' : '関数名') : literal === undefined ? '命令' : '文字列', line, column});
+    }
     if (pending !== null) {
       const {op, pc} = pending;
       pending = null;
+      if (node) node.label += " · " + token;
       if (sourceCommands && !mode) sourceCommands[pc / width] += ' ' + token;
       if (op === 9) {
         if (typeof token !== 'string' || !/^[0-9]{1,3}$/u.test(token) || Number(token) > 255) {
@@ -232,6 +243,25 @@ export function compile(source, {sourceMap = false} = {}) {
       throw new Error(`${pos}：不明な命令です。「8」「৪」「୪」を合わせた1〜8文字か、命令表のキーワードを使ってください。`);
     }
     if (locations.length === maxInstructions) throw new Error('命令は4,096個までです。');
+    if (parents) {
+      if (op === 7 || op === 15) {
+        if (omittedDepth) omittedDepth--;
+        else if (parents.length > 1) parents.pop();
+        node = null;
+      } else {
+        const isGroup = op === 6 || op === 14;
+        node = {kind:op === 6 ? 'loop' : op === 14 ? 'function' : 'instruction',
+          label:instructions[op - 1] + (literal === undefined ? '' : ' · ' + JSON.stringify(literal)), children:[]};
+        if (!omittedDepth) parents.at(-1).children.push(node);
+        if (isGroup) {
+          if (parents.length < 64 && !omittedDepth) parents.push(node);
+          else {
+            if (!omittedDepth) node.children.push({label:'ここより深い構造は表示を省略', children:[]});
+            omittedDepth++;
+          }
+        }
+      }
+    }
     const pc = code.length;
     code.push(op, 0, 0);
     locations.push(pos);
@@ -260,7 +290,7 @@ export function compile(source, {sourceMap = false} = {}) {
     if (!definitions.has(name)) throw new Error(`${pos}：関数「${name}」が定義されていません。`);
     setTarget(pc, definitions.get(name));
   }
-  return {code: Uint8Array.from(code), locations, literals, ...(sourceCommands ? {sourceCommands} : {})};
+  return {code: Uint8Array.from(code), locations, literals, ...(sourceCommands ? {sourceCommands} : {}), ...(analysis ? {ast, tokens:analyzedTokens} : {})};
 }
 
 export const debugLimit = 4096;
