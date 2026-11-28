@@ -1,4 +1,4 @@
-import {examples as clapSamples, exampleNames as clapExampleNames, initDebugger} from "./8888/playground.mjs?v=values-1";
+import {examples as clapSamples, exampleNames as clapExampleNames, initDebugger} from "./8888/playground.mjs?v=kami-body-1";
 const samples = {
   hello: "zz はじめの一歩。数字を鳴かせてみよう\nnaku(6 * 7)\nnaku(100 / 3)\n",
   branch: "zz 値を変えて、分岐を試してみよう\nx = 7\nmoshi (x < 5) {\n  naku(100)\n}\nmata (x < 10) {\n  naku(200)\n}\nhoka {\n  naku(300)\n}\n",
@@ -30,7 +30,7 @@ const languages={
   worker:"./chukei-worker.js?v=unified-debug-1", terminal:"CHUKEI VM", engine:"教材用VM", output:"出力：ASCII", generated:"main.chukei-vm.json",
   limits:"CHUKEI：256セル・値0〜255・ポインタ循環・入力なし。", samples:asciiSamples, exampleNames:["HELLO, I AM CHUKEI!","Helloを出力","別のセルでAB","改行してA・B","AZazを出力","ABCを出力"]},
  8888:{name:"8888", title:"ちょっと拍手しときますね型言語 8888", file:"main.👏",
-  worker:"./8888/worker.mjs?v=values-1", terminal:"8888 VM", engine:"教材用VM", output:"出力：数値・文字", generated:"main.8888-vm.json",
+  worker:"./8888/worker.mjs?v=kami-body-1", terminal:"8888 VM", engine:"教材用VM", output:"出力：数値・文字", generated:"main.8888-vm.json",
   limits:"8888：256セル・値0〜255・ポインタ循環・入力なし。", samples:clapSamples, exampleNames:clapExampleNames},
 };
 const draftKey="yanbarukuina.playground.drafts";

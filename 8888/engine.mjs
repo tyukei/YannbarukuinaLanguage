@@ -1,4 +1,4 @@
-import {compileExpressions, expressionInstructions, isExpressionProgram} from './functions.mjs?v=values-1';
+import {compileExpressions, expressionInstructions, isExpressionProgram} from './functions.mjs?v=kami-body-1';
 // 8888 v0.5: compact and legacy syntax compiled to 3-byte VM records.
 export const instructions = [
   'セルの値を +1', 'セルの値を −1', '右のセルへ', '左のセルへ',
