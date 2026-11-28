@@ -3,16 +3,20 @@ import {compile, extendedSyntax, hex, instructions, run} from './engine.mjs?v=6'
 const $ = id => document.getElementById(id);
 const source = $('source'), output = $('output'), error = $('error');
 const bytes = $('bytes'), trace = $('trace'), runButton = $('run');
+function example(name, body, calls = 1) {
+  const definition = ['マジ ' + name, ...body.split('\n').map(line => '  ' + line), 'end'];
+  return [...definition, '', ...Array(calls).fill('めっちゃ ' + name)].join('\n');
+}
 const examples = {
-  add: '8 8\n8 8 8\n88888',
-  count: '8 8 8\n888888\n  88888 88\n8888888',
-  move: '8 888 8 8 88888 8888 88888',
-  bengali: '8 ৪\n৪ 8 ৪\n8৪8৪8',
-  odia: '8 ৪\n୪ 8 ୪\n8৪୪8୪',
-  comment: '8 ৪ 👏 ここまでで 2\nコメント内の 88888 は実行しません 👏\n୪ 8 ୪ 88888',
-  arithmetic: 'set 2 push set 3 add 88888\nset 5 push set 2 sub 88888',
-  letter: 'set 72 char\nset 73 char',
-  function: 'マジ あいさつ\n  set 72 char\n  set 73 char\nend\n\nめっちゃ あいさつ\nめっちゃ あいさつ',
+  add: example('五を出す', '8 8\n8 8 8\n88888'),
+  count: example('カウントダウン', '8 8 8\n888888\n  88888 88\n8888888'),
+  move: example('セルを移動', '8 888 8 8 88888 8888 88888'),
+  bengali: example('数字を混ぜる', '8 ৪\n৪ 8 ৪\n8৪8৪8'),
+  odia: example('三つの数字', '8 ৪\n୪ 8 ୪\n8৪୪8୪'),
+  comment: example('コメントの例', '8 ৪ 👏 ここまでで 2\nコメント内の 88888 は実行しません 👏\n୪ 8 ୪ 88888'),
+  arithmetic: example('足し引き', 'set 2 push set 3 add 88888\nset 5 push set 2 sub 88888'),
+  letter: example('文字を出す', 'set 72 char\nset 73 char'),
+  function: example('あいさつ', 'set 72 char\nset 73 char', 2),
 };
 
 for (const [i, description] of instructions.entries()) {

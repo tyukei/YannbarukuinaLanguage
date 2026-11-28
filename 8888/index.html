@@ -6,7 +6,7 @@
 <meta name="description" content="数字の8、ベンガル数字の৪、オリヤー数字の୪で命令を書く教育用言語。ブラウザで実行してバイトコードと実行の流れを見比べられます。">
 <title>8888言語（試作） | YanbaruKuina</title>
 <link rel="stylesheet" href="./style.css">
-<script type="module" src="./playground.mjs?v=6"></script>
+<script type="module" src="./playground.mjs?v=7"></script>
 </head>
 <body>
 <main>
@@ -22,9 +22,13 @@
 <select id="example"><option value="add">2 + 3 → 5</option><option value="count">カウントダウン → 3, 2, 1</option><option value="move">別のセルに移動 → 2, 1</option><option value="bengali">8 と ৪ を混ぜる → 5</option><option value="odia">8・৪・୪ を混ぜる → 5</option><option value="comment">👏 コメントを書く → 5</option><option value="arithmetic">足し算・引き算 → 5, 3</option><option value="letter">文字を出す → HI</option><option value="function">関数を呼ぶ → HIHI</option></select>
 </div>
 <label for="source">ソースコード</label>
-<textarea id="source" rows="5" maxlength="16384" autocomplete="off" autocapitalize="off" spellcheck="false" aria-describedby="hint">8 8
-8 8 8
-88888</textarea>
+<textarea id="source" rows="5" maxlength="16384" autocomplete="off" autocapitalize="off" spellcheck="false" aria-describedby="hint">マジ 五を出す
+  8 8
+  8 8 8
+  88888
+end
+
+めっちゃ 五を出す</textarea>
 <div class="tools">
 <button id="run" type="button" disabled>実行</button>
 <span id="hint">命令は空白、改行、コメントで区切ります。⌘ / Ctrl + Enter でも実行できます。</span>
