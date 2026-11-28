@@ -6,13 +6,13 @@
 <meta name="description" content="数字の8、ベンガル数字の৪、オリヤー数字の୪で命令を書く教育用言語。ブラウザで実行してバイトコードと実行の流れを見比べられます。">
 <title>8888言語（試作） | YanbaruKuina</title>
 <link rel="stylesheet" href="./style.css">
-<script type="module" src="./playground.mjs?v=10"></script>
+<script type="module" src="./playground.mjs?v=11"></script>
 </head>
 <body>
 <main>
 <header>
 <p><a href="../">← Playground に戻る</a></p>
-<h1>8888言語 <small>試作 v0.4</small></h1>
+<h1>8888言語 <small>試作 v0.5</small></h1>
 <p><code>8</code>、ベンガル数字の <code lang="bn">৪</code>、オリヤー数字の <code lang="or">୪</code> を使う小さな言語です。3文字の組み合わせで命令を表します。命令をそのままつなげて書けます。まずは「実行」を押してみてください。</p>
 </header>
 <section aria-labelledby="try">
@@ -22,7 +22,7 @@
 <select id="example"><option value="add">2 + 3 → 5</option><option value="count">カウントダウン → 3, 2, 1</option><option value="move">別のセルに移動 → 2, 1</option><option value="bengali">৪ を使って増やす → 5</option><option value="odia">8・৪・୪ を混ぜる → 5</option><option value="comment">👏 コメントを書く → 5</option><option value="arithmetic">足し算・引き算 → 5, 3</option><option value="letter">文字を出す → こんにちは</option><option value="function">関数を呼ぶ → HIHI</option></select>
 </div>
 <label for="source">ソースコード</label>
-<textarea id="source" rows="5" maxlength="16384" autocomplete="off" autocapitalize="off" spellcheck="false" aria-describedby="hint">マジ五を出す{8୪৪神2神3神8৪୪}めっちゃ{五を出す}</textarea>
+<textarea id="source" rows="5" maxlength="16384" autocomplete="off" autocapitalize="off" spellcheck="false" aria-describedby="hint">マジ五を出す{88৪神2神3神৪৪৪}めっちゃ{五を出す}</textarea>
 <div class="tools">
 <button id="run" type="button" disabled>実行</button>
 <span id="hint">命令は3文字ずつ読めるので、間に空白や改行はいりません。⌘ / Ctrl + Enter でも実行できます。</span>
@@ -35,7 +35,7 @@
 <hr>
 <section aria-labelledby="inside">
 <h2 id="inside">2. 実行の中をのぞく</h2>
-<p><code>8୪৪神2神3神</code> は「2と3を足す」、<code>8৪୪</code> は「値を出力」です。ソースコードを専用VMのバイトコードに変換し、ブラウザで実行します。ここで表示するバイトはZ80や実機CPUの機械語ではありません。<a href="../guide/#z80">本物のZ80命令の例を見る</a></p>
+<p><code>88৪神2神3神</code> は「2と3を足す」、<code>৪৪৪</code> は「値を出力」です。ソースコードを専用VMのバイトコードに変換し、ブラウザで実行します。ここで表示するバイトはZ80や実機CPUの機械語ではありません。<a href="../guide/#z80">本物のZ80命令の例を見る</a></p>
 <details open><summary>生成したバイトコード</summary><pre id="bytes">実行後に表示します。</pre></details>
 <details open><summary>実行の跡</summary><pre id="trace">実行後に表示します。</pre></details>
 <p>PCは次に読む命令の位置です。各命令は3バイト（命令番号、数値・ジャンプ先・文字列番号の下位・上位バイト）なので、分岐しないときは3ずつ進みます。アドレスとバイトは16進数です。</p>
@@ -43,16 +43,18 @@
 <hr>
 <section aria-labelledby="commands">
 <h2 id="commands">3. 命令表</h2>
-<p>命令は3文字。値は <code>神</code> で区切ります。</p>
+<p>命令は3文字。先頭の <code>8</code> は計算、<code>৪</code> は値、<code>୪</code> は移動・ループ。値は <code>神</code> で区切ります。</p>
 <table><thead><tr><th scope="col">命令</th><th scope="col">意味</th><th scope="col">書き方の例</th></tr></thead><tbody id="commands-body"></tbody></table>
-<details><summary>その他の命令（セル・ループなど）</summary>
-<table><thead><tr><th scope="col">命令</th><th scope="col">意味</th></tr></thead><tbody id="extra-commands"></tbody></table>
+<details><summary>すべての命令（先頭の文字で分類）</summary>
+<table><caption>8：計算</caption><thead><tr><th scope="col">命令</th><th scope="col">意味</th></tr></thead><tbody id="command-group-0"></tbody></table>
+<table><caption>৪：値</caption><thead><tr><th scope="col">命令</th><th scope="col">意味</th></tr></thead><tbody id="command-group-1"></tbody></table>
+<table><caption>୪：移動・ループ</caption><thead><tr><th scope="col">命令</th><th scope="col">意味</th></tr></thead><tbody id="command-group-2"></tbody></table>
 </details>
 <h3>計算と文字</h3>
-<p><code>8୪৪神2神3神8৪୪</code> は <code>5</code> を表示します。<code>৪৪8神5神2神8৪୪</code> は <code>3</code>、<code>8৪୪神こんにちは神</code> は文字を表示します。<code>神</code> は値の境界です。たとえば <code>8୪৪神8神3神</code> の最初の <code>8</code> は命令の一部、<code>神8神</code> の <code>8</code> は計算する数です。表示する文字の中では空白も残り、<code>\神</code> と書けば文字として「神」を表示できます。</p>
+<p><code>88৪神2神3神৪৪৪</code> は <code>5</code> を表示します。<code>88୪神5神2神৪৪৪</code> は <code>3</code>、<code>৪৪৪神こんにちは神</code> は文字を表示します。<code>神</code> は値の境界です。たとえば <code>88৪神8神3神</code> の先頭の <code>88৪</code> は足し算の命令、<code>神8神</code> の <code>8</code> は計算する数です。表示する文字の中では空白も残り、<code>\神</code> と書けば文字として「神」を表示できます。</p>
 <h3>関数</h3>
 <p><code>マジ名前{…}</code> で関数を宣言します。中身だけを <code>{ }</code> で囲み、<code>めっちゃ{名前}</code> で実行します。関数の内外で同じセルを使います。</p>
-<details><summary>以前の書き方（互換モード）</summary><p><code>マジ 名前</code> のように関数名を引用符で囲まない以前のコードも実行できます。<code>マジ"名前"</code> から始まる前の試作（v0.3）もそのまま動きます。空白で区切る旧形式で、<code>8</code>・<code>৪</code>・<code>୪</code> を同じ1文字として数えます。<code>set</code> や <code>fn</code> / <code>end</code> / <code>call</code> も旧形式のまま使えます。</p></details>
+<details><summary>以前の書き方（互換モード）</summary><p><code>マジ 名前</code> のように関数名を引用符で囲まない以前のコードも実行できます。<code>マジ"名前"</code> から始まる前の試作（v0.3）や、旧命令の並びもそのまま動きます。空白で区切る旧形式で、<code>8</code>・<code>৪</code>・<code>୪</code> を同じ1文字として数えます。<code>set</code> や <code>fn</code> / <code>end</code> / <code>call</code> も旧形式のまま使えます。</p></details>
 <p>最初は256個のセルがすべて0で、左端のセルから始まります。値（0〜255）とセルの位置は端で一周します。ループの入れ子も使えます。</p>
 <p><code>👏 メモ 👏</code> のように、2つの <code>👏</code> で囲んだ部分はコメントになり、実行されません。複数行にまたがって書けます。最後の <code>👏</code> がない場合はエラーです。プログラムへの入力機能はありません。</p>
 <p>入力と実行回数に上限があり、終わらないループは自動で停止します。コードは端末のブラウザ内だけで処理します。</p>
