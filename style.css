@@ -80,3 +80,8 @@ th, td { text-align: left; padding: .3rem .75rem .3rem .25rem; border-bottom: 1p
 #clap-guide table { margin:0 0 .8rem; width:100%; }
 #clap-guide caption { text-align:left; font-weight:650; }
 #clap-guide th, #clap-guide td { text-align:left; padding:.25rem .45rem; }
+
+.language-idea { display:flex; flex-wrap:wrap; align-items:baseline; gap:.15rem .7rem; margin:0 0 .75rem; padding:.4rem .7rem; border-left:3px solid var(--line); }
+.language-idea h2 { color:var(--green); font-size:.79rem; white-space:nowrap; }
+.language-idea p { flex:1 1 26rem; margin:0; font-size:.85rem; color:var(--muted); }
+.language-idea strong { color:var(--ink); }
