@@ -5,8 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="description" content="数字の8、ベンガル数字の৪、オリヤー数字の୪で命令を書く教育用言語。ブラウザで実行してバイトコードと実行の流れを見比べられます。">
 <title>8888言語（試作） | YanbaruKuina</title>
-<link rel="stylesheet" href="./style.css?v=4">
-<script type="module" src="./playground.mjs?v=15"></script>
+<link rel="stylesheet" href="./style.css?v=5">
+<script type="module" src="./playground.mjs?v=16"></script>
 </head>
 <body>
 <main>
@@ -46,6 +46,14 @@
 <p id="debug-source-label">ソース上の位置</p>
 <pre id="debug-source" aria-labelledby="debug-source-label"></pre>
 <p id="debug-effect" aria-live="polite"></p>
+<section id="debug-addresses" aria-labelledby="debug-address-title">
+<h4 id="debug-address-title">命令のアドレス（PC）</h4>
+<dl class="debug-address-pair">
+<div><dt>実行した命令</dt><dd><code id="debug-pc">未実行</code></dd></div>
+<div><dt>次の命令</dt><dd><code id="debug-next-pc">0x0000</code></dd></div>
+</dl>
+<p id="debug-pc-note">アドレスはバイトコード上の位置です。セル番号とは別です。</p>
+</section>
 </div>
 <div class="tools"><label for="debug-page">表示するセル</label>
 <select id="debug-page"><option value="auto">現在のセルを追う</option></select></div>
