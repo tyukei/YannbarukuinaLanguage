@@ -1,4 +1,4 @@
-// 8888 v0.1: whitespace-delimited runs of 8 and ৪, compiled to 3-byte VM records.
+// 8888 v0.1: whitespace-delimited runs of 8, ৪ and ୪, compiled to 3-byte VM records.
 export const instructions = [
   'セルの値を +1', 'セルの値を −1', '右のセルへ', '左のセルへ',
   '値を出力', '値が 0 ならループを飛ばす',
@@ -19,8 +19,8 @@ export function compile(source) {
     for (const match of line.matchAll(/\S+/gu)) {
       const token = match[0], op = token.length, pc = code.length;
       const pos = `${row + 1}行 ${match.index + 1}列`;
-      if (!/^[8৪]{1,8}$/u.test(token)) {
-        throw new Error(`${pos}：命令は「8」と「৪」を合わせて1〜8文字です。空白か改行で区切ってください。`);
+      if (!/^[8৪୪]{1,8}$/u.test(token)) {
+        throw new Error(`${pos}：命令は「8」「৪」「୪」を合わせて1〜8文字です。空白か改行で区切ってください。`);
       }
       if (locations.length === maxInstructions) throw new Error('命令は4,096個までです。');
       code.push(op, 0, 0);

@@ -45,3 +45,13 @@ test('Bengali digit four is interchangeable with 8, but ASCII 4 is rejected', ()
   assert.throws(() => compile('৪ 4'), /1行 3列/u);
   assert.throws(() => compile('৪'.repeat(9)), /1行 1列/u);
 });
+
+test('Odia digit four works alone or mixed with the other two symbols', () => {
+  const ascii = '8 8 8 8 8 88888';
+  for (const source of ['୪ ୪ ୪ ୪ ୪ ୪୪୪୪୪', '8 ৪ ୪ 8 ୪ 8৪୪8୪']) {
+    assert.deepEqual(compile(source), compile(ascii));
+    assert.deepEqual(execute(source).output, [5]);
+  }
+  assert.throws(() => compile('୪ 4'), /1行 3列/u);
+  assert.throws(() => compile('୪'.repeat(9)), /1行 1列/u);
+});
