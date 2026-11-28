@@ -1,4 +1,4 @@
-// 8888 v0.1: whitespace-delimited runs of 8, ৪ and ୪, compiled to 3-byte VM records.
+// 8888 v0.1: whitespace-delimited runs of 8, ৪ and ୪ with 👏-delimited comments, compiled to 3-byte VM records.
 export const instructions = [
   'セルの値を +1', 'セルの値を −1', '右のセルへ', '左のセルへ',
   '値を出力', '値が 0 ならループを飛ばす',
@@ -15,10 +15,19 @@ export function compile(source) {
     code[pc + 1] = target & 255;
     code[pc + 2] = target >>> 8;
   }
+  let commentStart = null;
   for (const [row, line] of lines.entries()) {
-    for (const match of line.matchAll(/\S+/gu)) {
-      const token = match[0], op = token.length, pc = code.length;
-      const pos = `${row + 1}行 ${match.index + 1}列`;
+    let offset = 0, column = 1;
+    for (const match of line.matchAll(/👏|(?:(?!👏)\S)+/gu)) {
+      column += Array.from(line.slice(offset, match.index)).length;
+      offset = match.index;
+      const token = match[0], pos = `${row + 1}行 ${column}列`;
+      if (token === '👏') {
+        commentStart = commentStart === null ? pos : null;
+        continue;
+      }
+      if (commentStart !== null) continue;
+      const op = token.length, pc = code.length;
       if (!/^[8৪୪]{1,8}$/u.test(token)) {
         throw new Error(`${pos}：命令は「8」「৪」「୪」を合わせて1〜8文字です。空白か改行で区切ってください。`);
       }
@@ -33,6 +42,7 @@ export function compile(source) {
       setTarget(pc, open + width);
     }
   }
+  if (commentStart !== null) throw new Error(`${commentStart}：コメントを閉じる「👏」がありません。`);
   if (loops.length) throw new Error(`${locations[loops.at(-1) / width]}：ループが閉じていません。`);
   return {code: Uint8Array.from(code), locations};
 }

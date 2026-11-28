@@ -55,3 +55,17 @@ test('Odia digit four works alone or mixed with the other two symbols', () => {
   assert.throws(() => compile('୪ 4'), /1行 3列/u);
   assert.throws(() => compile('୪'.repeat(9)), /1行 1列/u);
 });
+
+test('paired claps make comments that emit no bytecode, even across lines', () => {
+  const source = '8👏任意の文字、88888、୪、"など\r\n次の行👏8 88888';
+  const p = compile(source);
+  assert.deepEqual(p.code, compile('8 8 88888').code);
+  assert.deepEqual(p.locations, ['1行 1列', '2行 5列', '2行 7列']);
+  assert.deepEqual(run(p).output, [2]);
+  assert.deepEqual(execute('👏コメントだけ👏').output, []);
+  assert.deepEqual(execute('8👏👏👏連続コメント👏88888').output, [1]);
+});
+test('unclosed comments and invalid tokens keep useful source locations', () => {
+  assert.throws(() => compile('8\n  👏未閉鎖\nメモ'), /2行 3列.*コメント/u);
+  assert.throws(() => compile('👏😀👏9'), /1行 4列/u);
+});
