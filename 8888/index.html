@@ -6,7 +6,7 @@
 <meta name="description" content="数字の8、ベンガル数字の৪、オリヤー数字の୪で命令を書く教育用言語。ブラウザで実行してバイトコードと実行の流れを見比べられます。">
 <title>8888言語（試作） | YanbaruKuina</title>
 <link rel="stylesheet" href="./style.css">
-<script type="module" src="./playground.mjs?v=7"></script>
+<script type="module" src="./playground.mjs?v=8"></script>
 </head>
 <body>
 <main>
@@ -26,7 +26,7 @@
   8 8
   8 8 8
   88888
-end
+神
 
 めっちゃ 五を出す</textarea>
 <div class="tools">
@@ -54,7 +54,7 @@ end
 <h3>計算と文字</h3>
 <p><code>set 2 push set 3 add 88888</code> は、左の値 <code>2</code> を保存してから <code>3</code> を足し、<code>5</code> を表示します。<code>sub</code> は「保存した値 − 現在値」です。<code>set 65 char</code> は ASCII の <code>A</code> を出力します。</p>
 <h3>関数</h3>
-<p><code>マジ 名前</code> から <code>end</code> までが関数の宣言です。宣言しただけでは実行せず、<code>めっちゃ 名前</code> で呼ぶと実行します。<code>fn</code> と <code>call</code> も同じ意味で使えます。関数の内外で同じセルを使います。引数や戻り値はまだありません。</p>
+<p><code>マジ 名前</code> から <code>神</code> までが関数の宣言です。宣言しただけでは実行せず、<code>めっちゃ 名前</code> で呼ぶと実行します。<code>fn</code>、<code>end</code>、<code>call</code> も互換用に使えます。関数の内外で同じセルを使います。引数や戻り値はまだありません。</p>
 <p>最初は256個のセルがすべて0で、左端のセルから始まります。値（0〜255）とセルの位置は端で一周します。ループの入れ子も使えます。</p>
 <p><code>👏 メモ 👏</code> のように、2つの <code>👏</code> で囲んだ部分はコメントになり、実行されません。複数行にまたがって書けます。最後の <code>👏</code> がない場合はエラーです。プログラムへの入力機能はありません。</p>
 <p>入力と実行回数に上限があり、終わらないループは自動で停止します。コードは端末のブラウザ内だけで処理します。</p>
