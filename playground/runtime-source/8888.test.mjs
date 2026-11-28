@@ -69,3 +69,32 @@ test('unclosed comments and invalid tokens keep useful source locations', () => 
   assert.throws(() => compile('8\n  👏未閉鎖\nメモ'), /2行 3列.*コメント/u);
   assert.throws(() => compile('👏😀👏9'), /1行 4列/u);
 });
+
+test('arithmetic uses both operands, preserves order and wraps as a byte', () => {
+  assert.deepEqual(execute('set 2 push set 3 add 88888 set 5 push set 2 sub 88888').output, [5, 3]);
+  assert.deepEqual(execute('set 2 push set 5 sub 88888 set 255 push set 2 add 88888').output, [253, 1]);
+  assert.throws(() => execute('add'), /push/u);
+  assert.throws(() => compile('set 256'), /0〜255/u);
+});
+test('char emits ASCII characters and linefeeds, not raw cell numbers', () => {
+  assert.deepEqual(execute('set 72 char set 73 char set 10 char 88888').output, ['H', 'I', '\n', 10]);
+  assert.throws(() => execute('set 128 char'), /ASCII/u);
+});
+test('declaration does not execute; calls can repeat, nest and reference later declarations', () => {
+  assert.deepEqual(execute('fn a set 65 char end').output, []);
+  const source = 'call 挨拶 call 挨拶 fn 挨拶 call Hi set 33 char end fn Hi set 72 char set 73 char end';
+  assert.deepEqual(execute(source).output, [...'HI!HI!']);
+  assert.deepEqual(execute('fn f set 2 888888 88888 88 8888888 end call f').output, [2, 1]);
+});
+test('bad function declarations and excessive recursion are rejected', () => {
+  for (const [source, pattern] of [
+    ['call missing', /定義されていません/u],
+    ['fn a set 1', /閉じる end/u],
+    ['end', /対応する fn/u],
+    ['fn a fn b end end', /関数やループの外/u],
+    ['fn a end fn a end', /定義済み/u],
+    ['888888 fn f end 8888888', /関数やループの外/u],
+    ['fn a 888888 end', /関数内のループ/u],
+    ['fn a call a end call a', /64段/u],
+  ]) assert.throws(() => execute(source), pattern);
+});
