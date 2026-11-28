@@ -25,9 +25,9 @@ test('the initial source and every sample declare and invoke a named function', 
     for (const key of keys) {
       nodes.example.events.change({target:{value:key}});
       const source = nodes.source.value;
-      const name = source.match(/^マジ("[^"]+")/u)?.[1];
+      const name = source.match(/^マジ([^{]+)\{/u)?.[1];
       assert.ok(name, key);
-      assert.ok(source.includes('神めっちゃ' + name), key);
+      assert.ok(source.includes('}めっちゃ{' + name + '}'), key);
       assert.doesNotMatch(source, /\s/u, key);
       if (key === 'add') assert.equal(source, defaults);
       nodes.run.events.click();

@@ -130,3 +130,14 @@ test('quoted display preserves Unicode, spaces and clap characters without execu
   const large = 'マジ"f"8৪୪"' + 'あ'.repeat(6000) + '"神' + 'めっちゃ"f"'.repeat(3);
   assert.throws(() => execute(large), /16,384文字/u);
 });
+
+test('braces close declarations and shared God boundaries delimit operands', () => {
+  const add = 'マジ足し算{8୪৪神8神3神8৪୪}めっちゃ{足し算}';
+  assert.deepEqual(execute(add).output, [11]);
+  assert.deepEqual(execute('めっちゃ{足し算}マジ 足し算 { ৪৪8神 5 神 2 神8৪୪ }').output, [3]);
+  assert.deepEqual(execute('マジ f { 8৪୪神こんにちは \\神 👏神 } めっちゃ { f }').output, ['こんにちは 神 👏']);
+  assert.deepEqual(execute('マジ数{8৪୪神8神৪8৪神8神8৪୪}めっちゃ{数}').output, ['8',8]);
+  assert.throws(() => compile('マジ数{8۴୪}'), /不明な命令/u);
+  assert.throws(() => compile('マジ数{8৪୪'), /閉じる「\}」/u);
+  assert.throws(() => compile('マジ数{8୪৪神8神'), /閉じる「神」/u);
+});
