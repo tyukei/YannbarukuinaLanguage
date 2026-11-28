@@ -2,11 +2,11 @@
 
 This is a separate language/runtime, not Queena, native CPU machine code or Z80.
 Exact case-sensitive commands; spaces are not required:
-C increment; CH decrement; CHU move right; CHUK output current number and newline;
+C increment; CH decrement; CHU move right; CHUK emit current cell as one ASCII character;
 CHUKE begin loop while current cell != 0; CHUKEI end loop.
 Every command starts with C and has no other C inside it. The next C or whitespace
-ends the current token. For example `CCCCHUKECHUKCHCHUKEI` is the countdown
-3, 2, 1 in numeric mode. Existing space/newline-separated code is still valid.
+ends the current token. For example, 65 consecutive C commands followed by
+CHUK emit A. Existing space/newline-separated code is still valid.
 Whitespace is an optional token boundary, not removed globally: `C H` is invalid,
 not `CH`. Unknown chunks, punctuation and incomplete loop pairs remain errors.
 Each of C, CH, CHU and CHUK is itself a complete command, not an incomplete prefix.
@@ -47,19 +47,18 @@ locations, limits, all UI examples and the bundled worker).
 Rebuild after runtime changes from this directory:
 `node_modules/.bin/esbuild chukei-worker.js --bundle --format=esm --platform=browser --target=es2020 --outfile=../dist/chukei-worker.js`
 
-## ASCII output option
+## ASCII output
 
-`runChukei(source, {outputMode:'ascii'})` or worker `{source,outputMode:'ascii'}`
-selects ASCII output. Omitting outputMode or using `'numeric'` preserves the
-original number-plus-newline behavior. No command was added or changed.
-In ASCII mode CHUK emits exactly one character for values 0–127 with NO automatic
+ASCII is the only output format from `runChukei(source)` and the worker. An
+explicit `outputMode:'ascii'` is still accepted; the old numeric mode is not.
+CHUK emits exactly one character for values 0–127 with NO automatic
 newline. All ASCII controls (including NUL, tab, LF, CR and ESC) and DEL are
 preserved literally; they may be invisible. Render as text, never terminal/HTML
 escape interpretation. Values 128–255 cause an explicit runtime error when OUT
 is executed; previous output and final VM state are retained. Those byte values
 are still valid cell values for all other operations. This is ASCII, not UTF-8,
 Latin-1 or arbitrary Unicode support.
-`result.outputMode` reports the validated mode (numeric default). `trace[].output`
+`result.outputMode` is always `ascii`. `trace[].output`
 contains the actual emitted text for that instruction, including ASCII controls.
 Invalid mode/settings fail before compilation. Output limit remains 16 KiB,
 which equals 16,384 characters in ASCII mode. `node chukei-ascii-test.mjs` adds

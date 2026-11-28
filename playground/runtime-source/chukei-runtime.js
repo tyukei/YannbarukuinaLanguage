@@ -2,13 +2,11 @@
 const COMMANDS = Object.freeze({C:'INC',CH:'DEC',CHU:'RIGHT',CHUK:'OUT',CHUKE:'JZ',CHUKEI:'JNZ'});
 const SOURCE_LIMIT=16384, OUTPUT_LIMIT=16384, STEP_LIMIT=1000000, TIME_LIMIT_MS=1500;
 export function runChukei(source, options={}) {
- const result={ok:false,tokens:[],ast:null,bytecode:[],output:'',steps:0,trace:[],trace_truncated:false,cells:Array(256).fill(0),pointer:0,outputMode:'numeric'};
+ const result={ok:false,tokens:[],ast:null,bytecode:[],output:'',steps:0,trace:[],trace_truncated:false,cells:Array(256).fill(0),pointer:0,outputMode:'ascii'};
  const started=performance.now();
  try {
   if(options===null || typeof options!=='object' || Array.isArray(options)) throw Error('出力設定が不正です。');
-  const outputMode=options.outputMode===undefined?'numeric':options.outputMode;
-  if(outputMode!=='numeric' && outputMode!=='ascii') throw Error('出力モードはnumericまたはasciiを指定してください。');
-  result.outputMode=outputMode;
+  if(options.outputMode!==undefined && options.outputMode!=='ascii') throw Error('CHUKEIの出力はASCIIのみです。');
   if(typeof source!=='string') throw Error('ソースコードは文字列で指定してください。');
   if(new TextEncoder().encode(source).length>SOURCE_LIMIT) throw Error('コードは16 KiB以内にしてください。');
   // Every command starts with C and contains no other C. Split at the next C
@@ -52,8 +50,8 @@ export function runChukei(source, options={}) {
      case 'DEC':cells[pointer]=(cells[pointer]+255)&255;pc++;break;
      case 'RIGHT':pointer=(pointer+1)&255;pc++;break;
      case 'OUT':{
-      if(outputMode==='ascii' && cells[pointer]>127) throw Error(`ASCII出力範囲外 at line ${result.tokens[ins.sourceIndex].line}, column ${result.tokens[ins.sourceIndex].column}: ${cells[pointer]}（0〜127のみ対応）`);
-      const text=outputMode==='ascii'?String.fromCharCode(cells[pointer]):`${cells[pointer]}\n`;
+      if(cells[pointer]>127) throw Error(`ASCII出力範囲外 at line ${result.tokens[ins.sourceIndex].line}, column ${result.tokens[ins.sourceIndex].column}: ${cells[pointer]}（0〜127のみ対応）`);
+      const text=String.fromCharCode(cells[pointer]);
       if(result.output.length+text.length>OUTPUT_LIMIT) throw Error('出力上限（16 KiB）に達しました。');
       result.output+=text;emitted=text;pc++;break;
      }

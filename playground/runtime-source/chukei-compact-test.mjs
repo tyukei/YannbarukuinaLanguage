@@ -12,7 +12,7 @@ const projectFile=path=>readFileSync(new URL(path,import.meta.url),'utf8');
 test('compact countdown preserves AST, jumps and execution',()=>{
  const spaced='C C C CHUKE CHUK CH CHUKEI';
  const a=runChukei(spaced),b=runChukei(compact(spaced));
- assert.equal(b.ok,true);assert.equal(b.output,'3\n2\n1\n');
+ assert.equal(b.ok,true);assert.equal(b.output,'\x03\x02\x01');
  for(const key of ['ast','bytecode','output','steps','trace','cells','pointer']) assert.deepEqual(b[key],a[key],key);
  assert.deepEqual(b.tokens.map(t=>t.column),[1,2,3,4,9,13,15]);
 });
@@ -98,22 +98,19 @@ test('compact ASCII output and error position stay unchanged',()=>{
  assert.equal(runChukei('C'.repeat(65)+'CHUKCHUK',{outputMode:'ascii'}).output,'AA');
  const r=runChukei('C'.repeat(128)+'CHUK',{outputMode:'ascii'});
  assert.equal(r.ok,false);assert.match(r.error,/line 1, column 129/);
- assert.equal(runChukei('C'.repeat(65)+'CHUK').output,'65\n');
+ assert.equal(runChukei('C'.repeat(65)+'CHUK').output,'A');
 });
 
 // Evaluate only the sample declarations, not the DOM/UI code or a browser mock.
 const app=projectFile('../dist/app.js');
-const uiSamples=vm.runInNewContext(app.slice(0,app.indexOf('const drafts='))+';({samples,chukeiSamples,asciiSamples})');
-const expectedNumeric={hello:'3\n2\n1\n',branch:'255\n0\n',loop:'3\n2\n1\n',control:'0\n'};
+const uiSamples=vm.runInNewContext(app.slice(0,app.indexOf('const drafts='))+';({samples,asciiSamples})');
 const expectedAscii={hello:'HELLO, I AM CHUKEI!',branch:'Hello',loop:'AB',control:'A\nB',letters:'AZaz',abc:'ABC'};
 
-test('all ten UI samples are whitespace-free and produce expected output',()=>{
- for(const [collection,outputMode,outputs] of [[uiSamples.chukeiSamples,'numeric',expectedNumeric],[uiSamples.asciiSamples,'ascii',expectedAscii]]){
-  for(const [name,s] of Object.entries(collection)){
-   assert.doesNotMatch(s,/\s/u,name);const r=runChukei(s,{outputMode});assert.equal(r.ok,true,name);assert.equal(r.output,outputs[name],name);
-  }
+test('all six UI samples are whitespace-free and produce expected output',()=>{
+ for(const [name,s] of Object.entries(uiSamples.asciiSamples)){
+  assert.doesNotMatch(s,/\s/u,name);const r=runChukei(s);assert.equal(r.ok,true,name);assert.equal(r.output,expectedAscii[name],name);
  }
- assert.match(app,/let chukeiMode="ascii"/);
+ assert.doesNotMatch(app,/output-mode|chukeiMode/);
  const init=app.split('\n').find(line=>line.startsWith('el("language").value=')&&line.includes('requestedLanguage'));
  assert.ok(init);
  const select={};
@@ -128,7 +125,7 @@ test('bundled worker message API agrees with runtime including errors',()=>{
  const messages=[];
  const self={postMessage:r=>messages.push(r)};
  vm.runInNewContext(projectFile('../dist/chukei-worker.js'),{self,performance,TextEncoder,Uint8Array});
- const cases=[...Object.values(uiSamples.chukeiSamples).map(source=>({source,outputMode:'numeric'})),...Object.values(uiSamples.asciiSamples).map(source=>({source,outputMode:'ascii'})),{source:'C H'},{source:'CCHUKE'},{source:'\nCHUKEI'},{source:''}];
+ const cases=[...Object.values(uiSamples.asciiSamples).map(source=>({source})),{source:'CHUK',outputMode:'numeric'},{source:'CHCHUK'},{source:'C H'},{source:'CCHUKE'},{source:'\nCHUKEI'},{source:''}];
  for(const data of cases){
   self.onmessage({data});
   const actual=JSON.parse(JSON.stringify(messages.pop()));
@@ -138,7 +135,10 @@ test('bundled worker message API agrees with runtime including errors',()=>{
 
 test('site explains compact syntax and retains VM instruction guide',()=>{
  const html=projectFile('../dist/index.html');
- assert.match(html,/app\.js\?v=[^"\s]+/);assert.match(app,/chukei-worker\.js\?v=compact-20261114/);
+ assert.match(html,/app\.js\?v=[^"\s]+/);assert.match(app,/chukei-worker\.js\?v=ascii-only-1/);
+ const example=html.split('id="chukei-cheat"')[1].match(/<pre><code>([\s\S]*?)<\/code><\/pre>/)[1];
+ assert.equal(runChukei(example).output,'A');
+ assert.doesNotMatch(html,/id="output-mode"/);
  assert.match(html,/スペース不要/);assert.match(html,/次のCで区切れます/);
  assert.match(html,/C HはCHになりません/);assert.match(html,/未知の文字・命令はエラー/);
  assert.doesNotMatch(html,/空白で分割したトークン単位|大文字・空白区切り|空白で区切る6命令/);

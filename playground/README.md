@@ -16,12 +16,12 @@ The lexical analysis panel uses the compiler's real lexer tokens in source order
 ## CHUKEI educational language
 Separate selectable language with six case-sensitive commands with no required spaces: C increment, CH decrement, CHU move right, CHUK output, CHUKE begin loop, CHUKEI end loop. Every command starts with C and contains no other C, so the next C separates commands. Existing whitespace/newline-separated code remains valid. Whitespace does not join fragments inside a command; unknown chunks and unmatched loops remain errors. It compiles to an explicitly educational VM instruction stream, not Z80. Its 256 uint8 cells and pointer wrap. The UI shows tokens, nested structure, generated instructions and bounded execution history. Source remains browser-local; both runtimes are terminated by the existing cancel/watchdog.
 
-CHUKEI now offers numeric (default, unchanged) and ASCII output modes for CHUK. ASCII mode emits one character without an automatic newline; 0–127 only, with 10 newline and 32 space. Values above127 report an error, not arbitrary Unicode conversion. UI includes ABC/AZaz/cell/newline examples and marks results stale when the mode changes.
+CHUKEI uses ASCII output only. CHUK emits one character without an automatic newline; 0–127 only, with 10 for newline and 32 for space. Values above 127 report an error. UI examples include ABC, AZaz, multiple cells and newlines.
 
 UI uses the same language/output controls, editor/result pair, and token/tree/generated-code/execution-step disclosures for both languages. Language details and illustrations are collapsed; Queena's unsupported ASCII selector is disabled and its step panel explicitly says CHUKEI only.
 
 ## Compact CHUKEI source
-The default HELLO greeting and all CHUKEI examples now contain no whitespace. `CCCCHUKECHUKCHCHUKEI` emits 3, 2, 1 in numeric mode. Output-mode selection and VM instruction semantics are unchanged. See `runtime-source/chukei-README.md` for the scanner, build and regression checks.
+The default HELLO greeting and all CHUKEI examples now contain no whitespace. Whitespace-separated source still works, but all output uses ASCII characters rather than decimal cell values. See `runtime-source/chukei-README.md` for the scanner, build and regression checks.
 
 ## Visual syntax tree
 The AST panel presents the actual returned AST as connected, keyboard-expandable cards. Roles (condition/body/left/right) and source locations are used only when provided by the compiler. CHUKEI loops remain one real loop node with their real body children; no synthetic condition nodes or execution counts are invented. Consecutive identical CHUKEI leaf commands can be grouped for display, with an explicit count and a switch to show individual nodes. This does not alter the AST, VM or execution.

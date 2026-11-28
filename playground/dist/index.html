@@ -8,7 +8,7 @@
   <link rel="stylesheet" href="./style.css?v=language-tabs-1">
   <link rel="stylesheet" href="./ast-view.css?v=visual-20261114">
   <script src="./ast-view.js?v=visual-20261114" defer></script>
-  <script src="./app.js?v=language-tabs-1" defer></script>
+  <script src="./app.js?v=ascii-only-1" defer></script>
   <style>
     #bytecode[hidden] + .vm-command-guide { display: none; }
     .vm-command-guide { margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--line); font-size: 12px; }
@@ -27,11 +27,11 @@
       </nav>
     </header>
     <nav class="language-tabs" aria-label="言語を切り替える"><span class="language-tabs-label">言語を切り替える</span><a href="./?lang=queena" data-language="queena">YanbaruKuina</a><a href="./?lang=chukei" data-language="chukei" aria-current="page">CHUKEI</a><a href="./8888/" data-language="8888">8888</a></nav>
-<h1 id="language-title" class="language-title">ちょっと刻んどきますね型言語 CHUKEI</h1>
+<h1 id="language-title" class="language-title">ちょっと中継しときますね型言語 CHUKEI</h1>
     <section class="language-bar">
       <select id="language" aria-label="言語" hidden><option value="queena">YanbaruKuina</option><option value="chukei">CHUKEI</option><option value="8888">8888</option></select>
-      <label for="output-mode">出力</label><select id="output-mode" disabled aria-describedby="output-help"><option value="numeric">数値</option><option value="ascii">文字（ASCII）</option></select>
-      <a class="cheat-link" href="#cheatsheet">チートシート ↓</a><span id="debug-note" class="feature-note" hidden>Z80のステップ実行は未対応</span><span id="language-note" class="engine-badge">Z80</span><span id="output-help" class="sr-only">文字出力はCHUKEIのみ対応。</span>
+      <span id="ascii-output-note" class="feature-note">出力：ASCII</span>
+      <a class="cheat-link" href="#cheatsheet">チートシート ↓</a><span id="debug-note" class="feature-note" hidden>Z80のステップ実行は未対応</span><span id="language-note" class="engine-badge">Z80</span>
     </section>
     <div class="workspace">
       <section class="panel editor-panel" aria-labelledby="editor-heading">
@@ -62,12 +62,17 @@ naku(t)</code></pre><div class="cheat-result"><span class="sample-arrow" aria-hi
 <p class="cheat-tip">行末までのコメントは <code>zz</code> または <code>//</code>。出力は数値です。</p>
 </div><div id="chukei-cheat">
 <div class="cheat-grid">
-<div class="cheat-example"><h3>まずはこれを実行</h3><pre><code>CCCHUK</code></pre><div class="cheat-result"><span class="sample-arrow" aria-hidden="true">↳</span><span>出力  <small>出力を「数値」にした場合</small></span><code>2</code></div></div>
-<ol class="cheat-steps"><li><strong>増やす：</strong><code>C</code> を2回書くと、セル0の値が2になる。</li><li><strong>表示する：</strong><code>CHUK</code> で現在のセルを出力する。</li><li><strong>見分ける：</strong>命令はすべて <code>C</code> から始まる。空白なしでも書ける。</li></ol>
+<div class="cheat-example"><h3>まずはこれを実行</h3><pre><code>CCCCCCCCCCCCC
+CCCCCCCCCCCCC
+CCCCCCCCCCCCC
+CCCCCCCCCCCCC
+CCCCCCCCCCCCC
+CHUK</code></pre><div class="cheat-result"><span class="sample-arrow" aria-hidden="true">↳</span><span>出力 </span><code>A</code></div></div>
+<ol class="cheat-steps"><li><strong>増やす：</strong><code>C</code> を65回書くと、セルの値が65になる。</li><li><strong>表示する：</strong><code>CHUK</code> で65をASCII文字 <code>A</code> として出す。</li><li><strong>見分ける：</strong>命令はすべて <code>C</code> から始まる。空白なしでも書ける。</li></ol>
 </div>
 <h3>よく使う命令</h3>
-<div class="cheat-table-wrap"><table><thead><tr><th scope="col">命令</th><th scope="col">意味</th><th scope="col">書き方の例</th></tr></thead><tbody><tr><td><code>C / CH</code></td><td>1増やす / 減らす</td><td><code>CCH</code></td></tr><tr><td><code>CHU</code></td><td>右のセルへ</td><td><code>CHU</code></td></tr><tr><td><code>CHUK</code></td><td>現在のセルを出力</td><td><code>CCCHUK</code></td></tr><tr><td><code>CHUKE … CHUKEI</code></td><td>現在セルが0になるまで繰り返す</td><td><code>CCCHUKECHUKCHCHUKEI</code></td></tr></tbody></table></div>
-<p class="cheat-tip">文字（ASCII）を選ぶと、セルの値65を <code>A</code> として表示します。コメントは使えません。</p>
+<div class="cheat-table-wrap"><table><thead><tr><th scope="col">命令</th><th scope="col">意味</th><th scope="col">書き方の例</th></tr></thead><tbody><tr><td><code>C / CH</code></td><td>1増やす / 減らす</td><td><code>CCH</code></td></tr><tr><td><code>CHU</code></td><td>右のセルへ</td><td><code>CHU</code></td></tr><tr><td><code>CHUK</code></td><td>現在のセルをASCIIで出力</td><td><code>CHUK</code></td></tr><tr><td><code>CHUKE … CHUKEI</code></td><td>現在セルが0になるまで繰り返す</td><td><code>CCCHUKECHUKCHCHUKEI</code></td></tr></tbody></table></div>
+<p class="cheat-tip"><code>65 → A</code> ／ <code>10 → 改行</code> ／ <code>32 → 空白</code>。128以上は出力エラーです。</p>
 </div></section>
     <h2 class="explore-heading">しくみを見る <span>開いて確認</span></h2>
     <details class="tokens-panel panel stage">
@@ -157,7 +162,7 @@ loop = "CHUKE", { statement }, "CHUKEI" ;</pre>
   if(stack.length){const t=stack.at(-1).token;throw Error(`Unmatched CHUKE at line ${t.line}, column ${t.column}`);}
 </code></pre><p>スタックで開始と終了を対応付け、JZはループ後、JNZは本体先頭へ。ASTと命令列を同時に作る。</p>
 <p><a href="https://github.com/tyukei/YannbarukuinaLanguage/blob/feat/queena-chukei-playground/playground/runtime-source/chukei-runtime.js" target="_blank" rel="noopener">実装全体</a> · <a href="https://github.com/tyukei/YannbarukuinaLanguage/blob/feat/queena-chukei-playground/playground/runtime-source/chukei-compact-test.mjs" target="_blank" rel="noopener">テスト</a></p>
-<p>JavaScript製の教材用VM。Z80ではありません。CCCCHUKECHUKCHCHUKEI → 数値出力で3・2・1。ASCIIは0〜127、自動改行なし。</p></div>
+<p>JavaScript製の教材用VM。Z80ではありません。CHUKは値をASCII文字として1文字出力します。ASCIIは0〜127、自動改行なし。</p></div>
 <p class="notation">EBNF：{ } 繰り返し ／ [ ] 省略可能 ／ | 選択 ／ , 連結</p></div></details>
     <details class="illustration-disclosure panel stage"><summary>図で見る</summary>
     <section class="illustrated-guide" aria-labelledby="flow-heading">
