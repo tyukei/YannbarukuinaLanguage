@@ -1,4 +1,4 @@
-import {commandGroups, commandTable, compactCodes, compile, debugSnapshot, hex, instructions, run} from './engine.mjs?v=13';
+import {commandGroups, commandTable, compactCodes, compile, debugSnapshot, hex, instructions, run} from './engine.mjs?v=14';
 
 const $ = id => document.getElementById(id);
 const source = $('source'), output = $('output'), error = $('error');
@@ -109,7 +109,7 @@ function explainStep(frame) {
     default: return 'ステップを進めると、ここに説明が出ます。';
   }
 }
-function buildAddressMap(code) {
+function buildAddressMap({code, sourceCommands}) {
   const rows = new Map();
   const body = $('debug-map-body');
   for (let addr = 0; addr < code.length; addr += 3) {
@@ -122,6 +122,10 @@ function buildAddressMap(code) {
       return cell;
     };
     addCell('0x' + hex(addr, 4) + '（' + addr + '）', 'map-address');
+    const original = sourceCommands?.[addr / 3] ?? '';
+    const excerpt = Array.from(original);
+    const sourceCell = addCell(excerpt.length > 48 ? excerpt.slice(0, 48).join('') + '…' : original, 'map-source');
+    if (excerpt.length > 48) sourceCell.title = original;
     addCell(Array.from(code.subarray(addr, addr + 3), n => hex(n)).join(' '), 'map-bytes');
     addCell(instructions[code[addr] - 1]);
     rows.set(addr, {row, status: addCell('')});
@@ -200,8 +204,8 @@ function showStep(step) {
   }
   $('debug-cells').replaceChildren(...cards);
 }
-function openDebug(data, code) {
-  recording = {...data, codeLength:code.length, rows:buildAddressMap(code), marked:[], lines: source.value.split(/\r\n?|\n/u)};
+function openDebug(data, program) {
+  recording = {...data, codeLength:program.code.length, rows:buildAddressMap(program), marked:[], lines: source.value.split(/\r\n?|\n/u)};
   pageSelect.value = 'auto';
   slider.max = String(data.frames.length - 1);
   slider.disabled = data.frames.length <= 1;
@@ -234,7 +238,7 @@ function execute(debug = false) {
   clear();
   let program;
   try {
-    program = compile(source.value);
+    program = compile(source.value, {sourceMap:debug});
     const {code, literals} = program;
     const listing = [];
     for (let i = 0; i < Math.min(code.length, 96 * 3); i += 3) {
@@ -246,7 +250,7 @@ function execute(debug = false) {
     bytes.textContent = listing.join('\n') || '（命令なし）';
 
     const result = run(program, {debug});
-    if (result.debug) openDebug(result.debug, code);
+    if (result.debug) openDebug(result.debug, program);
     let rendered = '', previous;
     for (const value of result.output) {
       if (previous !== undefined) {
@@ -265,7 +269,7 @@ function execute(debug = false) {
     output.textContent = '停止しました。';
     error.hidden = false;
     error.textContent = e.message;
-    if (e.debug) openDebug(e.debug, program.code);
+    if (e.debug) openDebug(e.debug, program);
   }
 }
 runButton.addEventListener('click', () => execute());

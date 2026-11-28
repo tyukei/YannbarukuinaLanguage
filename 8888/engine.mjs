@@ -127,10 +127,11 @@ function* compactTokens(source, braces) {
   while (true) {
     r.skip();
     if (r.cursor === source.length) return;
-    const pos = r.position();
+    const pos = r.position(), start = r.cursor;
+    const original = () => source.slice(start, r.cursor);
     if (r.starts(braces ? '}' : '神')) {
       r.advance(r.cursor + 1);
-      yield {token:'神', pos};
+      yield {token:'神', pos, original:original()};
       continue;
     }
     const word = r.starts('マジ') ? 'マジ' : r.starts('めっちゃ') ? 'めっちゃ' : null;
@@ -138,14 +139,15 @@ function* compactTokens(source, braces) {
       const match = word === 'マジ' ? r.declaration() : r.invocation();
       if (!match) throw new Error(`${pos}：関数は「マジ名前{…}」で宣言し、「めっちゃ{名前}」で呼びます。`);
       r.advance(r.cursor + match[0].length);
-      yield {token:word, pos};
+      yield {token:word, pos, original:original()};
       yield {token:match[1], pos};
       continue;
     }
     if (word) {
       r.advance(r.cursor + word.length);
-      yield {token:word, pos};
-      yield r.quoted('関数名');
+      const name = r.quoted('関数名');
+      yield {token:word, pos, original:original()};
+      yield name;
       continue;
     }
     const code = source.slice(r.cursor, r.cursor + 3), i = compactOpcodes.get(code);
@@ -154,22 +156,26 @@ function* compactTokens(source, braces) {
     const atValue = () => braces ? r.atGod() : r.atQuote();
     if (i === 4 && atValue()) {
       const literal = braces ? r.godFields(1, '表示する文字')[0] : r.quoted('表示する文字');
-      yield {literal:literal.token, pos};
+      yield {literal:literal.token, pos, original:original()};
       continue;
     }
+    let text = code;
     if ((i === 10 || i === 11) && atValue()) {
       const [left, right] = braces ? r.godFields(2, '左と右の数') : [r.quoted('左の数'), r.quoted('右の数')];
       if (braces) { left.token = left.token.trim(); right.token = right.token.trim(); }
-      yield {token:'set', pos}; yield left;
-      yield {token:'push', pos};
-      yield {token:'set', pos}; yield right;
+      text = original();
+      yield {token:'set', pos, original:text}; yield left;
+      yield {token:'push', pos, original:text};
+      yield {token:'set', pos, original:text}; yield right;
     }
-    yield {token: i < 8 ? '8'.repeat(i + 1) : ['set','push','add','sub','char'][i - 8], pos};
     if (i === 8) {
       const value = braces ? r.godFields(1, '数')[0] : r.quoted('数');
       if (braces) value.token = value.token.trim();
+      yield {token:'set', pos, original:original()};
       yield value;
+      continue;
     }
+    yield {token: i < 8 ? '8'.repeat(i + 1) : ['set','push','add','sub','char'][i - 8], pos, original:text};
   }
 }
 
@@ -185,9 +191,10 @@ function compactMode(source) {
   return null;
 }
 
-export function compile(source) {
+export function compile(source, {sourceMap = false} = {}) {
   if (source.length > 16384) throw new Error('入力は16,384文字までです。');
   const code = [], locations = [], loops = [], literals = [];
+  const sourceCommands = sourceMap ? [] : null;
   function setTarget(pc, target) {
     code[pc + 1] = target & 255;
     code[pc + 2] = target >>> 8;
@@ -196,10 +203,11 @@ export function compile(source) {
   let pending = null, active = null;
   const mode = compactMode(source);
   const tokens = mode ? compactTokens(source, mode === 'braces') : legacyTokens(source);
-  for (const {token, pos, literal} of tokens) {
+  for (const {token, pos, literal, original} of tokens) {
     if (pending !== null) {
       const {op, pc} = pending;
       pending = null;
+      if (sourceCommands && !mode) sourceCommands[pc / width] += ' ' + token;
       if (op === 9) {
         if (typeof token !== 'string' || !/^[0-9]{1,3}$/u.test(token) || Number(token) > 255) {
           throw new Error(`${pos}：set には0〜255の整数を指定してください。`);
@@ -227,6 +235,7 @@ export function compile(source) {
     const pc = code.length;
     code.push(op, 0, 0);
     locations.push(pos);
+    if (sourceCommands) sourceCommands.push(original ?? token);
     if (op === 17) { setTarget(pc, literals.length); literals.push(literal); }
     if (op === 14 && (active !== null || loops.length)) throw new Error(`${pos}：関数宣言は関数やループの外に書いてください。`);
     if (op === 9 || op === 14 || op === 16) pending = {op, pc, pos, token};
@@ -251,7 +260,7 @@ export function compile(source) {
     if (!definitions.has(name)) throw new Error(`${pos}：関数「${name}」が定義されていません。`);
     setTarget(pc, definitions.get(name));
   }
-  return {code: Uint8Array.from(code), locations, literals};
+  return {code: Uint8Array.from(code), locations, literals, ...(sourceCommands ? {sourceCommands} : {})};
 }
 
 export const debugLimit = 4096;
