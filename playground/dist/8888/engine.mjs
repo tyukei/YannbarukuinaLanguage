@@ -1,4 +1,4 @@
-// 8888 v0.4: compact and legacy syntax compiled to 3-byte VM records.
+// 8888 v0.5: compact and legacy syntax compiled to 3-byte VM records.
 export const instructions = [
   'セルの値を +1', 'セルの値を −1', '右のセルへ', '左のセルへ',
   '値を出力', '値が 0 ならループを飛ばす',
@@ -15,17 +15,29 @@ keywords.set('神', keywords.get('end'));
 const width = 3;
 const maxInstructions = 4096;
 
-export const compactCodes = ['8৪8','8୪8','৪8୪','୪8৪','8৪୪','৪୪8','୪৪8','୪୪8','৪8৪','୪8୪','8୪৪','৪৪8','8୪୪'];
+// Positions correspond to VM opcodes 1 to 13.
+const previousCodes = ['8৪8','8୪8','৪8୪','୪8৪','8৪୪','৪୪8','୪৪8','୪୪8','৪8৪','୪8୪','8୪৪','৪৪8','8୪୪'];
+export const compactCodes = ['8৪8','8୪8','୪৪৪','୪৪୪','৪৪৪','୪୪৪','୪୪୪','888','৪8৪','৪୪৪','88৪','88୪','৪৪୪'];
+const compactOpcodes = new Map(previousCodes.map((code, i) => [code, i]));
+for (const [i, code] of compactCodes.entries()) {
+  if (compactOpcodes.has(code) && compactOpcodes.get(code) !== i) {
+    throw new Error('Conflicting compact opcode: ' + code);
+  }
+  compactOpcodes.set(code, i);
+}
 export const commandTable = [
-  [4, '表示', '神こんにちは神'],
-  [8, '値を入れる', '神8神'],
   [10, '足す', '神2神3神'],
   [11, '引く', '神5神2神'],
+  [8, '値を入れる', '神8神'],
+  [4, '表示', '神こんにちは神'],
 ].map(([i, label, suffix]) => [compactCodes[i], label, compactCodes[i] + suffix]);
-const mainCodes = new Set(commandTable.map(([code]) => code));
-export const extraCommands = compactCodes
-  .map((code, i) => [code, instructions[i]])
-  .filter(([code]) => !mainCodes.has(code));
+export const commandGroups = [
+  ['8：計算', [0, 1, 7, 10, 11]],
+  ['৪：値', [8, 9, 4, 12]],
+  ['୪：移動・ループ', [2, 3, 5, 6]],
+].map(([title, indices]) => [title, indices.map(i => [
+  compactCodes[i], ({4:'数または文字を表示',7:'0にする',8:'値を入れる',9:'値を保存',10:'足す',11:'引く'}[i] ?? instructions[i]),
+])]);
 
 function* legacyTokens(source) {
   const lines = source.split(/\r\n?|\n/u);
@@ -136,8 +148,8 @@ function* compactTokens(source, braces) {
       yield r.quoted('関数名');
       continue;
     }
-    const code = source.slice(r.cursor, r.cursor + 3), i = compactCodes.indexOf(code);
-    if (i < 0) throw new Error(`${pos}：不明な命令です。命令は3文字ずつ、命令表どおりに書いてください。`);
+    const code = source.slice(r.cursor, r.cursor + 3), i = compactOpcodes.get(code);
+    if (i === undefined) throw new Error(`${pos}：不明な命令です。命令は3文字ずつ、命令表どおりに書いてください。`);
     r.advance(r.cursor + 3);
     const atValue = () => braces ? r.atGod() : r.atQuote();
     if (i === 4 && atValue()) {

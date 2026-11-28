@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {compile, run} from '../dist/8888/engine.mjs';
+import {compactCodes, compile, run} from '../dist/8888/engine.mjs';
 
 const execute = source => run(compile(source));
 test('2 + 3 gives 5 and PC advances 3 bytes per instruction', () => {
@@ -115,7 +115,7 @@ test('compact commands use three distinct symbols and ignore whitespace between 
   assert.deepEqual(compile(spaced).code, compile(flat).code);
   assert.deepEqual(execute(flat).output, [5, 3]);
   assert.deepEqual(execute('マジ"二つ"8৪88୪88৪୪神めっちゃ"二つ"').output, [0]);
-  assert.throws(() => compile('マジ"f"888神めっちゃ"f"'), /不明な命令/u);
+  assert.throws(() => compile('マジ"f"৪88神めっちゃ"f"'), /不明な命令/u);
 });
 
 test('quoted display preserves Unicode, spaces and clap characters without executing them', () => {
@@ -140,4 +140,14 @@ test('braces close declarations and shared God boundaries delimit operands', () 
   assert.throws(() => compile('マジ数{8۴୪}'), /不明な命令/u);
   assert.throws(() => compile('マジ数{8৪୪'), /閉じる「\}」/u);
   assert.throws(() => compile('マジ数{8୪৪神8神'), /閉じる「神」/u);
+});
+
+test('v0.5 command families use distinct prefixes without breaking v0.4', () => {
+  for (const [prefix, indices] of [['8',[0,1,7,10,11]],['৪',[4,8,9,12]],['୪',[2,3,5,6]]]) {
+    for (const i of indices) assert.equal(compactCodes[i][0], prefix);
+  }
+  const current = 'マジ数{88৪神8神3神৪৪৪88୪神8神3神৪৪৪৪৪৪神8神}めっちゃ{数}';
+  const previous = 'マジ数{8୪৪神8神3神8৪୪৪৪8神8神3神8৪୪8৪୪神8神}めっちゃ{数}';
+  assert.deepEqual(compile(current).code, compile(previous).code);
+  assert.deepEqual(execute(current).output, [11, 5, '8']);
 });

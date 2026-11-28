@@ -1,4 +1,4 @@
-import {commandTable, compile, extraCommands, hex, instructions, run} from './engine.mjs?v=10';
+import {commandGroups, commandTable, compactCodes, compile, hex, instructions, run} from './engine.mjs?v=11';
 
 const $ = id => document.getElementById(id);
 const source = $('source'), output = $('output'), error = $('error');
@@ -6,16 +6,20 @@ const bytes = $('bytes'), trace = $('trace'), runButton = $('run');
 function example(name, body, calls = 1) {
   return 'マジ' + name + '{' + body + '}' + ('めっちゃ{' + name + '}').repeat(calls);
 }
+const [inc, dec, right, left, print, loop, again, , set, , add, sub] = compactCodes;
+const plus = add + '神2神3神', minus = sub + '神5神2神';
+const put = n => set + '神' + n + '神';
+const display = text => print + '神' + text + '神';
 const examples = {
-  add: example('五を出す', '8୪৪神2神3神8৪୪'),
-  count: example('カウントダウン', '৪8৪神3神৪୪88৪୪8୪8୪৪8'),
-  move: example('セルを移動', '৪8৪神1神৪8୪৪8৪神2神8৪୪୪8৪8৪୪'),
-  bengali: example('ベンガル数字', '8৪8'.repeat(5) + '8৪୪'),
-  odia: example('三つの数字', '8୪৪神2神3神8৪୪'),
-  comment: example('コメントの例', '8୪৪神2神3神👏この中の命令8৪୪は実行しない👏8৪୪'),
-  arithmetic: example('足し引き', '8୪৪神2神3神8৪୪৪৪8神5神2神8৪୪'),
-  letter: example('文字を出す', '8৪୪神こんにちは神'),
-  function: example('あいさつ', '8৪୪神HI神', 2),
+  add: example('五を出す', plus + print),
+  count: example('カウントダウン', put(3) + loop + print + dec + again),
+  move: example('セルを移動', put(1) + right + put(2) + print + left + print),
+  bengali: example('ベンガル数字', inc.repeat(5) + print),
+  odia: example('三つの数字', inc.repeat(6) + dec + print),
+  comment: example('コメントの例', plus + '👏この中の命令は実行しない👏' + print),
+  arithmetic: example('足し引き', plus + print + minus + print),
+  letter: example('文字を出す', display('こんにちは')),
+  function: example('あいさつ', display('HI'), 2),
 };
 
 function showCommands(id, commands) {
@@ -32,7 +36,7 @@ function showCommands(id, commands) {
   }
 }
 showCommands('commands-body', commandTable);
-showCommands('extra-commands', extraCommands);
+for (const [i, [, commands]] of commandGroups.entries()) showCommands('command-group-' + i, commands);
 
 function clear() {
   output.textContent = 'まだ実行していません。';
