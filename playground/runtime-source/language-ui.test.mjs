@@ -36,3 +36,16 @@ test('one editor, terminal and debugger are shared across the three languages', 
  assert.match(app,/idea\.hidden=idea\.dataset\.idea!==language/);
 
 });
+
+test('language philosophy includes a shared comparison and qualified per-language labels', async () => {
+ const html=await read('../dist/index.html');
+ const labels=Object.fromEntries([...html.matchAll(/data-idea="([^"]+)"[^>]*>.*?<span class="paradigm-tag">([^<]+)/gu)].map(m=>[m[1],m[2]]));
+ assert.deepEqual(labels,{
+  yanbarukuina:'強いて言うなら：手続き型寄りの言語',
+  chukei:'強いて言うなら：命令型言語',
+  8888:'強いて言うなら：関数型言語（引数と戻り値を使う新形式）',
+ });
+ const table=html.match(/<details class="paradigm-guide">([\s\S]*?)<\/details>/u)[1];
+ assert.deepEqual([...table.matchAll(/<th scope="row">([^<]+)<\/th><td>[^<]+<\/td>/gu)].map(m=>m[1]),
+ ['命令型','手続き型','宣言型','関数型','オブジェクト指向','論理型']);
+});

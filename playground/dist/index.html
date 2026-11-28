@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="YanbaruKuina、CHUKEI、8888を同じ画面で試せるブラウザ内実験室。">
   <title>YanbaruKuina Playground</title>
-  <link rel="stylesheet" href="./style.css?v=language-ideas-1">
+  <link rel="stylesheet" href="./style.css?v=paradigms-1">
   <link rel="stylesheet" href="./ast-view.css?v=visual-20261114">
   <script src="./ast-view.js?v=visual-20261114" defer></script>
   <link rel="stylesheet" href="./8888/style.css?v=values-1">
@@ -30,9 +30,24 @@
 <h1 id="language-title" class="language-title">ちょっと中継しときますね型言語 CHUKEI</h1>
     <section class="language-idea" aria-labelledby="idea-title">
       <h2 id="idea-title">言語の思想</h2>
-      <p id="idea-yanbarukuina" data-idea="yanbarukuina" hidden><strong>読みやすい手順を、Z80で動かす。</strong> 変数・条件分岐・繰り返しで書いたコードが、どんな機械語になるかを見られます。</p>
-      <p id="idea-chukei" data-idea="chukei"><strong>6つの命令で、セルを直接操作する。</strong> 値を増減したり、隣のセルに移ったりしながら、数が文字として出るまでを一手ずつ追えます。</p>
-      <p id="idea-8888" data-idea="8888" hidden><strong>値を受け取り、次の値を返す。</strong> <code>マジ</code>で関数を定義し、<code>めっちゃ</code>で結果を受け取ります。共有メモリを変えず、関数をつなげて計算できます。</p>
+      <p id="idea-yanbarukuina" data-idea="yanbarukuina" hidden><strong>読みやすい手順を、Z80で動かす。</strong> 変数・条件分岐・繰り返しで書いたコードが、どんな機械語になるかを見られます。<span class="paradigm-tag">強いて言うなら：手続き型寄りの言語</span></p>
+      <p id="idea-chukei" data-idea="chukei"><strong>6つの命令で、セルを直接操作する。</strong> 値を増減したり、隣のセルに移ったりしながら、数が文字として出るまでを一手ずつ追えます。<span class="paradigm-tag">強いて言うなら：命令型言語</span></p>
+      <p id="idea-8888" data-idea="8888" hidden><strong>値を受け取り、次の値を返す。</strong> <code>マジ</code>で関数を定義し、<code>めっちゃ</code>で結果を受け取ります。共有メモリを変えず、関数をつなげて計算できます。<span class="paradigm-tag">強いて言うなら：関数型言語（引数と戻り値を使う新形式）</span></p>
+      <details class="paradigm-guide">
+        <summary>「○○型」って何？ 一言で比べる</summary>
+        <table aria-label="プログラムの主な書き方">
+          <thead><tr><th scope="col">型</th><th scope="col">一言でいうと</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">命令型</th><td>何をどの順に実行するかを書く。</td></tr>
+            <tr><th scope="row">手続き型</th><td>命令を名前付きの手順にまとめて呼び出す。</td></tr>
+            <tr><th scope="row">宣言型</th><td>手順より、欲しい結果や満たす条件を書く。</td></tr>
+            <tr><th scope="row">関数型</th><td>値を受け取って値を返す関数を組み合わせる。</td></tr>
+            <tr><th scope="row">オブジェクト指向</th><td>データと、それを扱う処理をひとまとめにする。</td></tr>
+            <tr><th scope="row">論理型</th><td>事実とルールを書き、答えを導く。</td></tr>
+          </tbody>
+        </table>
+        <p>分類は重なります。たとえば、手続き型は命令型の一種です。YanbaruKuina は分岐や繰り返しで手順を書くため「手続き型寄り」としていますが、自分で手続きを定義する機能はまだありません。</p>
+      </details>
     </section>
     <section class="language-bar">
       <select id="language" aria-label="言語" hidden><option value="yanbarukuina">YanbaruKuina</option><option value="chukei">CHUKEI</option><option value="8888">8888</option></select>
