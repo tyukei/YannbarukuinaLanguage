@@ -46,3 +46,13 @@ th, td { text-align: left; padding: .2rem .75rem .2rem 0; border-bottom: 1px sol
 .debug-address-pair dt, #debug-pc-note { font-size: .83rem; }
 .debug-address-pair dd { margin: 0; font-weight: 700; }
 #debug-pc-note { margin: .3rem 0 0; }
+
+#debug-map-title { margin: .8rem 0 .2rem; font-size: .9rem; }
+#debug-map-help, #debug-map-empty { margin: 0 0 .35rem; font-size: .83rem; }
+#debug-map-scroll { max-height: 13rem; overflow: auto; position: relative; }
+#debug-map { width: 100%; font-size: .8rem; border-spacing: 0; }
+#debug-map th { position: sticky; top: 0; background: #eff4fb; z-index: 1; }
+#debug-map th, #debug-map td { padding: .25rem .35rem; }
+#debug-map .map-address, #debug-map .map-bytes { font-family: ui-monospace, monospace; white-space: nowrap; }
+#debug-map .map-done td { background: #fff0b0; }
+#debug-map .map-next td { background: #d8eafa; }

@@ -109,6 +109,52 @@ function explainStep(frame) {
     default: return 'ステップを進めると、ここに説明が出ます。';
   }
 }
+function buildAddressMap(code) {
+  const rows = new Map();
+  const body = $('debug-map-body');
+  for (let addr = 0; addr < code.length; addr += 3) {
+    const row = document.createElement('tr');
+    const addCell = (value, className) => {
+      const cell = document.createElement('td');
+      if (className) cell.className = className;
+      cell.textContent = value;
+      row.append(cell);
+      return cell;
+    };
+    addCell('0x' + hex(addr, 4) + '（' + addr + '）', 'map-address');
+    addCell(Array.from(code.subarray(addr, addr + 3), n => hex(n)).join(' '), 'map-bytes');
+    addCell(instructions[code[addr] - 1]);
+    rows.set(addr, {row, status: addCell('')});
+  }
+  body.replaceChildren(...Array.from(rows.values(), entry => entry.row));
+  $('debug-map-scroll').hidden = !rows.size;
+  $('debug-map-scroll').scrollTop = 0;
+  $('debug-map-empty').hidden = Boolean(rows.size);
+  return rows;
+}
+
+function markAddressRows(frame) {
+  const {rows} = recording;
+  for (const addr of recording.marked) {
+    const {row, status} = rows.get(addr);
+    row.className = '';
+    status.textContent = '';
+  }
+  recording.marked = [];
+  for (const addr of new Set([frame.pc, frame.next])) {
+    if (!rows.has(addr)) continue;
+    const {row, status} = rows.get(addr);
+    const done = addr === frame.pc, upcoming = addr === frame.next;
+    row.className = done ? 'map-done' : 'map-next';
+    status.textContent = done && upcoming ? '▶ 実行・次' : done ? '▶ 実行済み' : '↳ 次';
+    recording.marked.push(addr);
+  }
+  const scroll = $('debug-map-scroll');
+  const row = rows.get(frame.pc ?? frame.next)?.row;
+  if (row && (row.offsetTop < scroll.scrollTop || row.offsetTop + row.offsetHeight > scroll.scrollTop + scroll.clientHeight)) {
+    scroll.scrollTop = Math.max(0, row.offsetTop - 36);
+  }
+}
 function showAddresses(frame) {
   const address = n => '0x' + hex(n, 4);
   const {pc, next} = frame;
@@ -117,6 +163,7 @@ function showAddresses(frame) {
   let explanation = 'アドレスはバイトコード上の位置です。セル番号とは別です。';
   if (pc !== undefined && next !== pc + 3) explanation = 'ジャンプ：' + address(pc) + ' → ' + address(next) + '。' + explanation;
   $('debug-pc-note').textContent = explanation;
+  markAddressRows(frame);
 }
 function showStep(step) {
   if (!recording) return;
@@ -153,8 +200,8 @@ function showStep(step) {
   }
   $('debug-cells').replaceChildren(...cards);
 }
-function openDebug(data, codeLength) {
-  recording = {...data, codeLength, lines: source.value.split(/\r\n?|\n/u)};
+function openDebug(data, code) {
+  recording = {...data, codeLength:code.length, rows:buildAddressMap(code), marked:[], lines: source.value.split(/\r\n?|\n/u)};
   pageSelect.value = 'auto';
   slider.max = String(data.frames.length - 1);
   slider.disabled = data.frames.length <= 1;
@@ -199,7 +246,7 @@ function execute(debug = false) {
     bytes.textContent = listing.join('\n') || '（命令なし）';
 
     const result = run(program, {debug});
-    if (result.debug) openDebug(result.debug, code.length);
+    if (result.debug) openDebug(result.debug, code);
     let rendered = '', previous;
     for (const value of result.output) {
       if (previous !== undefined) {
@@ -218,7 +265,7 @@ function execute(debug = false) {
     output.textContent = '停止しました。';
     error.hidden = false;
     error.textContent = e.message;
-    if (e.debug) openDebug(e.debug, program.code.length);
+    if (e.debug) openDebug(e.debug, program.code);
   }
 }
 runButton.addEventListener('click', () => execute());
