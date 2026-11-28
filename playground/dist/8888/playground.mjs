@@ -1,4 +1,4 @@
-import {commandGroups, commandTable, compactCodes, compile, debugSnapshot, hex, instructions, run} from './engine.mjs?v=12';
+import {commandGroups, commandTable, compactCodes, compile, debugSnapshot, hex, instructions, run} from './engine.mjs?v=13';
 
 const $ = id => document.getElementById(id);
 const source = $('source'), output = $('output'), error = $('error');
@@ -72,6 +72,43 @@ function showSource(frame) {
   label.textContent = '▶ 実行した命令：' + frame.source;
   preview.replaceChildren(before, arrow, current, rest);
 }
+function explainStep(frame) {
+  const {op, before, after, pointer, previousPointer, leftValue, emitted, next} = frame;
+  const cell = `セル${pointer}`;
+  const jump = `アドレス 0x${hex(next, 4)}`;
+  switch (op) {
+    case 1:
+    case 2: {
+      const delta = op === 1 ? 1 : -1;
+      let message = `${cell}の ${before} を1つ${delta > 0 ? '増やし' : '減らし'}、${after} にしました。`;
+      if (before + delta !== after) message += '値は0〜255で一周します。';
+      return message;
+    }
+    case 3:
+    case 4: return `セル${previousPointer}から${op === 3 ? '右へ' : '左へ'}移動して、${cell}を選びました。値は変わりません。`;
+    case 5: return `${cell}の値 ${emitted} を数として表示しました。`;
+    case 6: return before === 0 ? `${cell}の値が0なのでループを飛ばしました。` : `${cell}の値が ${before} なのでループに入りました。`;
+    case 7: return before === 0 ? `${cell}の値が0なのでループを抜けました。` : `${cell}の値が ${before} なのでループの先頭に戻りました。`;
+    case 8: return `${cell}の値を ${before} から0にしました。`;
+    case 9: return `${cell}に ${after} を入れました（実行前は ${before}）。`;
+    case 10: return `${cell}の値 ${before} を、次の計算で使う左の数として保存しました。`;
+    case 11:
+    case 12: {
+      const raw = op === 11 ? leftValue + before : leftValue - before;
+      let message = op === 11
+        ? `${leftValue} と ${before} を足して、${cell}に ${after} を入れました。`
+        : `${leftValue} から ${before} を引いて、${cell}に ${after} を入れました。`;
+      if (raw !== after) message += `計算結果 ${raw} は0〜255の範囲で一周します。`;
+      return message;
+    }
+    case 13: return `${cell}の値 ${before} をASCII文字 ${JSON.stringify(emitted)} として表示しました。`;
+    case 14: return `関数を宣言しただけなので中身は実行せず、${jump} に進みました。`;
+    case 15: return `関数の実行が終わり、呼び出した場所の次（${jump}）に戻りました。`;
+    case 16: return `関数を呼び出し、中身の先頭（${jump}）へ進みました。`;
+    case 17: return `文字列 ${JSON.stringify(emitted.length > 48 ? emitted.slice(0, 48) + '…' : emitted)} を表示しました。セルの値は変わりません。`;
+    default: return 'ステップを進めると、ここに説明が出ます。';
+  }
+}
 function showStep(step) {
   if (!recording) return;
   const {frames, steps} = recording;
@@ -91,6 +128,7 @@ function showStep(step) {
   }
   $('debug-status').textContent = label;
   showSource(frame);
+  $('debug-effect').textContent = explainStep(frame);
   const first = pageSelect.value === 'auto' || pageSelect.value === undefined
     ? frame.pointer - frame.pointer % 16 : Number(pageSelect.value);
   const cards = [];

@@ -51,6 +51,7 @@ test('the initial source and every sample declare and invoke a named function', 
     nodes['debug-next'].events.click();
     assert.match(nodes['debug-status'].textContent, /移動：0 → 1/u);
     assert.equal(nodes['debug-source'].children[2].textContent, '୪৪৪');
+    assert.match(nodes['debug-effect'].textContent, /セル0から右へ移動.*セル1/u);
     nodes['debug-prev'].events.click();
     assert.match(nodes['debug-status'].textContent, /現在のセル：0/u);
     assert.equal(nodes['debug-source'].children[2].textContent, '৪8৪');
@@ -60,6 +61,11 @@ test('the initial source and every sample declare and invoke a named function', 
     nodes['debug-page'].value = '240';
     nodes['debug-page'].events.change();
     assert.equal(nodes['debug-cells'].children[15].children[0].textContent, 'セル 255');
+    nodes.example.events.change({target:{value:'add'}});
+    nodes['run-debug'].events.click();
+    step.value = '6';
+    step.events.input();
+    assert.equal(nodes['debug-effect'].textContent, '2 と 3 を足して、セル0に 5 を入れました。');
     nodes.source.events.input();
     assert.equal(nodes['debug-panel'].hidden, true);
   } finally {

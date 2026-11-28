@@ -279,7 +279,7 @@ export function run({code, locations, literals = []}, {debug = false} = {}) {
     if (steps === 100000) fail('100,000ステップで停止しました。ループや関数呼び出しを確認してください。');
     const op = code[pc], target = code[pc + 1] + (code[pc + 2] << 8);
     const previousPointer = pointer, previousValue = cells[pointer];
-    let next = pc + width, emitted = null;
+    let next = pc + width, emitted = null, leftValue;
     switch (op) {
       case 1: cells[pointer]++; break;
       case 2: cells[pointer]--; break;
@@ -305,8 +305,8 @@ export function run({code, locations, literals = []}, {debug = false} = {}) {
       case 11:
       case 12: {
         if (!saved.length) fail('先に push で左の値を保存してください。');
-        const left = saved.pop();
-        cells[pointer] = op === 11 ? left + cells[pointer] : left - cells[pointer];
+        leftValue = saved.pop();
+        cells[pointer] = op === 11 ? leftValue + cells[pointer] : leftValue - cells[pointer];
         break;
       }
       case 14: next = target; break;
@@ -333,6 +333,7 @@ export function run({code, locations, literals = []}, {debug = false} = {}) {
       const to = cells[previousPointer];
       frames.push({
         pc, op, next, pointer, previousPointer, source: locations[pc / width],
+        before: previousValue, after: to, leftValue, emitted,
         change: previousValue === to ? null : {index: previousPointer, from: previousValue, to},
       });
     }
