@@ -65,8 +65,17 @@ test('the initial source and every sample declare and invoke a named function', 
     assert.equal(nodes['debug-cells'].children[15].children[0].textContent, 'セル 255');
     nodes.example.events.change({target:{value:'add'}});
     nodes['run-debug'].events.click();
+    const addressRows = nodes['debug-map-body'].children;
+    assert.equal(addressRows.length, 8);
+    assert.equal(addressRows[0].children[0].textContent, '0x0000（0）');
+    assert.equal(addressRows[0].children[1].textContent, '0E 15 00');
+    assert.equal(addressRows[0].className, 'map-next');
     step.value = '2';
     step.events.input();
+    assert.equal(addressRows[7].children[0].textContent, '0x0015（21）');
+    assert.equal(addressRows[7].className, 'map-done');
+    assert.equal(addressRows[1].className, 'map-next');
+    assert.equal(addressRows[0].className, '');
     assert.equal(nodes['debug-pc'].textContent, '0x0015');
     assert.equal(nodes['debug-next-pc'].textContent, '0x0003');
     assert.match(nodes['debug-pc-note'].textContent, /ジャンプ：0x0015 → 0x0003/u);
