@@ -361,7 +361,8 @@ function replayStages(result){
 // Default to the CHUKEI greeting, or restore a draft when returning from 8888.
 const returning=takeReturnFrom8888();
 if(returning?.chukeiMode==="numeric") chukeiMode="numeric";
-el("language").value=returning?.language==="queena"?"queena":"chukei";
+const requestedLanguage=new URLSearchParams(location.search).get("lang");
+el("language").value=["queena","chukei"].includes(requestedLanguage)?requestedLanguage:(returning?.language==="queena"?"queena":"chukei");
 el("language").dispatchEvent(new Event("change"));
 for (const key of ["queena","chukei"]) {
   if(typeof returning?.drafts?.[key]==="string") drafts[key]=returning.drafts[key];

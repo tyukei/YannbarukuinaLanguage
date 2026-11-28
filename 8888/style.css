@@ -1,26 +1,39 @@
-* { box-sizing: border-box; }
-body { margin: 0; color: #181818; background: #fff; font: 1rem/1.7 system-ui, sans-serif; }
-main { max-width: 46rem; margin: auto; padding: 1.25rem clamp(1rem, 5vw, 2rem) 3rem; }
-h1, h2, h3 { line-height: 1.35; }
-h1 { font-size: clamp(1.9rem, 6vw, 2.6rem); margin: .7em 0 .3em; }
-h1 small { font-size: .45em; font-weight: 500; white-space: nowrap; }
-h2 { font-size: 1.3rem; }
-h3 { font-size: 1rem; margin-bottom: .35em; }
-a { color: #0645ad; text-underline-offset: .15em; }
-a:visited { color: #551a8b; }
-:focus-visible { outline: 2px solid #0645ad; outline-offset: 3px; }
-hr { border: 0; border-top: 1px solid #aaa; margin: 1.5rem 0; }
-code, pre, textarea { font-family: ui-monospace, Menlo, Consolas, monospace; }
-textarea { display: block; width: 100%; min-height: 8rem; resize: vertical; padding: .6rem; font-size: 1rem; border: 1px solid #777; margin: .25rem 0 .65rem; }
-.tools { display: flex; flex-wrap: wrap; align-items: center; gap: .55rem .75rem; margin-bottom: .6rem; }
-button, select { min-height: 44px; max-width: 100%; padding: .3rem .6rem; font: inherit; }
-button, summary { cursor: pointer; }
-#hint { font-size: .88rem; color: #444; }
-pre { margin: .35rem 0 .8rem; padding: .5rem .65rem; border-left: 2px solid #aaa; background: #f6f6f6; overflow: auto; max-height: 18rem; font-size: .875rem; }
+/* The editor, panels and terminal use the main Playground stylesheet. */
+main { padding-bottom: 3rem; }
+.masthead .brand { gap: .6rem; }
+.mast-links { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: .25rem 1rem; }
+.intro { padding-block: .25rem .6rem; }
+.intro p { margin: .4rem 0; }
+.credit { color: var(--muted); font-size: .88em; }
+.cheat-link { font-weight: 650; }
+#source { min-height: 10rem; height: 15rem; }
+.editor-footer { flex-wrap: wrap; }
+.editor-footer .run-button { margin-left: auto; }
+.result-content { min-height: 14rem; }
 #output { white-space: pre-wrap; overflow-wrap: anywhere; }
-#error { color: #9b1c1c; }
-th, td { text-align: left; padding: .2rem .75rem .2rem 0; border-bottom: 1px solid #ccc; }
-
+.js-note { margin-inline: 18px; }
+.tools { display: flex; align-items: center; gap: .55rem .75rem; flex-wrap: wrap; margin-bottom: .6rem; }
+code, pre { font-family: var(--mono); }
+.cheat-panel { padding: 1.15rem clamp(1rem, 3vw, 1.4rem); margin-bottom: 1.4rem; }
+.cheat-grid { display: grid; grid-template-columns: minmax(0, .87fr) minmax(0, 1fr); align-items: start; gap: .5rem 1.5rem; }
+.cheat-steps { padding-left: 1.4rem; margin-block: 1rem; }
+.cheat-steps li + li { margin-top: .55rem; }
+.cheat-panel h3, .docs-section h3 { font-size: 1rem; margin-bottom: .4rem; }
+.cheat-example pre, .doc-body pre, #debug-source { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; background: #eef5f0; border: 1px solid var(--line); border-radius: 8px; padding: .7rem .8rem; }
+.cheat-result, .cheat-tip { margin: .5rem 0 0; color: var(--muted); }
+.cheat-table-wrap { overflow-x: auto; }
+.cheat-panel table, .docs-section table { border-spacing: 0; }
+th, td { text-align: left; padding: .3rem .75rem .3rem .25rem; border-bottom: 1px solid var(--line); }
+.doc-body { padding: 0 18px 14px; }
+.doc-body pre { max-height: 18rem; overflow: auto; }
+.docs-section caption { text-align: left; margin-top: .6rem; font-weight: 650; }
+#cheatsheet, #commands { scroll-margin-top: 1rem; }
+@media (max-width: 760px) {
+  .cheat-grid { grid-template-columns: minmax(0, 1fr); }
+  .masthead .brand-word { display: none; }
+  .result-content { min-height: 7rem; }
+  th, td { padding-right: .45rem; }
+}
 #debug-panel { background: #f7faf9; border: 1px solid #a3bdb2; border-radius: .5rem; padding: .8rem; margin-top: 1rem; }
 #debug-panel h3 { margin-top: 0; }
 #debug-step { width: 100%; accent-color: #225847; }
@@ -59,35 +72,7 @@ th, td { text-align: left; padding: .2rem .75rem .2rem 0; border-bottom: 1px sol
 
 #debug-map .map-source { font-family: ui-monospace, monospace; min-width: 8rem; max-width: 18rem; white-space: pre-wrap; overflow-wrap: anywhere; }
 
-/* A white, left-aligned reference page in the spirit of the original Grass docs. */
-body { background: #fff; color: #101010; font-family: Arial, "Hiragino Kaku Gothic ProN", Meiryo, sans-serif; line-height: 1.58; }
-main { max-width: none; margin: 0; padding: .9rem clamp(1rem, 3.6vw, 3rem) 3rem; }
-header { border-top: 1px solid #333; }
-header .back { margin: .5rem 0 .7rem; font-size: .9rem; }
-h1 { font-size: clamp(1.7rem, 3.4vw, 2.25rem); margin: .4rem 0 .55rem; }
-h1 small { font-size: .48em; margin-inline-start: .35em; }
-h2 { font-size: 1.36rem; }
-h3 { font-size: 1.06rem; }
-header p, section > p { max-width: 72ch; }
-header .credit { font-size: .9rem; }
-header nav { font-size: .92rem; }
-a { color: #000080; text-decoration: underline; }
-a:visited { color: #551a8b; }
-hr { margin-block: 1.45rem .85rem; border-top-color: #ccc; }
-.clap-art { border: 0; background: transparent; margin: .8rem 0; padding: 0; overflow: visible; line-height: 1.2; }
-textarea { max-width: 58rem; background: #fff; color: inherit; border: 1px solid #777; border-radius: 0; }
-button, select { border-radius: 0; }
-button { border: 1px solid #888; background: #f3f3f3; color: #111; }
-button:hover:not(:disabled) { background: #e7e7e7; }
-button:disabled { color: #666; }
-pre:not(.clap-art) { max-width: 68rem; background: #f7f7f7; }
-#debug-panel { max-width: 68rem; border-radius: 0; background: #fff; border-color: #aaa; }
-#debug-addresses { border-radius: 0; background: #fafafa; border-color: #bbb; }
-#debug-map th { background: #eee; }
-.debug-cell { border-radius: 0; }
-#commands { scroll-margin-top: .75rem; }
-@media (max-width: 36rem) {
-  main { padding-inline: 1rem; }
-  button, select { min-height: 44px; }
-  th, td { padding-inline-end: .45rem; }
-}
+
+#debug-panel { margin: 0 0 1.4rem; border-radius: 14px; padding: 1.05rem; background: #fff; border-color: var(--line); }
+#debug-panel .tools button { border: 1px solid var(--line); border-radius: 8px; background: var(--paper); padding: .3rem .65rem; }
+#debug-addresses, #debug-map th { background: #eef5f0; }

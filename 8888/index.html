@@ -5,39 +5,51 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="description" content="数字の8、ベンガル数字の৪、オリヤー数字の୪で命令を書く教育用言語。ブラウザで実行してバイトコードと実行の流れを見比べられます。">
 <title>ちょっと拍手しときますね型言語 8888 | YanbaruKuina</title>
-<link rel="stylesheet" href="./style.css?v=grass-1">
-<script type="module" src="./playground.mjs?v=18"></script>
+<link rel="stylesheet" href="../style.css">
+<link rel="stylesheet" href="./style.css?v=shared-1">
+<script type="module" src="./playground.mjs?v=19"></script>
 </head>
 <body>
 <main>
-<header>
-<p class="back"><a href="../">← Playground に戻る</a></p>
+<header class="masthead">
+<a class="brand" href="../" aria-label="元のPlaygroundに戻る"><span class="bird" aria-hidden="true">👏</span><span class="brand-word">8888 Playground</span></a>
+<nav class="mast-links" aria-label="関連ページ"><a href="../">元のPlayground</a><a href="../guide/">コードはどうやって動く？</a></nav>
+</header>
+<div class="intro">
 <h1>ちょっと拍手しときますね型言語 8888</h1>
-<pre class="clap-art" aria-hidden="true">   ( ･ᴗ･ )  👏
-    └───┘   8৪8  8୪8  ৪৪৪</pre>
 <p>作ってみた88888<strong>👏👏👏</strong><br>
 とりあえず公開888888888っうぇ</p>
 <p><code>8</code>、ベンガル数字の <code lang="bn">৪</code>、オリヤー数字の <code lang="or">୪</code> を使う小さな言語です。3文字の組み合わせで命令を表します。命令をそのままつなげて書けます。まずは「実行」を押してみてください。</p>
 <p class="credit">デザインの参考：<a href="https://web.archive.org/web/20241214191045/http://www.blue.sky.or.jp/grass/doc_ja.html">ちょっと草植えときますね型言語 Grass</a>（日本語アーカイブ）・<a href="http://www.blue.sky.or.jp/grass/doc_ja.html">元サイト</a></p>
-<nav aria-label="ページ内の目次"><a href="#try">実行する</a> / <a href="#inside">しくみ</a> / <a href="#commands">命令表</a></nav>
-</header>
-<hr>
-<section aria-labelledby="try">
-<h2 id="try">1. 書いて動かす</h2>
-<div class="tools">
+</div>
+<section class="language-bar" aria-label="言語の選択">
+<label for="language-select">言語</label>
+<select id="language-select"><option value="queena">YanbaruKuina</option><option value="chukei">CHUKEI</option><option value="8888" selected>8888言語（試作）</option></select>
+<a class="cheat-link" href="#cheatsheet">チートシート ↓</a>
+<span class="engine-badge">教材用VM</span>
+</section>
+<div class="workspace">
+<section class="panel editor-panel" aria-labelledby="try">
+<div class="panel-header"><h2 id="try"><span class="step-badge">1</span> コードを書く</h2><span class="file-name">main.8888</span></div>
+<div class="toolbar">
 <label for="example">サンプル</label>
 <select id="example"><option value="add">2 + 3 → 5</option><option value="count">カウントダウン → 3, 2, 1</option><option value="move">別のセルに移動 → 2, 1</option><option value="bengali">৪ を使って増やす → 5</option><option value="odia">8・৪・୪ を混ぜる → 5</option><option value="comment">👏 コメントを書く → 5</option><option value="arithmetic">足し算・引き算 → 5, 3</option><option value="letter">文字を出す → こんにちは</option><option value="function">関数を呼ぶ → HIHI</option></select>
 </div>
-<label for="source">ソースコード</label>
+<label class="sr-only" for="source">8888のソースコード</label>
 <textarea id="source" rows="5" maxlength="16384" autocomplete="off" autocapitalize="off" spellcheck="false" aria-describedby="hint">マジ五を出す{👏2と3を足して表示する👏88৪神2神3神৪৪৪}めっちゃ{五を出す}</textarea>
-<div class="tools">
-<button id="run" type="button" disabled>実行</button>
-<button id="run-debug" type="button" disabled>デバッグ実行</button>
-<span id="hint">命令は3文字ずつ読めるので、間に空白や改行はいりません。⌘ / Ctrl + Enter でも実行できます。</span>
+<div class="editor-footer">
+<span id="hint">⌘ / Ctrl + Enter</span>
+<button id="run-debug" class="text-button" type="button" disabled>デバッグ実行</button>
+<button id="run" class="run-button" type="button" disabled><span aria-hidden="true">▶</span> 2. 実行</button>
 </div>
-<h3>出力</h3>
-<pre id="output" role="status">まだ実行していません。</pre>
-<p id="error" role="alert" hidden></p>
+<noscript><p class="js-note">実行にはJavaScriptが必要です。</p></noscript>
+</section>
+<section class="panel result-panel" aria-labelledby="result-heading">
+<div class="panel-header"><h2 id="result-heading"><span class="step-badge">3</span> 8888 VM</h2><span class="status" id="result-status">待機中</span></div>
+<div class="result-content"><p class="result-note">出力</p><pre id="output" role="status">まだ実行していません。</pre><p id="error" class="error" role="alert" hidden></p></div>
+<div class="result-footer"><span class="engine-light" aria-hidden="true"></span> ブラウザ内で実行</div>
+</section>
+</div>
 <section id="debug-panel" aria-labelledby="debug-title" hidden>
 <h3 id="debug-title">デバッグ：セルの値を見る</h3>
 <p>1ステップずつ進めると、命令の実行後にセルがどうなったか見られます。足し算など1つの命令が複数ステップになることもあります。</p>
@@ -72,31 +84,47 @@
 <select id="debug-page"><option value="auto">現在のセルを追う</option></select></div>
 <ul id="debug-cells" aria-label="セル番号と値"></ul>
 </section>
-<noscript><p>実行にはJavaScriptが必要です。</p></noscript>
+<section class="panel cheat-panel" id="cheatsheet" aria-labelledby="cheat-title">
+<h2 id="cheat-title">チートシート</h2>
+<div class="cheat-grid">
+<div class="cheat-example">
+<h3>まずは「こんにちは」</h3>
+<pre><code>マジ挨拶{
+  ৪৪৪神こんにちは神
+}
+めっちゃ{挨拶}</code></pre>
+<p class="cheat-result">出力：<code>こんにちは</code></p>
+</div>
+<ol class="cheat-steps">
+<li><strong>宣言する：</strong><code>マジ名前{…}</code> にやりたいことを書く。</li>
+<li><strong>呼び出す：</strong><code>めっちゃ{名前}</code> で中身を実行する。</li>
+<li><strong>表示する：</strong><code>৪৪৪神文字神</code> で文字を出す。<code>৪৪৪</code> だけなら今の数を出す。</li>
+</ol>
+</div>
+<h3>よく使う命令</h3>
+<div class="cheat-table-wrap"><table><thead><tr><th scope="col">命令</th><th scope="col">意味</th><th scope="col">書き方の例</th></tr></thead><tbody id="commands-body"></tbody></table></div>
+<p class="cheat-tip"><code>神</code> は値の区切り、<code>👏メモ👏</code> はコメント。命令同士の空白や改行は省けます。<a href="#commands">全命令を見る ↓</a></p>
 </section>
-<hr>
-<section aria-labelledby="inside">
-<h2 id="inside">2. 実行の中をのぞく</h2>
+<section class="docs-section" aria-labelledby="inside">
+<h2 id="inside" class="explore-heading">実行の中をのぞく</h2>
 <p><code>88৪神2神3神</code> は「2と3を足す」、<code>৪৪৪</code> は「値を出力」です。ソースコードを専用VMのバイトコードに変換し、ブラウザで実行します。ここで表示するバイトはZ80や実機CPUの機械語ではありません。<a href="../guide/#z80">本物のZ80命令の例を見る</a></p>
-<details open><summary>生成したバイトコード</summary><pre id="bytes">実行後に表示します。</pre></details>
-<details open><summary>実行の跡</summary><pre id="trace">実行後に表示します。</pre></details>
+<details class="panel stage"><summary>生成したバイトコード</summary><div class="doc-body"><pre id="bytes">実行後に表示します。</pre></div></details>
+<details class="panel stage"><summary>実行の跡</summary><div class="doc-body"><pre id="trace">実行後に表示します。</pre></div></details>
 <p>PCは次に読む命令の位置です。各命令は3バイト（命令番号、数値・ジャンプ先・文字列番号の下位・上位バイト）なので、分岐しないときは3ずつ進みます。アドレスとバイトは16進数です。</p>
 </section>
-<hr>
-<section aria-labelledby="commands">
-<h2 id="commands">3. 命令表</h2>
+<section class="docs-section" aria-labelledby="commands">
+<h2 id="commands" class="explore-heading">全命令と詳しいルール</h2>
 <p>命令は3文字。先頭の <code>8</code> は計算、<code>৪</code> は値、<code>୪</code> は移動・ループ。値は <code>神</code> で区切ります。</p>
-<table><thead><tr><th scope="col">命令</th><th scope="col">意味</th><th scope="col">書き方の例</th></tr></thead><tbody id="commands-body"></tbody></table>
-<details><summary>すべての命令（先頭の文字で分類）</summary>
+<details class="panel stage"><summary>すべての命令（先頭の文字で分類）</summary><div class="doc-body">
 <table><caption>8：計算</caption><thead><tr><th scope="col">命令</th><th scope="col">意味</th></tr></thead><tbody id="command-group-0"></tbody></table>
 <table><caption>৪：値</caption><thead><tr><th scope="col">命令</th><th scope="col">意味</th></tr></thead><tbody id="command-group-1"></tbody></table>
 <table><caption>୪：移動・ループ</caption><thead><tr><th scope="col">命令</th><th scope="col">意味</th></tr></thead><tbody id="command-group-2"></tbody></table>
-</details>
+</div></details>
 <h3>計算と文字</h3>
 <p><code>88৪神2神3神৪৪৪</code> は <code>5</code> を表示します。<code>88୪神5神2神৪৪৪</code> は <code>3</code>、<code>৪৪৪神こんにちは神</code> は文字を表示します。<code>神</code> は値の境界です。たとえば <code>88৪神8神3神</code> の先頭の <code>88৪</code> は足し算の命令、<code>神8神</code> の <code>8</code> は計算する数です。表示する文字の中では空白も残り、<code>\神</code> と書けば文字として「神」を表示できます。</p>
 <h3>関数</h3>
 <p><code>マジ名前{…}</code> で関数を宣言します。中身だけを <code>{ }</code> で囲み、<code>めっちゃ{名前}</code> で実行します。関数の内外で同じセルを使います。</p>
-<details><summary>以前の書き方（互換モード）</summary><p><code>マジ 名前</code> のように関数名を引用符で囲まない以前のコードも実行できます。<code>マジ"名前"</code> から始まる前の試作（v0.3）や、旧命令の並びもそのまま動きます。空白で区切る旧形式で、<code>8</code>・<code>৪</code>・<code>୪</code> を同じ1文字として数えます。<code>set</code> や <code>fn</code> / <code>end</code> / <code>call</code> も旧形式のまま使えます。</p></details>
+<details class="panel stage"><summary>以前の書き方（互換モード）</summary><p class="doc-body"><code>マジ 名前</code> のように関数名を引用符で囲まない以前のコードも実行できます。<code>マジ"名前"</code> から始まる前の試作（v0.3）や、旧命令の並びもそのまま動きます。空白で区切る旧形式で、<code>8</code>・<code>৪</code>・<code>୪</code> を同じ1文字として数えます。<code>set</code> や <code>fn</code> / <code>end</code> / <code>call</code> も旧形式のまま使えます。</p></details>
 <p>最初は256個のセルがすべて0で、左端のセルから始まります。値（0〜255）とセルの位置は端で一周します。ループの入れ子も使えます。</p>
 <p><code>👏 メモ 👏</code> のように、2つの <code>👏</code> で囲んだ部分はコメントになり、実行されません。複数行にまたがって書けます。最後の <code>👏</code> がない場合はエラーです。プログラムへの入力機能はありません。</p>
 <p>入力と実行回数に上限があり、終わらないループは自動で停止します。コードは端末のブラウザ内だけで処理します。</p>
