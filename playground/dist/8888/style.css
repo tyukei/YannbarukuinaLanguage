@@ -58,3 +58,36 @@ th, td { text-align: left; padding: .2rem .75rem .2rem 0; border-bottom: 1px sol
 #debug-map .map-next td { background: #d8eafa; }
 
 #debug-map .map-source { font-family: ui-monospace, monospace; min-width: 8rem; max-width: 18rem; white-space: pre-wrap; overflow-wrap: anywhere; }
+
+/* A white, left-aligned reference page in the spirit of the original Grass docs. */
+body { background: #fff; color: #101010; font-family: Arial, "Hiragino Kaku Gothic ProN", Meiryo, sans-serif; line-height: 1.58; }
+main { max-width: none; margin: 0; padding: .9rem clamp(1rem, 3.6vw, 3rem) 3rem; }
+header { border-top: 1px solid #333; }
+header .back { margin: .5rem 0 .7rem; font-size: .9rem; }
+h1 { font-size: clamp(1.7rem, 3.4vw, 2.25rem); margin: .4rem 0 .55rem; }
+h1 small { font-size: .48em; margin-inline-start: .35em; }
+h2 { font-size: 1.36rem; }
+h3 { font-size: 1.06rem; }
+header p, section > p { max-width: 72ch; }
+header .credit { font-size: .9rem; }
+header nav { font-size: .92rem; }
+a { color: #000080; text-decoration: underline; }
+a:visited { color: #551a8b; }
+hr { margin-block: 1.45rem .85rem; border-top-color: #ccc; }
+.clap-art { border: 0; background: transparent; margin: .8rem 0; padding: 0; overflow: visible; line-height: 1.2; }
+textarea { max-width: 58rem; background: #fff; color: inherit; border: 1px solid #777; border-radius: 0; }
+button, select { border-radius: 0; }
+button { border: 1px solid #888; background: #f3f3f3; color: #111; }
+button:hover:not(:disabled) { background: #e7e7e7; }
+button:disabled { color: #666; }
+pre:not(.clap-art) { max-width: 68rem; background: #f7f7f7; }
+#debug-panel { max-width: 68rem; border-radius: 0; background: #fff; border-color: #aaa; }
+#debug-addresses { border-radius: 0; background: #fafafa; border-color: #bbb; }
+#debug-map th { background: #eee; }
+.debug-cell { border-radius: 0; }
+#commands { scroll-margin-top: .75rem; }
+@media (max-width: 36rem) {
+  main { padding-inline: 1rem; }
+  button, select { min-height: 44px; }
+  th, td { padding-inline-end: .45rem; }
+}
