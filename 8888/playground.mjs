@@ -1,4 +1,4 @@
-import {compile, hex, instructions, run} from './engine.mjs?v=3';
+import {compile, hex, instructions, run} from './engine.mjs?v=4';
 
 const $ = id => document.getElementById(id);
 const source = $('source'), output = $('output'), error = $('error');
@@ -9,6 +9,7 @@ const examples = {
   move: '8 888 8 8 88888 8888 88888',
   bengali: '8 ৪\n৪ 8 ৪\n8৪8৪8',
   odia: '8 ৪\n୪ 8 ୪\n8৪୪8୪',
+  comment: '8 ৪ 👏 ここまでで 2\nコメント内の 88888 は実行しません 👏\n୪ 8 ୪ 88888',
 };
 
 for (const [i, description] of instructions.entries()) {
