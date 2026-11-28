@@ -1,3 +1,4 @@
+import {compileExpressions, expressionInstructions, isExpressionProgram} from './functions.mjs?v=values-1';
 // 8888 v0.5: compact and legacy syntax compiled to 3-byte VM records.
 export const instructions = [
   'セルの値を +1', 'セルの値を −1', '右のセルへ', '左のセルへ',
@@ -6,6 +7,7 @@ export const instructions = [
   '値をセット', '左の値として保存', '保存した値 + 現在値',
   '保存した値 − 現在値', 'ASCII文字を出力',
   '関数宣言を飛ばす', '呼び出し元に戻る', '関数を呼ぶ', '文字列を出力',
+  ...expressionInstructions,
 ];
 export const extendedSyntax = ['set 値', 'push', 'add', 'sub', 'char', 'マジ 名前', '神', 'めっちゃ 名前'];
 const keywords = new Map(['set', 'push', 'add', 'sub', 'char', 'fn', 'end', 'call'].map((key, i) => [key, i + 9]));
@@ -193,6 +195,7 @@ function compactMode(source) {
 
 export function compile(source, {sourceMap = false, analysis = false} = {}) {
   if (source.length > 16384) throw new Error('入力は16,384文字までです。');
+  if (isExpressionProgram(source)) return compileExpressions(source,{sourceMap,analysis});
   const code = [], locations = [], loops = [], literals = [];
   const sourceCommands = sourceMap ? [] : null;
   const ast = analysis ? {kind:'program', label:'プログラム', children:[]} : null;
@@ -304,14 +307,15 @@ export function debugSnapshot(frames, step) {
   return {cells, frame: frames[step]};
 }
 
-export function run({code, locations, literals = []}, {debug = false} = {}) {
+export function run({code, locations, literals = [], functions}, {debug = false} = {}) {
   const cells = new Uint8Array(256), output = [], trace = [];
-  const saved = [], returns = [];
-  const frames = debug ? [{pointer: 0, next: 0}] : null;
+  const saved = [], returns = [], values = [], calls = [];
+  const valueState=()=>({values:values.slice(-16),args:calls.at(-1)?.args??[],depth:calls.length});
+  const frames = debug ? [{pointer: 0, next: 0,...(functions?valueState():{})}] : null;
   let pointer = 0, pc = 0, steps = 0, outputChars = 0;
   const fail = message => {
     const error = new Error(`${locations[pc / width]}：${message}`);
-    if (frames) error.debug = {frames, steps};
+    if (frames) error.debug = {frames, steps, functional:Boolean(functions)};
     throw error;
   };
   while (pc < code.length) {
@@ -359,6 +363,30 @@ export function run({code, locations, literals = []}, {debug = false} = {}) {
         next = target;
         break;
       case 17: emitted = literals[target]; break;
+      case 18: values.push(target); break;
+      case 19: values.push(calls.at(-1).args[target]); break;
+      case 20:
+      case 21: {
+        const right=values.pop(),left=values.pop();
+        values.push((op===20?left+right:left-right)&255);
+        break;
+      }
+      case 22: {
+        if(calls.length===64) fail('関数呼び出しは64段までです。');
+        const fn=functions[target];
+        const base=values.length-fn.arity;
+        calls.push({args:values.splice(base),base,next});
+        next=fn.pc;
+        break;
+      }
+      case 23: {
+        const call=calls.pop(), result=values.pop();
+        values.length=call.base;
+        values.push(result);
+        next=call.next;
+        break;
+      }
+      case 24: emitted=values.pop(); break;
       default: throw new Error('不明なVM命令です。');
     }
     if (emitted !== null) {
@@ -367,19 +395,20 @@ export function run({code, locations, literals = []}, {debug = false} = {}) {
       if (outputChars > 16384) fail('出力が16,384文字を超えました。');
       output.push(emitted);
     }
-    if (trace.length < 48) trace.push({pc, op, next, pointer, value: cells[pointer], emitted});
+    if (trace.length < 48) trace.push({pc, op, next, pointer, value:functions?values.at(-1):cells[pointer], emitted});
     if (frames && steps < debugLimit) {
       const to = cells[previousPointer];
       frames.push({
         pc, op, next, pointer, previousPointer, source: locations[pc / width],
         before: previousValue, after: to, leftValue, emitted,
+        ...(functions?valueState():{}),
         change: previousValue === to ? null : {index: previousPointer, from: previousValue, to},
       });
     }
     steps++;
     pc = next;
   }
-  return {output, trace, steps, pointer, cells, ...(frames ? {debug: {frames, steps}} : {})};
+  return {output, trace, steps, pointer, cells, ...(frames ? {debug: {frames, steps, functional:Boolean(functions)}} : {})};
 }
 
 export const hex = (n, digits = 2) => n.toString(16).toUpperCase().padStart(digits, '0');
