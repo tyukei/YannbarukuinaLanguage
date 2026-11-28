@@ -5,8 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="description" content="数字の8、ベンガル数字の৪、オリヤー数字の୪で命令を書く教育用言語。ブラウザで実行してバイトコードと実行の流れを見比べられます。">
 <title>8888言語（試作） | YanbaruKuina</title>
-<link rel="stylesheet" href="./style.css?v=2">
-<script type="module" src="./playground.mjs?v=13"></script>
+<link rel="stylesheet" href="./style.css?v=3">
+<script type="module" src="./playground.mjs?v=14"></script>
 </head>
 <body>
 <main>
@@ -42,6 +42,10 @@
 <label for="debug-step">実行ステップ</label>
 <input id="debug-step" type="range" min="0" max="0" step="1" value="0">
 <p id="debug-status" role="status"></p>
+<div id="debug-source-view">
+<p id="debug-source-label">ソース上の位置</p>
+<pre id="debug-source" aria-labelledby="debug-source-label"></pre>
+</div>
 <div class="tools"><label for="debug-page">表示するセル</label>
 <select id="debug-page"><option value="auto">現在のセルを追う</option></select></div>
 <ul id="debug-cells" aria-label="セル番号と値"></ul>

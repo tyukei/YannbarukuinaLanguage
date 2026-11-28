@@ -46,6 +46,32 @@ for (let index = 0; index < 256; index += 16) {
   option.textContent = `セル ${index}〜${index + 15}`;
   pageSelect.append(option);
 }
+function showSource(frame) {
+  const preview = $('debug-source');
+  const label = $('debug-source-label');
+  const location = frame.source?.match(/^(\d+)行 (\d+)列$/u);
+  if (!location) {
+    label.textContent = 'ソース上の位置';
+    preview.textContent = '実行前：まだ命令を実行していません。';
+    return;
+  }
+  const [, row, column] = location;
+  const line = Array.from(recording.lines[Number(row) - 1] ?? '');
+  const at = Number(column) - 1;
+  const after = line.slice(at).join('');
+  const command = after.match(/^(?:マジ|めっちゃ|神|\}|[8৪୪]{3}|[^\s👏]+)/u)?.[0] ?? after.charAt(0);
+  const end = at + Array.from(command).length;
+  const startContext = Math.max(0, at - 38), endContext = Math.min(line.length, end + 38);
+  const before = document.createElement('span'), arrow = document.createElement('span');
+  const current = document.createElement('mark'), rest = document.createElement('span');
+  before.textContent = (startContext ? '…' : '') + line.slice(startContext, at).join('');
+  arrow.textContent = '▶';
+  arrow.className = 'debug-source-arrow';
+  current.textContent = command;
+  rest.textContent = line.slice(end, endContext).join('') + (endContext < line.length ? '…' : '');
+  label.textContent = '▶ 実行した命令：' + frame.source;
+  preview.replaceChildren(before, arrow, current, rest);
+}
 function showStep(step) {
   if (!recording) return;
   const {frames, steps} = recording;
@@ -64,6 +90,7 @@ function showStep(step) {
     else label += ' · 値の変化なし';
   }
   $('debug-status').textContent = label;
+  showSource(frame);
   const first = pageSelect.value === 'auto' || pageSelect.value === undefined
     ? frame.pointer - frame.pointer % 16 : Number(pageSelect.value);
   const cards = [];
@@ -79,7 +106,7 @@ function showStep(step) {
   $('debug-cells').replaceChildren(...cards);
 }
 function openDebug(data) {
-  recording = data;
+  recording = {...data, lines: source.value.split(/\r\n?|\n/u)};
   pageSelect.value = 'auto';
   slider.max = String(data.frames.length - 1);
   slider.disabled = data.frames.length <= 1;
