@@ -5,7 +5,6 @@ const samples = {
   loop: "zz 0 から 4 まで、ひとつずつ\ni = 0\naruku (i < 5) {\n  naku(i)\n  i = i + 1\n}\n",
   control: "zz 3 を飛ばして、6 の手前で止まる\ni = 0\naruku (i < 10) {\n  i = i + 1\n  moshi (i == 3) { hashiru }\n  moshi (i == 6) { tobu }\n  naku(i)\n}\n"
 };
-const chukeiSamples = {hello:"CCCCHUKECHUKCHCHUKEI", branch:"CHCHUKCCHUK", loop:"CCCHUCCCCHUKECHUKCHCHUKEI", control:"CCHUKECHUKECHCHUKEICHUKEICHUK"};
 let language="queena", trace=[], traceIndex=0;
 function asciiExample(text){
  let value=0;const commands=[];
@@ -24,12 +23,10 @@ const asciiSamples={
  abc:asciiExample("ABC")
 };
 const drafts={};
-let chukeiMode="ascii";
 const returnFrom8888Key="yanbarukuina.playground.return-from-8888";
 function saveFor8888(){
   drafts[language]=source.value;
-  if(language==="chukei") chukeiMode=el("output-mode").value;
-  try { sessionStorage.setItem(returnFrom8888Key, JSON.stringify({language,chukeiMode,drafts})); }
+  try { sessionStorage.setItem(returnFrom8888Key, JSON.stringify({language,drafts})); }
   catch { /* Navigation still works if session storage is unavailable. */ }
 }
 function takeReturnFrom8888(){
@@ -40,19 +37,19 @@ function takeReturnFrom8888(){
     return JSON.parse(value);
   } catch { return null; }
 }
-function currentSamples(){return language==="chukei"?(el("output-mode").value==="ascii"?asciiSamples:chukeiSamples):samples;}
+function currentSamples(){return language==="chukei"?asciiSamples:samples;}
 const el = (id) => document.getElementById(id);
 const source = el("source"), runButton = el("run"), exampleSelect = el("example");
 let busy = false, lastSource = null, controller = null, cancelRun = null;
 function execute(code) {
   return new Promise((resolve, reject) => {
-    const worker = new Worker(language==="chukei"?"./chukei-worker.js?v=compact-20261114":"./runtime-worker.js", {type:"module"});
+    const worker = new Worker(language==="chukei"?"./chukei-worker.js?v=ascii-only-1":"./runtime-worker.js", {type:"module"});
     controller = worker;
     cancelRun = () => { clearTimeout(timer); worker.terminate(); reject(new Error("実行を停止しました。")); };
     const timer = setTimeout(() => { worker.terminate(); reject(new Error("時間制限に達しました。ループや入力サイズを確認してください。")); }, 15000);
     worker.onmessage = ({data}) => { clearTimeout(timer); worker.terminate(); resolve(data); };
     worker.onerror = () => { clearTimeout(timer); worker.terminate(); reject(new Error("実行エンジンでエラーが発生しました。入力を短くして再実行してください。")); };
-    worker.postMessage({source:code,outputMode:el("output-mode").value});
+    worker.postMessage({source:code});
   });
 }
 source.value = samples.hello;
@@ -88,7 +85,7 @@ function changed() {
 let selectedSample="hello";
 el("example").addEventListener("change",()=>{
  const next=el("example").value;
- const known=[...Object.values(samples),...Object.values(chukeiSamples),...Object.values(asciiSamples)].includes(source.value);
+ const known=[...Object.values(samples),...Object.values(asciiSamples)].includes(source.value);
  if(source.value && !known && !confirm("編集したコードをサンプルで置き換えますか？")){el("example").value=selectedSample;return;}
  source.value=currentSamples()[next];selectedSample=next;changed();
 });
@@ -134,7 +131,7 @@ async function run({debug=false}={}) {
   if (!debug) openRunDialog();
   el("cancel").hidden = false;
   lastSource = code;
-  runButton.disabled = el("debug-run").disabled = el("example").disabled = el("language").disabled = el("output-mode").disabled = true;
+  runButton.disabled = el("debug-run").disabled = el("example").disabled = el("language").disabled = true;
   runButton.textContent = "実行中…";
   setStatus("実行中", "running");
   el("output").textContent = "";
@@ -165,8 +162,8 @@ async function run({debug=false}={}) {
     }
     changed();
     if(result.ok){
-      generated={source:code,language,mode:el("output-mode").value,
-        content:language==="chukei"?JSON.stringify({format:"CHUKEI educational VM",version:1,outputMode:el("output-mode").value,bytecode:result.bytecode},null,2):result.assembly,
+      generated={source:code,language,
+        content:language==="chukei"?JSON.stringify({format:"CHUKEI educational VM",version:1,outputMode:result.outputMode,bytecode:result.bytecode},null,2):result.assembly,
         filename:language==="chukei"?"main.chukei-vm.json":"main.z80.asm"};
       el("download-generated").disabled=!generated.content;
     }
@@ -184,7 +181,7 @@ async function run({debug=false}={}) {
     cancelRun = null;
     el("cancel").hidden = true;
     runButton.disabled = el("example").disabled = el("language").disabled = false;
-    el("output-mode").disabled=el("debug-run").disabled=language!=="chukei";
+    el("debug-run").disabled=language!=="chukei";
     runButton.innerHTML = '<span aria-hidden="true">▶</span> 2. 実行';
     if (!debug) finishRunDialog();
   }
@@ -225,17 +222,14 @@ el("language").addEventListener("change",()=>{
   }
   invalidateGenerated();
   drafts[language]=source.value;
-  if(language==="chukei") chukeiMode=el("output-mode").value;
   language=el("language").value;
-  el("output-mode").value=language==="chukei"?chukeiMode:"numeric";
-  el("output-mode").disabled=language!=="chukei";
   source.value=drafts[language]??currentSamples().hello;lastSource=null;
   el("tokens-list").replaceChildren();astView.clear();
   el("output").textContent="";el("error").hidden=true;el("assembly").textContent="実行で表示。";setStatus("待機中","");
   el("tokens-note").textContent="実行で表示。";el("ast-note").textContent="実行で表示。";
   el("result-note").textContent="実行で表示。";
   const isChukei=language==="chukei";
-  const fullName=isChukei?"ちょっと刻んどきますね型言語 CHUKEI":"ちょっと鳴いときますね型言語 YanbaruKuina";
+  const fullName=isChukei?"ちょっと中継しときますね型言語 CHUKEI":"ちょっと鳴いときますね型言語 YanbaruKuina";
   el("language-title").textContent=fullName;
   document.title=fullName+" | Playground";
   el("chukei-cheat").hidden=!isChukei;
@@ -260,6 +254,7 @@ el("language").addEventListener("change",()=>{
   el("trace-note").textContent=isChukei?"実行で表示。":"CHUKEIのみ対応。";
   document.querySelector(".file-name").textContent=isChukei?"main.chukei":"main.🐧";
   el("language-note").textContent=isChukei?"教材用VM":"Z80";
+  el("ascii-output-note").hidden=!isChukei;
   el("terminal-name").textContent=isChukei?"CHUKEI VM":"Z80 CONSOLE";
   el("z80-chip").hidden=isChukei;
   el("limits").textContent=isChukei?"CHUKEI：256セル・値0〜255・ポインタ循環・入力なし。":"数値は 0〜65535 の整数。変数は最大 32 個。";
@@ -271,20 +266,11 @@ el("language").addEventListener("change",()=>{
 
 function refreshSampleNames(){
  const keys=Object.keys(currentSamples());
- const names=language==="chukei"?(el("output-mode").value==="ascii"?["HELLO, I AM CHUKEI!","Helloを出力","別のセルでAB","改行してA・B","AZazを出力","ABCを出力"]:["3・2・1を出力","0と255の循環","セルを右へ移動","入れ子のループ"]):["はじめの一歩","分岐してみる","くり返してみる","スキップと脱出"];
+ const names=language==="chukei"?["HELLO, I AM CHUKEI!","Helloを出力","別のセルでAB","改行してA・B","AZazを出力","ABCを出力"]:["はじめの一歩","分岐してみる","くり返してみる","スキップと脱出"];
  const selected=el("example").value;
  el("example").replaceChildren(...keys.map((key,i)=>{const option=document.createElement("option");option.value=key;option.textContent=names[i];return option;}));
  el("example").value=keys.includes(selected)?selected:"hello";
 }
-el("output-mode").addEventListener("change",()=>{
- const wasSample=[...Object.values(chukeiSamples),...Object.values(asciiSamples)].includes(source.value);
- invalidateGenerated();chukeiMode=el("output-mode").value;refreshSampleNames();selectedSample=el("example").value;
- if(wasSample){source.value=currentSamples()[el("example").value];changed();}
- el("result-note").textContent=wasSample?"出力形式に合わせてサンプルを更新しました。":"コードは保持。文字出力にはASCII値（65=A）が必要です。";
- el("output").textContent="";el("error").hidden=true;setStatus("再実行","");
- el("trace-note").textContent="形式変更前の記録。";
-});
-
 el("import-code").addEventListener("click",()=>{
  if(busy){el("file-status").textContent="実行終了後に開けます。";return;}
  el("code-file").click();
@@ -343,7 +329,7 @@ el("run-dialog").addEventListener("close",()=>{
 let generated=null;
 function invalidateGenerated(){generated=null;el("download-generated").disabled=true;}
 el("download-generated").addEventListener("click",()=>{
- if(!generated||busy||source.value!==generated.source||language!==generated.language||el("output-mode").value!==generated.mode){invalidateGenerated();return;}
+ if(!generated||busy||source.value!==generated.source||language!==generated.language){invalidateGenerated();return;}
  const url=URL.createObjectURL(new Blob([generated.content],{type:language==="chukei"?"application/json":"text/plain;charset=utf-8"}));
  const a=document.createElement("a");a.href=url;a.download=generated.filename;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);
 });
@@ -394,7 +380,6 @@ for(const tab of document.querySelectorAll(".language-tabs [data-language]")){
 }
 // Default to the CHUKEI greeting, or restore a draft when returning from 8888.
 const returning=takeReturnFrom8888();
-if(returning?.chukeiMode==="numeric") chukeiMode="numeric";
 const requestedLanguage=new URLSearchParams(location.search).get("lang");
 el("language").value=["queena","chukei"].includes(requestedLanguage)?requestedLanguage:(returning?.language==="queena"?"queena":"chukei");
 el("language").dispatchEvent(new Event("change"));
