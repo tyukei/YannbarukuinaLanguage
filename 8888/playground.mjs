@@ -1,4 +1,4 @@
-import {compile, extendedSyntax, hex, instructions, run} from './engine.mjs?v=5';
+import {compile, extendedSyntax, hex, instructions, run} from './engine.mjs?v=6';
 
 const $ = id => document.getElementById(id);
 const source = $('source'), output = $('output'), error = $('error');
@@ -12,7 +12,7 @@ const examples = {
   comment: '8 ৪ 👏 ここまでで 2\nコメント内の 88888 は実行しません 👏\n୪ 8 ୪ 88888',
   arithmetic: 'set 2 push set 3 add 88888\nset 5 push set 2 sub 88888',
   letter: 'set 72 char\nset 73 char',
-  function: 'fn あいさつ\n  set 72 char\n  set 73 char\nend\n\ncall あいさつ\ncall あいさつ',
+  function: 'マジ あいさつ\n  set 72 char\n  set 73 char\nend\n\nめっちゃ あいさつ\nめっちゃ あいさつ',
 };
 
 for (const [i, description] of instructions.entries()) {
